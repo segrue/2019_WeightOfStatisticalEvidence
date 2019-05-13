@@ -102,7 +102,7 @@ for (n_study in n_studies) {
   
   #calculate theoretical and empiral evidence based on clt-vst
   #question: can I use empirical SE to calculate T_clt_th > how is distribution of this statistic?
-  T_clt_emp <- calc_T(p0s,p1_hats,n_study,clt)
+  T_clt_emp <- calc_T(mu0s=p0s,mu1s=p1_hats,n_study=n_study,func=clt)
   T_clt_emp_avg <- T_averager(T_clt_emp)
   T_clt_emp_sd <- T_sd(T_clt_emp)
   
@@ -122,7 +122,7 @@ for (n_study in n_studies) {
                  dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence))
   
   #calculate theoretical and empiral evidence based on binomial vst
-  T_vst_emp <- calc_T(p0s,p1_hats,n_study,vst)
+  T_vst_emp <- calc_T(mu0s=p0s,mu1s=p1_hats,n_study=n_study,func=vst)
   T_vst_emp_avg <- T_averager(T_vst_emp)
   T_vst_emp_sd <- T_sd(T_vst_emp)
   
