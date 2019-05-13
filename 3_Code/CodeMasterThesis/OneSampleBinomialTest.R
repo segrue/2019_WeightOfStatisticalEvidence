@@ -6,12 +6,15 @@ require("ggplot2") #http://www.sthda.com/english/wiki/ggplot2-histogram-plot-qui
 #for data handling
 require("reshape2") #https://stackoverflow.com/questions/21563864/ggplot2-overlay-density-plots-r
 
+#custom functions
+source("./functions/helper_functions.R")
+
 # Define starting assumptions and conditions ----
 # hypotheses:
 # H0: p = p0
 # H1: p > p0
 n_studies <- c(5,10,20,30,40,50,100,200,500,1000)
-n_sim <- 1e4
+n_sim <- 1e2
 p0s <- seq(0.1,0.9,by=0.2)
 p1s <- seq(0.01,0.99,by=0.01)
 alphas <- c(0.05)
@@ -22,56 +25,56 @@ correction <- ifelse(T_corr,"Ans","MLE")
 name <- paste0("Ev_Binom_",correction,"_",n_sim,"_",seed)
 
 
-# Define vst and helper functions  ----
-vst <- function(p0,p1,n){
-  Tn <- 2*sqrt(n)*(asin(sqrt(p1))-asin(sqrt(p0)))
-  return(Tn)
-}
-
-#z-statistic based on CLT
-clt <- function(p0,p1,n){
-  Tn <- (p1-p0)/sqrt((p1*(1-p1)/n))
-  return(Tn)
-}
+# # Define vst and helper functions  ----
+# vst <- function(p0,p1,n){
+#   Tn <- 2*sqrt(n)*(asin(sqrt(p1))-asin(sqrt(p0)))
+#   return(Tn)
+# }
+# 
+# #z-statistic based on CLT
+# clt <- function(p0,p1,n){
+#   Tn <- (p1-p0)/sqrt((p1*(1-p1)/n))
+#   return(Tn)
+# }
 #question: what changes when we use the theoretical variance instead of the empirical? fit should get better, shouldn't it?
 #also: where do peaks come from?
 
-calc_T <- function(p0s,p1s,n_study,func){
-  Tn <- apply(p1s, 1, function(p1) sapply(p0s, function(p0) func(p0,p1,n_study)))
-  Tn[is.infinite(Tn)] <- NA
-  return(Tn)
-}
+# calc_T <- function(p0s,p1s,n_study,func){
+#   Tn <- apply(p1s, 1, function(p1) sapply(p0s, function(p0) func(p0,p1,n_study)))
+#   Tn[is.infinite(Tn)] <- NA
+#   return(Tn)
+# }
 
 #brings data into the correct form for plottings
-dat_transform <- function(T_avg,T_sd,th_emp,id,n_study,cols){
-  dat <- merge(melt(T_avg),melt(T_sd),by=c("Var1","Var2"),sort=FALSE)
-  dat <- cbind(dat,th_emp,id,n_study)
-  colnames(dat) <- cols
-  dat$p1 <- rep(p1s,times=1,each=length(p0s))
-  dat$p0 <- rep(p0s,times=length(p1s))
-  return(dat)
-}
+# dat_transform <- function(T_avg,T_sd,th_emp,id,n_study,cols){
+#   dat <- merge(melt(T_avg),melt(T_sd),by=c("Var1","Var2"),sort=FALSE)
+#   dat <- cbind(dat,th_emp,id,n_study)
+#   colnames(dat) <- cols
+#   dat$p1 <- rep(p1s,times=1,each=length(p0s))
+#   dat$p0 <- rep(p0s,times=length(p1s))
+#   return(dat)
+# }
 
-test_func <- function(val,crit_val){
-  return((val>crit_val)*1)
-}
+# test_func <- function(val,crit_val){
+#   return((val>crit_val)*1)
+# }
+# 
+# ci_coverage <- function(Ts,T_avg,crit_val){
+#   T_avg <- as.vector(t(T_avg))
+#   vals <- t(abs(sapply(1:dim(Ts)[1], function(i) Ts[i,]-T_avg[i])))
+#   Ts_coverage <- 1-test_func(vals,crit_val)
+#   return(Ts_coverage)
+# }
 
-ci_coverage <- function(Ts,T_avg,crit_val){
-  T_avg <- as.vector(t(T_avg))
-  vals <- t(abs(sapply(1:dim(Ts)[1], function(i) Ts[i,]-T_avg[i])))
-  Ts_coverage <- 1-test_func(vals,crit_val)
-  return(Ts_coverage)
-}
-
-T_averager <- function(Ts){
-  Ts_avg <- matrix(apply(Ts,1,mean,na.rm=TRUE),length(p0s),length(p1s),byrow=TRUE)
-  return(Ts_avg)
-}
-
-T_sd <- function(Ts){
-  Ts_avg <- matrix(apply(Ts,1,sd,na.rm=TRUE),length(p0s),length(p1s),byrow=TRUE)
-  return(Ts_avg)
-}
+# T_averager <- function(Ts){
+#   Ts_avg <- matrix(apply(Ts,1,mean,na.rm=TRUE),length(p0s),length(p1s),byrow=TRUE)
+#   return(Ts_avg)
+# }
+# 
+# T_sd <- function(Ts){
+#   Ts_avg <- matrix(apply(Ts,1,sd,na.rm=TRUE),length(p0s),length(p1s),byrow=TRUE)
+#   return(Ts_avg)
+# }
 
 #simulate values
 #https://stackoverflow.com/questions/34999019/apply-a-function-to-all-pairwise-combinations-of-list-elements-in-r
@@ -103,8 +106,8 @@ for (n_study in n_studies) {
   #calculate theoretical and empiral evidence based on clt-vst
   #question: can I use empirical SE to calculate T_clt_th > how is distribution of this statistic?
   T_clt_emp <- calc_T(mu0s=p0s,mu1s=p1_hats,n_study=n_study,func=clt)
-  T_clt_emp_avg <- T_averager(T_clt_emp)
-  T_clt_emp_sd <- T_sd(T_clt_emp)
+  T_clt_emp_avg <- T_averager(T_clt_emp,p0s,p1s)
+  T_clt_emp_sd <- T_sd(T_clt_emp,p0s,p1s)
   
   # if (T_corr==T){
   #   T_clt_th_avg <- sapply((p1s*n_study+3/8)/(n_study+3/4),function(p1) clt(p0s,p1,n_study))
@@ -118,13 +121,13 @@ for (n_study in n_studies) {
   T_clt_th_avg <- sapply(p1s,function(p1) clt(p0s,p1,n_study))
   T_th_sd <- matrix(1,nrow=dim(T_clt_th_avg)[1],ncol=dim(T_clt_th_avg)[2])
   
-  T_clt <- rbind(dat_transform(T_clt_emp_avg,T_clt_emp_sd,"emp","clt",n_study,cols_evidence),
-                 dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence))
+  T_clt <- rbind(dat_transform(T_clt_emp_avg,T_clt_emp_sd,"emp","clt",n_study,cols_evidence,p0s,p1s),
+                 dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence,p0s,p1s))
   
   #calculate theoretical and empiral evidence based on binomial vst
   T_vst_emp <- calc_T(mu0s=p0s,mu1s=p1_hats,n_study=n_study,func=vst)
-  T_vst_emp_avg <- T_averager(T_vst_emp)
-  T_vst_emp_sd <- T_sd(T_vst_emp)
+  T_vst_emp_avg <- T_averager(T_vst_emp,p0s,p1s)
+  T_vst_emp_sd <- T_sd(T_vst_emp,p0s,p1s)
   
   # if (T_corr==T){
   #   T_vst_th_avg <- sapply((p1s*n_study+3/8)/(n_study+3/4),function(p1) vst(p0s,p1,n_study))
@@ -138,8 +141,8 @@ for (n_study in n_studies) {
   
   T_vst_th_avg <- sapply(p1s,function(p1) vst(p0s,p1,n_study))
   
-  T_vst <- rbind(dat_transform(T_vst_emp_avg,T_vst_emp_sd,"emp","vst",n_study,cols_evidence),
-                 dat_transform(T_vst_th_avg,T_th_sd,"th","vst",n_study,cols_evidence))
+  T_vst <- rbind(dat_transform(T_vst_emp_avg,T_vst_emp_sd,"emp","vst",n_study,cols_evidence,p0s,p1s),
+                 dat_transform(T_vst_th_avg,T_th_sd,"th","vst",n_study,cols_evidence,p0s,p1s))
 
   #calculate power & confidence intervals
   j <- 1
@@ -148,8 +151,8 @@ for (n_study in n_studies) {
     #confidence_intervals
     crit_val_ci <- qnorm((1-alph/2),0,1)
     
-    emp_ci_clt <- T_averager(ci_coverage(T_clt_emp,T_clt_emp_avg,crit_val_ci))
-    emp_ci_vst <- T_averager(ci_coverage(T_vst_emp,T_vst_emp_avg,crit_val_ci))
+    emp_ci_clt <- T_averager(ci_coverage(T_clt_emp,T_clt_emp_avg,crit_val_ci),p0s,p1s)
+    emp_ci_vst <- T_averager(ci_coverage(T_vst_emp,T_vst_emp_avg,crit_val_ci),p0s,p1s)
     th_ci <- matrix((1-alph),nrow=dim(emp_ci_clt)[1],ncol=dim(emp_ci_clt)[2])
     ci_clt <- rbind(melt(emp_ci_clt),melt(th_ci))$value
     ci_vst <- rbind(melt(emp_ci_vst),melt(th_ci))$value
@@ -179,7 +182,7 @@ for (n_study in n_studies) {
                               function(i) sapply(p0s, 
                                                  function(p0) mean(sapply(p1s_th[,i],
                                                                           function(p1) 1-pnorm(crit_val_norm,clt(p0,p1,n_study),sd=1)))))
-    pows_avg_clt_emp <- T_averager(1*(T_clt_emp>crit_val_norm))
+    pows_avg_clt_emp <- T_averager(1*(T_clt_emp>crit_val_norm),p0s,p1s)
     
     #pows_avg_clt <- dat_transform_th_emp(list(pows_avg_clt_th,pows_avg_clt_emp))
     
@@ -192,7 +195,7 @@ for (n_study in n_studies) {
                            function(i) sapply(p0s, 
                                               function(p0) mean(sapply(p1s_th[,i],
                                                                        function(p1) 1-pnorm(crit_val_norm,vst(p0,p1,n_study),sd=1)))))
-    pows_avg_vst_emp <- T_averager(1*(T_vst_emp>crit_val_norm))
+    pows_avg_vst_emp <- T_averager(1*(T_vst_emp>crit_val_norm),p0s,p1s)
   
     #pows_avg_vst <- dat_transform_th_emp(list(pows_avg_vst_th,pows_avg_vst_emp))
     #pows_avg_vst <- rbind(dat_transform_power(pows_avg_vst_emp,"emp","vst",alph,n_study,cols_power),
@@ -331,11 +334,11 @@ SE_calculator <- function(p,n){
   return(SE)
 }
 
-calc_T_clt <- function(p0s,p1s,n_study,func){
-  Tn <- sapply(1:dim(p1s)[1], function(p1) sapply(p0s, function(p0) func(p0,p1s[p1,],n_study,SEs[p1,])))
-  Tn[is.infinite(Tn)] <- NA
-  return(Tn)
-}
+# calc_T_clt <- function(p0s,p1s,n_study,func){
+#   Tn <- sapply(1:dim(p1s)[1], function(p1) sapply(p0s, function(p0) func(p0,p1s[p1,],n_study,SEs[p1,])))
+#   Tn[is.infinite(Tn)] <- NA
+#   return(Tn)
+# }
 
 
 dat_transform_power <- function(pow_avg,th_emp,id,alph,n_study,cols){

@@ -1,11 +1,24 @@
-## functions needed for simulation of binomial evidence
+## functions needed for simulation of evidence
+
+#vst for binomial variable
+vst <- function(p0,p1,n){
+  Tn <- 2*sqrt(n)*(asin(sqrt(p1))-asin(sqrt(p0)))
+  return(Tn)
+}
+
+#z-statistic based on CLT for binomial variable
+clt <- function(p0,p1,n){
+  Tn <- (p1-p0)/sqrt((p1*(1-p1)/n))
+  return(Tn)
+}
 
 
-## functions needed for simulation of evidence in T statistic
+#vst for normally distributed variable - variance known (aka clt)
 vst_var_known <- function(mu0,mu1,sgm0,n_study){
   Tn <- (mu1-mu0)/sgm0*sqrt(n_study)
 }
 
+#vast for normally distributed variable - variance unknown
 vst_var_est <- function(mu0,mu1,sgm_est,n_study,corr=F){
   if (corr==T){
     Tn <- sqrt(2*n_study)*asinh((mu1-mu0)/(sgm_est*sqrt(2)))*(1-0.7/(n_study-1)) 
@@ -24,15 +37,13 @@ calc_T <- function(mu0s,mu1s,sgm0s,n_study,func){
   return(Tn)
 }
 
-
-
 #brings data into the correct form for plottings
-dat_transform <- function(T_avg,T_sd,th_emp,id,n_study,cols){
+dat_transform <- function(T_avg,T_sd,th_emp,id,n_study,cols,mu0s,mu1s){
   dat <- merge(melt(T_avg),melt(T_sd),by=c("Var1","Var2"),sort=FALSE)
   dat <- cbind(dat,th_emp,id,n_study)
   colnames(dat) <- cols
-  dat$mu1 <- rep(mu1s,times=1,each=length(mu0s))
-  dat$mu0 <- rep(mu0s,times=length(mu1s))
+  dat[,1] <- rep(mu0s,times=length(mu1s))
+  dat[,2] <- rep(mu1s,times=1,each=length(mu0s))
   return(dat)
 }
 
@@ -47,12 +58,12 @@ ci_coverage <- function(Ts,T_avg,crit_val){
   return(Ts_coverage)
 }
 
-T_averager <- function(Ts){
+T_averager <- function(Ts,mu0s,mu1s){
   Ts_avg <- matrix(apply(Ts,1,mean,na.rm=TRUE),length(mu0s),length(mu1s),byrow=TRUE)
   return(Ts_avg)
 }
 
-T_sd <- function(Ts){
+T_sd <- function(Ts,mu0s,mu1s){
   Ts_avg <- matrix(apply(Ts,1,sd,na.rm=TRUE),length(mu0s),length(mu1s),byrow=TRUE)
   return(Ts_avg)
 }

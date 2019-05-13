@@ -14,7 +14,7 @@
   # H0: p = mu0
   # H1: p > mu0
   n_studies <- c(5,10,20,30,40,50,100,200,500,1000)
-  n_sim <- 1e4
+  n_sim <- 1e2
   mu0s <- seq(-2,2,by=1)
   mu1s <- seq(-2,2,by=0.1)
   sgm0 <- sgm1 <- 2
@@ -55,14 +55,14 @@
     #this gives the distribution of the values if the clt holds, i.e. if we know the sd
     #question: can I use empirical SE to calculate T_clt_th > how is distribution of this statistic?
     T_clt_emp <- calc_T(mu0s,mu1_hats,sgm_th,n_study,vst_var_known)
-    T_clt_emp_avg <- T_averager(T_clt_emp)
-    T_clt_emp_sd <- T_sd(T_clt_emp)
+    T_clt_emp_avg <- T_averager(T_clt_emp,mu0s,mu1s)
+    T_clt_emp_sd <- T_sd(T_clt_emp,mu0s,mu1s)
     
     T_clt_th_avg <- sapply(mu1s,function(mu1) vst_var_known(mu0s,mu1,sgm0,n_study))
     T_th_sd <- matrix(1,nrow=dim(T_clt_th_avg)[1],ncol=dim(T_clt_th_avg)[2])
     
-    T_clt <- rbind(dat_transform(T_clt_emp_avg,T_clt_emp_sd,"emp","clt",n_study,cols_evidence),
-                   dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence))
+    T_clt <- rbind(dat_transform(T_clt_emp_avg,T_clt_emp_sd,"emp","clt",n_study,cols_evidence,mu0s,mu1s),
+                   dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence,mu0s,mu1s))
     
     #T_avg_clt <- dat_transform_th_emp(list(T_clt_th_avg,T_clt_emp_avg))
     
@@ -73,26 +73,26 @@
     T_clt_emp_stud <- calc_T(mu0s,mu1_hats,sgm_hats,n_study,vst_var_known)
     
     #T_clt_th_stud_avg <- T_averager(T_clt_th_stud)
-    T_clt_emp_stud_avg <- T_averager(T_clt_emp_stud)
-    T_clt_emp_stud_sd <- T_sd(T_clt_emp_stud)
+    T_clt_emp_stud_avg <- T_averager(T_clt_emp_stud,mu0s,mu1s)
+    T_clt_emp_stud_sd <- T_sd(T_clt_emp_stud,mu0s,mu1s)
     
     #not that the "theoretical" distribution of T_clt_stud is the same as the theoretical
     #distribution of T_clt, which admittedly is pretty nonsensical in this context
-    T_clt_stud <-  rbind(dat_transform(T_clt_emp_stud_avg,T_clt_emp_stud_sd,"emp","clt",n_study,cols_evidence),
-                         dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence))
+    T_clt_stud <-  rbind(dat_transform(T_clt_emp_stud_avg,T_clt_emp_stud_sd,"emp","clt",n_study,cols_evidence,mu0s,mu1s),
+                         dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence,mu0s,mu1s))
     
     #T_avg_clt_stud <- dat_transform_th_emp(list(T_clt_emp_stud_avg),c("emp"))
     
     #calculate theoretical and empiral evidence based on Student-t vst
     #question: does it make sense to use theoretical mu1 but empirical sigma_est? 
     T_vst_emp <- calc_T(mu0s,mu1_hats,sgm_hats,n_study,vst_var_est)
-    T_vst_emp_avg <- T_averager(T_vst_emp)
-    T_vst_emp_sd <- T_sd(T_vst_emp)
+    T_vst_emp_avg <- T_averager(T_vst_emp,mu0s,mu1s)
+    T_vst_emp_sd <- T_sd(T_vst_emp,mu0s,mu1s)
     
     T_vst_th_avg <- sapply(mu1s,function(mu1) vst_var_est(mu0s,mu1,sgm0,n_study))
     
-    T_vst <- rbind(dat_transform(T_vst_emp_avg,T_vst_emp_sd,"emp","vst",n_study,cols_evidence),
-                   dat_transform(T_vst_th_avg,T_th_sd,"th","vst",n_study,cols_evidence))
+    T_vst <- rbind(dat_transform(T_vst_emp_avg,T_vst_emp_sd,"emp","vst",n_study,cols_evidence,mu0s,mu1s),
+                   dat_transform(T_vst_th_avg,T_th_sd,"th","vst",n_study,cols_evidence,mu0s,mu1s))
     
     #T_avg_vst <- dat_transform_th_emp(list(T_vst_th_avg,T_vst_emp_avg))
     
@@ -104,9 +104,9 @@
       crit_val_ci <- qnorm((1-alph/2),0,1)
       crit_val_ci_stud <- qt((1-alph/2),n_study-1,0)
       
-      emp_ci_clt <- T_averager(ci_coverage(T_clt_emp,T_clt_emp_avg,crit_val_ci))
-      emp_ci_clt_stud <- T_averager(ci_coverage(T_clt_emp_stud,T_clt_emp_stud_avg,crit_val_ci_stud))
-      emp_ci_vst <- T_averager(ci_coverage(T_vst_emp,T_vst_emp_avg,crit_val_ci))
+      emp_ci_clt <- T_averager(ci_coverage(T_clt_emp,T_clt_emp_avg,crit_val_ci),mu0s,mu1s)
+      emp_ci_clt_stud <- T_averager(ci_coverage(T_clt_emp_stud,T_clt_emp_stud_avg,crit_val_ci_stud),mu0s,mu1s)
+      emp_ci_vst <- T_averager(ci_coverage(T_vst_emp,T_vst_emp_avg,crit_val_ci),mu0s,mu1s)
       
       th_ci <- matrix((1-alph),nrow=dim(emp_ci_clt)[1],ncol=dim(emp_ci_clt)[2])
       
@@ -124,7 +124,7 @@
       crit_val_stud <- qt(alph,n_study-1,0,lower.tail=FALSE)
       
       pows_avg_stud_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pt(crit_val_stud,n_study-1,vst_var_known(mu0,mu1,sgm0,n_study))))
-      pows_avg_stud_emp <- T_averager(1*(T_clt_emp_stud>crit_val_stud))
+      pows_avg_stud_emp <- T_averager(1*(T_clt_emp_stud>crit_val_stud),mu0s,mu1s)
       
       pows_avg_stud <- rbind(melt(pows_avg_stud_emp),melt(pows_avg_stud_th))$value
       
@@ -133,14 +133,14 @@
       crit_val_norm <- qnorm(alph,mean=0,sd=1,lower.tail=FALSE)
       
       pows_avg_clt_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,vst_var_known(mu0,mu1,sgm0,n_study),sd=1)))
-      pows_avg_clt_emp <- T_averager(1*(T_clt_emp>crit_val_norm))
+      pows_avg_clt_emp <- T_averager(1*(T_clt_emp>crit_val_norm),mu0s,mu1s)
       
       pows_avg_clt <- rbind(melt(pows_avg_clt_emp),melt(pows_avg_clt_th))$value
       
       #calculate theoretical and empirical power for test using the vst (non-central Student t distribution)
       #question: should I be using the theoretical or empirical variance here?
       pows_avg_vst_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,vst_var_est(mu0,mu1,sgm0,n_study),sd=1)))
-      pows_avg_vst_emp <- T_averager(1*(T_vst_emp>crit_val_norm))
+      pows_avg_vst_emp <- T_averager(1*(T_vst_emp>crit_val_norm),mu0s,mu1s)
       
       pows_avg_vst <- rbind(melt(pows_avg_vst_emp),melt(pows_avg_vst_th))$value
   
@@ -168,8 +168,8 @@
     i <- i+1
   }
   
-  #save data so that it doesn't have to be computed again and again:
-  save(evidence_mean, file = paste0("data/",name,".RData"))
+#save data so that it doesn't have to be computed again and again:
+save(evidence_mean, file = paste0("data/",name,".RData"))
 
 
 
