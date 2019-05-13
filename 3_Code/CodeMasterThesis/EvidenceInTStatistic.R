@@ -37,10 +37,6 @@ vst_var_est <- function(mu0,mu1,sgm_est,n_study,corr=T_corr){
   }
 }
 
-# vst_var_est_corr <- function(mu0,mu1,sgm_est,n_study,correction=FALSE){
-#     Tn <- (1-0.7/(n_study-1))*sqrt(2*n_study)*asinh((mu1-mu0)/(sgm_est*sqrt(2))) 
-# }
-
 calc_T <- function(mu0s,mu1s,sgm0s,n_study,func){
   #T <- apply(mu1s, 1, function(mu1) sapply(mu0s, function(mu0) func(mu0,mu1,sgm0s[mu1],n_study)))
   Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0,mu1s[mu1,],sgm0s[mu1,],n_study)))
@@ -48,24 +44,25 @@ calc_T <- function(mu0s,mu1s,sgm0s,n_study,func){
   return(Tn)
 }
 
-#brings data into the correct form for plotting
-dat_transform <- function(T_avg){
-  dat <- melt(T_avg)
-  colnames(dat) <- c("mu0","mu1","Tn")
+#brings data into the correct form for plottings
+dat_transform <- function(T_avg,T_sd,th_emp,id,n_study,cols){
+  dat <- merge(melt(T_avg),melt(T_sd),by=c("Var1","Var2"),sort=FALSE)
+  dat <- cbind(dat,th_emp,id,n_study)
+  colnames(dat) <- cols
   dat$mu1 <- rep(mu1s,times=1,each=length(mu0s))
   dat$mu0 <- rep(mu0s,times=length(mu1s))
   return(dat)
 }
 
-dat_transform_th_emp <- function(dats,th_emps=c("th", "emp")){
-  for (i in 1:length(th_emps)){
-    dat <- dat_transform(dats[[i]])
-    th_emp <- rep(th_emps[i],dim(dat)[1])
-    dat$th_emp <- th_emp
-    dats[[i]] <- dat
-  }
-  dats <- do.call("rbind",dats)
-  return(dats)
+test_func <- function(val,crit_val){
+  return((val>crit_val)*1)
+}
+
+ci_coverage <- function(Ts,T_avg,crit_val){
+  T_avg <- as.vector(t(T_avg))
+  vals <- t(abs(sapply(1:dim(Ts)[1], function(i) Ts[i,]-T_avg[i])))
+  Ts_coverage <- 1-test_func(vals,crit_val)
+  return(Ts_coverage)
 }
 
 T_averager <- function(Ts){
@@ -73,23 +70,22 @@ T_averager <- function(Ts){
   return(Ts_avg)
 }
 
-merger <- function(dats,ids){
-  for (i in 1:length(ids)){
-    id <- rep(ids[i],dim(dats[[i]])[1])
-    dat <- dats[[i]]
-    dat$id <- id
-    dats[[i]] <- dat
-  }
-  dats <- do.call("rbind",dats)
-  return(dats)
+T_sd <- function(Ts){
+  Ts_avg <- matrix(apply(Ts,1,sd,na.rm=TRUE),length(p0s),length(p1s),byrow=TRUE)
+  return(Ts_avg)
 }
 
 
 #simulate values
 #https://stackoverflow.com/questions/34999019/apply-a-function-to-all-pairwise-combinations-of-list-elements-in-r
-sims <- vector("list",length(n_studies))
+cols_evidence <- c("mu0","mu1","Tn","Tn_sd","th_emp","id","n_study")
+cols_tot <- c("mu0","mu1","Tn","Tn_sd","th_emp","id","n_study","alpha","CI","power")
+evidence_mean <- data.frame(matrix(NA,nrow=0,ncol=12))
+colnames(evidence_mean) <- cols_tot
+
 i <- 1
 for (n_study in n_studies) {
+  start.time <- Sys.time()
   #calculate empirical and theoretical mus
   set.seed(seed)
   mu1_hats <- sapply(mu1s,function(mu1) sapply(1:n_sim, function(y) mean(rnorm(n_study,mu1,sgm0)))) #regular estimator:
@@ -111,10 +107,15 @@ for (n_study in n_studies) {
   #question: can I use empirical SE to calculate T_clt_th > how is distribution of this statistic?
   T_clt_emp <- calc_T(mu0s,mu1_hats,sgm_th,n_study,vst_var_known)
   T_clt_emp_avg <- T_averager(T_clt_emp)
+  T_clt_emp_sd <- T_sd(T_clt_emp)
   
   T_clt_th_avg <- sapply(mu1s,function(mu1) vst_var_known(mu0s,mu1,sgm0,n_study))
+  T_th_sd <- matrix(1,nrow=dim(T_clt_th_avg)[1],ncol=dim(T_clt_th_avg)[2])
   
-  T_avg_clt <- dat_transform_th_emp(list(T_clt_th_avg,T_clt_emp_avg))
+  T_clt <- rbind(dat_transform(T_clt_emp_avg,T_clt_emp_sd,"emp","clt",n_study,cols_evidence),
+                 dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence))
+  
+  #T_avg_clt <- dat_transform_th_emp(list(T_clt_th_avg,T_clt_emp_avg))
   
   #calculate theoretical and empirical evidence based on clt-vst, but using empirical sd instead of theoretical
   #this gives us values if we assume the clt holds, but we do not know the sd and just use the empirical sd instead
@@ -124,67 +125,102 @@ for (n_study in n_studies) {
   
   #T_clt_th_stud_avg <- T_averager(T_clt_th_stud)
   T_clt_emp_stud_avg <- T_averager(T_clt_emp_stud)
+  T_clt_emp_stud_sd <- T_sd(T_clt_emp_stud)
   
-  T_avg_clt_stud <- dat_transform_th_emp(list(T_clt_emp_stud_avg),c("emp"))
+  #not that the "theoretical" distribution of T_clt_stud is the same as the theoretical
+  #distribution of T_clt, which admittedly is pretty nonsensical in this context
+  T_clt_stud <-  rbind(dat_transform(T_clt_emp_stud_avg,T_clt_emp_stud_sd,"emp","clt",n_study,cols_evidence),
+                       dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence))
+  
+  #T_avg_clt_stud <- dat_transform_th_emp(list(T_clt_emp_stud_avg),c("emp"))
   
   #calculate theoretical and empiral evidence based on Student-t vst
   #question: does it make sense to use theoretical mu1 but empirical sigma_est? 
-  
   T_vst_emp <- calc_T(mu0s,mu1_hats,sgm_hats,n_study,vst_var_est)
   T_vst_emp_avg <- T_averager(T_vst_emp)
+  T_vst_emp_sd <- T_sd(T_vst_emp)
   
   T_vst_th_avg <- sapply(mu1s,function(mu1) vst_var_est(mu0s,mu1,sgm0,n_study))
   
-  T_avg_vst <- dat_transform_th_emp(list(T_vst_th_avg,T_vst_emp_avg))
+  T_vst <- rbind(dat_transform(T_vst_emp_avg,T_vst_emp_sd,"emp","vst",n_study,cols_evidence),
+                 dat_transform(T_vst_th_avg,T_th_sd,"th","vst",n_study,cols_evidence))
+  
+  #T_avg_vst <- dat_transform_th_emp(list(T_vst_th_avg,T_vst_emp_avg))
   
 
-  #calculate power
+  #calculate power & confidence intervals
   j <- 1
-  sims_pow <- vector("list",length(alphas))
   for (alph in alphas){
+    #confidence_intervals
+    crit_val_ci <- qnorm((1-alph/2),0,1)
+    crit_val_ci_stud <- qt((1-alph/2),n_study-1,0)
+    
+    emp_ci_clt <- T_averager(ci_coverage(T_clt_emp,T_clt_emp_avg,crit_val_ci))
+    emp_ci_clt_stud <- T_averager(ci_coverage(T_clt_emp_stud,T_clt_emp_stud_avg,crit_val_ci_stud))
+    emp_ci_vst <- T_averager(ci_coverage(T_vst_emp,T_vst_emp_avg,crit_val_ci))
+    
+    th_ci <- matrix((1-alph),nrow=dim(emp_ci_clt)[1],ncol=dim(emp_ci_clt)[2])
+    
+    ci_clt <- rbind(melt(emp_ci_clt),melt(th_ci))$value
+    ci_clt_stud <- rbind(melt(emp_ci_clt_stud),melt(th_ci))$value
+    ci_vst <- rbind(melt(emp_ci_vst),melt(th_ci))$value
+    
+    T_clt <- cbind(T_clt,alph,ci_clt)
+    T_clt_stud <- cbind(T_clt_stud,alph,ci_clt)
+    T_vst <- cbind(T_vst,alph,ci_vst)
+    
+    colnames(T_vst) <- c(cols_evidence,"alpha","CI")
     
     #calculate theoretical and empirical power for test using the exact noncentral Student t test
     crit_val_stud <- qt(alph,n_study-1,0,lower.tail=FALSE)
     
     pows_avg_stud_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pt(crit_val_stud,n_study-1,vst_var_known(mu0,mu1,sgm0,n_study))))
-    
     pows_avg_stud_emp <- T_averager(1*(T_clt_emp_stud>crit_val_stud))
     
-    pows_avg_stud <- dat_transform_th_emp(list(pows_avg_stud_th,pows_avg_stud_emp))
-
+    pows_avg_stud <- rbind(melt(pows_avg_stud_emp),melt(pows_avg_stud_th))$value
+    
     #calculate theoretical and empirical power for test using the clt and the normal distribution
     #note: I always use sd=1 to calculate power > but: this assumption only holds in certain areas (question)
     crit_val_norm <- qnorm(alph,mean=0,sd=1,lower.tail=FALSE)
     
-    #pows_avg_clt_th can be simplified; #simplify
     pows_avg_clt_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,vst_var_known(mu0,mu1,sgm0,n_study),sd=1)))
     pows_avg_clt_emp <- T_averager(1*(T_clt_emp>crit_val_norm))
     
-    pows_avg_clt <- dat_transform_th_emp(list(pows_avg_clt_th,pows_avg_clt_emp))
+    pows_avg_clt <- rbind(melt(pows_avg_clt_emp),melt(pows_avg_clt_th))$value
     
     #calculate theoretical and empirical power for test using the vst (non-central Student t distribution)
     #question: should I be using the theoretical or empirical variance here?
     pows_avg_vst_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,vst_var_est(mu0,mu1,sgm0,n_study),sd=1)))
     pows_avg_vst_emp <- T_averager(1*(T_vst_emp>crit_val_norm))
     
-    pows_avg_vst <- dat_transform_th_emp(list(pows_avg_vst_th,pows_avg_vst_emp))
-    
+    pows_avg_vst <- rbind(melt(pows_avg_vst_emp),melt(pows_avg_vst_th))$value
+
     #maybe replace sd_th with sd_emp?
     #question: in this case, isn't the maximum evidence 1?
     #question: what standard deviation do we use? the empirical or the theoretical?
     #question: how do we know that approximate standard normality holds for vst?
     #question: is it prudent to use the theoretical mu1s to calculate the theoretical power for the student vst?
-    sims_pow[[j]] <- list(pows_avg_clt,pows_avg_stud,pows_avg_vst)
-    j <- j+1
+    
+    #combine coverages & power to dataframe
+    T_clt <- cbind(T_clt,pows_avg_clt)
+    colnames(T_clt) <- cols_tot
+    
+    T_clt_stud <- cbind(T_clt_stud,pows_avg_stud)
+    colnames(T_clt_stud) <- cols_tot
+
+    T_vst <- cbind(T_vst,pows_avg_vst)
+    colnames(T_vst) <- cols_tot
+
+    evidence_mean <- rbind(evidence_mean,T_clt,T_clt_stud,T_vst)
   }
   
-  sims[[i]] <- list(T_avg_clt,T_avg_clt_stud,T_avg_vst,sims_pow)
-  print(paste("round",i,"done"))
+  diff.time <- Sys.time()-start.time
+  print(paste0("round ",i," is done in ",round(diff.time,2), " ",attributes(diff.time)$units))
   i <- i+1
 }
 
 #save data so that it doesn't have to be computed again and again:
-save(sims, file = paste0("data/",name,".RData"))
+save(evidence_mean, file = paste0("data/",name,".RData"))
 
 pdf(paste0("./figs/",name,".pdf"),onefile=TRUE)
 i <- 1
@@ -253,3 +289,34 @@ dev.off()
 #to add:
 # 1) error between pow_stud and pow_vst? 
 
+
+#discontinued functions ----
+# dat_transform_th_emp <- function(dats,th_emps=c("th", "emp")){
+#   for (i in 1:length(th_emps)){
+#     dat <- dat_transform(dats[[i]])
+#     th_emp <- rep(th_emps[i],dim(dat)[1])
+#     dat$th_emp <- th_emp
+#     dats[[i]] <- dat
+#   }
+#   dats <- do.call("rbind",dats)
+#   return(dats)
+# }
+
+# dat_transform <- function(T_avg){
+#   dat <- melt(T_avg)
+#   colnames(dat) <- c("mu0","mu1","Tn")
+#   dat$mu1 <- rep(mu1s,times=1,each=length(mu0s))
+#   dat$mu0 <- rep(mu0s,times=length(mu1s))
+#   return(dat)
+# }
+
+# merger <- function(dats,ids){
+#   for (i in 1:length(ids)){
+#     id <- rep(ids[i],dim(dats[[i]])[1])
+#     dat <- dats[[i]]
+#     dat$id <- id
+#     dats[[i]] <- dat
+#   }
+#   dats <- do.call("rbind",dats)
+#   return(dats)
+# }

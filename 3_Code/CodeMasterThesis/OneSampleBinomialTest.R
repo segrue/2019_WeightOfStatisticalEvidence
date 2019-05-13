@@ -52,14 +52,6 @@ dat_transform <- function(T_avg,T_sd,th_emp,id,n_study,cols){
   return(dat)
 }
 
-dat_transform_power <- function(pow_avg,th_emp,id,alph,n_study,cols){
-  dat <- cbind(melt(pow_avg),th_emp,id,alph,n_study)
-  colnames(dat) <- cols
-  dat$p1 <- rep(p1s,times=1,each=length(p0s))
-  dat$p0 <- rep(p0s,times=length(p1s))
-  return(dat)
-}
-
 test_func <- function(val,crit_val){
   return((val>crit_val)*1)
 }
@@ -83,7 +75,7 @@ T_sd <- function(Ts){
 
 #simulate values
 #https://stackoverflow.com/questions/34999019/apply-a-function-to-all-pairwise-combinations-of-list-elements-in-r
-sims <- vector("list",length(n_studies))
+#sims <- vector("list",length(n_studies))
 cols_evidence <- c("p0","p1","Tn","Tn_sd","th_emp","id","n_study")
 cols_tot <- c("p0","p1","Tn","Tn_sd","th_emp","id","n_study","alpha","CI","power")
 evidence_binom <- data.frame(matrix(NA,nrow=0,ncol=12))
@@ -339,9 +331,17 @@ SE_calculator <- function(p,n){
   return(SE)
 }
 
-
 calc_T_clt <- function(p0s,p1s,n_study,func){
   Tn <- sapply(1:dim(p1s)[1], function(p1) sapply(p0s, function(p0) func(p0,p1s[p1,],n_study,SEs[p1,])))
   Tn[is.infinite(Tn)] <- NA
   return(Tn)
+}
+
+
+dat_transform_power <- function(pow_avg,th_emp,id,alph,n_study,cols){
+  dat <- cbind(melt(pow_avg),th_emp,id,alph,n_study)
+  colnames(dat) <- cols
+  dat$p1 <- rep(p1s,times=1,each=length(p0s))
+  dat$p0 <- rep(p0s,times=length(p1s))
+  return(dat)
 }
