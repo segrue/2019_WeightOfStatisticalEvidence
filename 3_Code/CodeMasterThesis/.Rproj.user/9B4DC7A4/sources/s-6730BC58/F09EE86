@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557070282921.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "F09EE86",
+    "lastKnownWriteTime" : 1557243471,
+    "last_content_update" : 1557243471,
+    "path" : "~/Tresorit_Local/EPFL_COMP_SC_ENG/MasterThesis/3_Code/CodeMasterThesis/Figures.R",
+    "project_path" : "Figures.R",
+    "properties" : {
+        "cursorPosition" : "42,67",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

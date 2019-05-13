@@ -1,0 +1,33 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557259358578.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "81514B12",
+    "lastKnownWriteTime" : 1557259213,
+    "last_content_update" : 1557259358578,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "C2632E48",
+        "caption" : "T_clt",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=T_clt&cache_key=C2632E48",
+        "displayedObservations" : 990,
+        "environment" : "",
+        "expression" : "T_clt",
+        "object" : "T_clt",
+        "preview" : 0,
+        "totalObservations" : 990,
+        "variables" : 9
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

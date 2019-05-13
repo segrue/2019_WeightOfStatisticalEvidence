@@ -1,0 +1,4 @@
+Satz von Berry-Esseen https://de.wikipedia.org/wiki/Satz_von_Berry-Esseen
+Important: gives bound for both independent and idenitcal variables, as well as for independent, but *not* identically distributed variables! > can come in handy, when I try to simulate different studies with different Student's t distributions
+
+U-Statistics: https://en.wikipedia.org/wiki/U-statistic
