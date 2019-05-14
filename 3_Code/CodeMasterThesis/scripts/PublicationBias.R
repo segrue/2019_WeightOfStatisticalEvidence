@@ -31,3 +31,13 @@ name <- paste0("DF_Ev_Mean_",correction,"_",n_sim,"_",seed) #name to load and sa
 load(paste0("data/",name,".RData"),verbose=TRUE) #load data set containing simulated values
 
 ### simulate publication bias
+## Situtation 1:
+## no publication bias - all studies (n=100) are included
+dat <- evidence_df[mu1=="0.2",]
+p1 <- ggplot(data=dat,aes(x=Tn/sqrt(dat$n_study),y=),col=id,group=interaction(p0,id),linetype=factor(p0))) + 
+  geom_line() + scale_color_manual(values=c("clt"=3,"vst"=4,"std_norm"=2))+
+  ylim(-3,3) + xlim(0,1) + ggtitle(bquote("Study size"==.(dat$n_study[1]))) + labs(x= expression(p[1]), y = "Evidence/sqrt(n)")
+return(T_plot)
+
+
+

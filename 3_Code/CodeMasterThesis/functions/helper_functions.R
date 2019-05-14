@@ -97,7 +97,7 @@ mat2df <- function(mats,id){
 #function to simulate a lot of different data_sets to take as basis for additional calculations 
 evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_sim){
   cols_tot <- c("sim","mu1","mu1_hat","sgm_hat","sgm_th","Tn","id","T_avg_th","T_avg_emp",
-                "T_sd_th","T_sd_emp","n_study","correction","mu0","CI","CI_crit_value","alpha","H1","H0_crit_val")
+                "T_sd_th","T_sd_emp","n_study","correction","mu0","mu1_hat_mean","sgm_hat_mean","CI","CI_crit_value","alpha","H1","H0_crit_val")
   
   evidence_df <- data.table(matrix(NA,nrow=0,ncol=length(cols_tot)))
   colnames(evidence_df) <- cols_tot
@@ -113,6 +113,7 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
       #calculate empirical and theoretical mus
       set.seed(seed)
       mu1_hats <- sapply(mu1s,function(mu1) sapply(1:n_sim, function(y) mean(rnorm(n_study,mu1,sgm0))))
+      mu1_hats_mean <- T_averager(t(mu1_hats),mu0s,mu1s)
       
       #calculate empirical and theoretical sgm
       set.seed(seed)
@@ -120,6 +121,7 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
       sgm_hats <- sapply(1:length(mu1s),
                          function(mu1) sapply(1:n_sim, 
                                               function(sim) sqrt(1/(n_study-1)*sum((rnorm(n_study,mu1s[mu1],sgm0)-mu1_hats[sim,mu1])^2))))
+      sgm_hats_mean <- T_averager(t(sgm_hats),mu0s,mu1s)
       
       sgm_th <- matrix(rep(sgm0,length(mu1_hats)),n_sim,length(mu1s),byrow=TRUE)
       
@@ -133,8 +135,8 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
       T_clt_th_avg <- sapply(mu1s,function(mu1) vst_var_known(mu0s,mu1,sgm0,n_study))
       T_th_sd <- matrix(1,nrow=dim(matrix(T_clt_th_avg))[1],ncol=dim(matrix(T_clt_th_avg))[2])
       
-      T_clt_averages <- cbind(rep(T_clt_th_avg,each=length(n_sim)),rep(T_clt_emp_avg,each=length(n_sim)),
-                              rep(T_th_sd,each=length(n_sim)),rep(T_clt_emp_sd,each=length(n_sim)))
+      T_clt_averages <- cbind(rep(T_clt_th_avg,each=n_sim),rep(T_clt_emp_avg,each=n_sim),
+                              rep(T_th_sd,each=n_sim),rep(T_clt_emp_sd,each=n_sim))
       
       T_clt_df <- cbind(mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_clt_emp)),id="clt"),T_clt_averages)
       
@@ -151,8 +153,8 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
       #                      dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence,mu0s,mu1s))
       
       
-      T_clt_stud_averages <- cbind(rep(T_clt_th_avg,each=length(n_sim)),rep(T_clt_emp_stud_avg,each=length(n_sim)),
-                                   rep(T_th_sd,each=length(n_sim)),rep(T_clt_emp_stud_sd,each=length(n_sim)))
+      T_clt_stud_averages <- cbind(rep(T_clt_th_avg,each=n_sim),rep(T_clt_emp_stud_avg,each=n_sim),
+                                   rep(T_th_sd,each=n_sim),rep(T_clt_emp_stud_sd,each=n_sim))
       
       T_clt_stud_df <- cbind(mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_clt_emp_stud)),id="stud"),T_clt_stud_averages)
       
@@ -168,20 +170,21 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
       # T_vst <- rbind(dat_transform(T_vst_emp_avg,T_vst_emp_sd,"emp","vst",n_study,cols_evidence,mu0s,mu1s),
       #                dat_transform(T_vst_th_avg,T_th_sd,"th","vst",n_study,cols_evidence,mu0s,mu1s))
       
-      T_vst_averages <- cbind(rep(T_vst_th_avg,each=length(n_sim)),rep(T_vst_emp_avg,each=length(n_sim)),
-                              rep(T_th_sd,each=length(n_sim)),rep(T_vst_emp_sd,each=length(n_sim)))
+      T_vst_averages <- cbind(rep(T_vst_th_avg,each=n_sim),rep(T_vst_emp_avg,each=n_sim),
+                              rep(T_th_sd,each=n_sim),rep(T_vst_emp_sd,each=n_sim))
       
       T_vst_df <- cbind(mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_vst_emp)),id="vst"),T_vst_averages)
       
       
       T_df <- cbind(rbind(T_clt_df,T_clt_stud_df,T_vst_df),n_study,correction,mu0s)
       T_df[,2] <- rep(mu1s,times=3,each=n_sim)
+      T_df <- cbind(T_df,rep(mu1_hats_mean,times=3,each=n_sim),rep(sgm_hats_mean,times=3,each=n_sim))
       # colnames(T_df) <- c("sim","mu1","mu1_hat","sgm_hat","sgm_th","Tn","id","n_study","correction","mu0")
       
       #things to add:
       # column with critical value for CI -> done
       # column with critical value for power
-      # mean over all mu1_hats
+      # mean over all mu1_hats 
       # mean over all sgm_hats > can be averaged, because mu and n are the same in each case
       
       #calculate power & confidence intervals
