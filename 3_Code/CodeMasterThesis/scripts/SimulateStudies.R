@@ -17,7 +17,7 @@ set.seed(seed)
 n_studies <- c(5,10,20,30,40,50,100,200,500,1000) #number of subjects per study
 
 mu0s <- 0
-mu1s <- seq(-2,2,by=0.1)
+mu1s <- round(seq(-2,2,by=0.1),1)
 sgm0 <- sgm1 <- 2
 alphas <- c(0.05)
 

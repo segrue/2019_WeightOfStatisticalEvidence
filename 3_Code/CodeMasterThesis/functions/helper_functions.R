@@ -1,5 +1,14 @@
-### functions needed for simulation of evidence in multiple scripts
+### packages needed for functions below ----
+#for data handling
+require("reshape2") #https://stackoverflow.com/questions/21563864/ggplot2-overlay-density-plots-r
+require("data.table")
 
+#for plotting
+require("ggplot2")
+require("gridExtra")
+require("cowplot")
+
+### functions needed for simulation of evidence in multiple scripts ----
 #vst for binomial variable
 vst <- function(p0,p1,n){
   Tn <- 2*sqrt(n)*(asin(sqrt(p1))-asin(sqrt(p0)))
@@ -75,7 +84,15 @@ T_sd <- function(Ts,mu0s,mu1s){
   return(Ts_avg)
 }
 
-### functions needed for the script "SimulateStudies.R"
+### functions needed for plotting in several scripts
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+
+### functions needed for the script "SimulateStudies.R" ----
 
 #brings data into the correct form to be handled in "SimulateStudies.R"
 mat2df <- function(mats,id){
@@ -263,4 +280,53 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
   }
   save(evidence_df, file = paste0("data/",name,".RData")) #save data so that it doesn't have to be computed again and again
   return(evidence_df)
+}
+
+### functions needed for script "PublicationBias.R"
+funnel_plotter <- function(clt,vst,stud,xlim=2){
+  p1 <- ggplot(data=clt,aes(x=Tn/sqrt(n_study),y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim) +
+        theme(legend.position = "none") + labs(x = expression(paste(italic("z"),"-statistic")),y= "n")
+  p2 <- ggplot(data=clt,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
+        theme(legend.position = "none") + labs(x = expression(paste(italic("z"),"-statistic")),y= expression(1/sqrt(SE(bar(X)))))
+  p3 <- ggplot(data=stud,aes(x=Tn/sqrt(n_study),y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim)+
+        theme(legend.position = "none") + labs(x = expression(paste(italic("t"),"-statistic")),y= "n")
+  p4 <- ggplot(data=stud,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
+        theme(legend.position = "none") + labs(x = expression(paste(italic("t"),"-statistic")),y= expression(1/sqrt(SE(bar(X)))))
+  p5 <- ggplot(data=vst,aes(x=Tn/sqrt(n_study),y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim) +
+        theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= "n")
+  p6 <- ggplot(data=vst,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
+        theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= expression(1/sqrt(SE(bar(X)))))
+  p7 <- ggplot(data=clt,aes(x=mu1_hat,y=n_study,col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
+        theme(legend.position = "none") + labs(x = expression(bar(X)),y= "n")
+  p8 <- ggplot(data=clt,aes(x=mu1_hat,y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) + 
+        guides(color = guide_legend(reverse = TRUE)) + labs(x = expression(bar(X)),y= expression(1/sqrt(SE(bar(X)))))
+  
+  #see here for more details on gridarrange: http://www.sthda.com/english/wiki/wiki.php?id_contents=7930
+  legend <- get_legend(p8)
+  blankPlot <- ggplot()+geom_blank(aes(1,1))+cowplot::theme_nothing()
+  grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8+theme(legend.position="none"),legend,blankPlot,
+               nrow=4,ncol=3,widths=c(3,3,1),layout_matrix=cbind(c(1,3,5,7),c(2,4,6,8),c(9,10,10,10)))
+}
+
+select_studies <- function(dat,probs,n_studies,n_total,n_sim,seed,id){
+  set.seed(seed)
+  if (sum(probs)!=1){
+    stop("The probabilties must add up to 1.")
+  } 
+  if (length(probs)!= length(n_studies)){
+    stop("Length or probs vector must be the same as length of n_studies vector.")
+  }
+  if (n_total > n_sim*length(probs)){
+    stop("The total number of entries to be selected exceeds total number of studies available.")
+  }
+  n_select <- ceiling(n_total*probs)
+  
+  dat_selected <- data.table(matrix(NA,nrow=0,ncol=ncol(dat)))
+  colnames(dat_selected) <- colnames(dat)
+  for (i in 1:length(n_studies)){
+    selected_idx <- sample(n_sim,n_select[i])
+    temp_dat <- dat[n_study==n_studies[i] & id==id,]
+    dat_selected <- rbind(dat_selected,temp_dat[selected_idx,])
+  }
+  return(dat_selected)
 }
