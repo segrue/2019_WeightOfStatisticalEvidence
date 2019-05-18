@@ -85,6 +85,7 @@ funnel_plotter(clt_sig,vst_sig,stud_sig,xlim=2,figname=paste0(fig_name,"_2B.pdf"
 ## Situtation 2C:
 ## only keep studies which turned out to be significant and small percentage of non-significant studies
 n_nsig <- 5
+probs_mix <- c(0,0,0,0,0.2,0.3,0.5)
 clt_mix <- rbind(clt_sig,select_studies(clt[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,seed,id="clt"))
 vst_mix <- rbind(vst_sig,select_studies(clt[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,seed,id="vst"))
 stud_mix <- rbind(stud_sig,select_studies(clt[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,seed,id="stud"))
