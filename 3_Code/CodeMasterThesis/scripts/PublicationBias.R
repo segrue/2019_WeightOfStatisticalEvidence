@@ -60,11 +60,11 @@ stud_sig <- stud[H1==1,]
 funnel_plotter(clt_sig,vst_sig,stud_sig,xlim=2,figname=paste0(fig_name,"_1B.pdf"),ctgs)
 
 ## Situtation 2A:
-## only keep 50 studies in total, but weigh according to study size; 
+## only keep 100 studies in total, but weigh according to study size; 
 ## choose studies with lower sample size with higher probability
 n_studies_selected <- n_studies[n_studies %between% rng]
 probs <- c(0.29,0.24,0.2,0.14,0.09,0.03,0.01)
-n_tot <- 50
+n_tot <- 200
 
 clt <- select_studies(dat,probs,n_studies_selected,n_total=n_tot,seed,id="clt")
 vst <- select_studies(dat,probs,n_studies_selected,n_total=n_tot,seed,id="vst")
@@ -72,7 +72,7 @@ stud <- select_studies(dat,probs,n_studies_selected,n_total=n_tot,seed,id="stud"
 
 stopifnot(sum(clt$mu1_hat-vst$mu1_hat)==0,sum(stud$mu1_hat-vst$mu1_hat)==0)
 
-funnel_plotter(clt,vst,vst,xlim=2,figname=paste0(fig_name,"_2A.pdf"),ctgs)
+funnel_plotter(clt,vst,vst,xlim=2,ylim=8,figname=paste0(fig_name,"_2A.pdf"),ctgs)
 
 ## Situtation 2B:
 ## only keep studies which turned out to be significant
@@ -80,17 +80,17 @@ clt_sig <- clt[H1==1,]
 vst_sig <- vst[H1==1,]
 stud_sig <- stud[H1==1,]
 
-funnel_plotter(clt_sig,vst_sig,stud_sig,xlim=2,figname=paste0(fig_name,"_2B.pdf"),ctgs)
+funnel_plotter(clt_sig,vst_sig,stud_sig,xlim=2,ylim=8,figname=paste0(fig_name,"_2B.pdf"),ctgs)
 
 ## Situtation 2C:
 ## only keep studies which turned out to be significant and small percentage of non-significant studies
 n_nsig <- 5
-probs_mix <- c(0,0,0,0,0.2,0.3,0.5)
+probs_mix <- c(0,0,0.1,0.1,0.1,0.1,0.1)
 clt_mix <- rbind(clt_sig,select_studies(clt[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,seed,id="clt"))
 vst_mix <- rbind(vst_sig,select_studies(clt[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,seed,id="vst"))
 stud_mix <- rbind(stud_sig,select_studies(clt[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,seed,id="stud"))
 
-funnel_plotter(clt_mix,vst_mix,stud_mix,xlim=2,figname=paste0(fig_name,"_2C.pdf"),ctgs)
+funnel_plotter(clt_mix,vst_mix,stud_mix,xlim=2,ylim=8,figname=paste0(fig_name,"_2C.pdf"),ctgs)
 
 #function to calculate the aggregated mean of the studies
 aggregate_mean <- function(dat){
@@ -98,3 +98,13 @@ aggregate_mean <- function(dat){
   return(agg_mean)
 }
 aggregate_mean(stud)
+
+### Calculate number of papers stored in file drawer based Rosenthal 1984
+calc_filedrawer <- function(Zs,alph){
+  k <- length(Zs)
+  z <- qnorm(1-alph)
+  X <- (k*mean(Zs)/z)^2-k
+  return(X)
+}
+
+

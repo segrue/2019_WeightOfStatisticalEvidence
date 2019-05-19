@@ -10,7 +10,7 @@ source("./functions/helper_functions.R")
 # hypotheses:
 # H0: p = mu0
 # H1: p > mu0
-n_sim <- 1e3 #number of times the setting below shall be simulated
+n_sim <- 1e2 #number of times the setting below shall be simulated
 seed <- 20190514
 set.seed(seed)
 

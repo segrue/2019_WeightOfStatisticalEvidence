@@ -114,7 +114,7 @@ mat2df <- function(mats,id){
 
 #function to simulate a lot of different data_sets to take as basis for additional calculations 
 evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_sim,fig_name){
-  cols_tot <- c("sim","mu1","mu1_hat","sgm_hat","sgm_th","Tn","id","T_avg_th","T_avg_emp",
+  cols_tot <- c("sim","mu1","mu1_hat","sgm_hat","sgm_th","Tn","p","id","T_avg_th","T_avg_emp",
                 "T_sd_th","T_sd_emp","n_study","correction","mu0","mu1_hat_mean","sgm_hat_mean","CI","CI_crit_value","alpha","H1","H0_crit_val")
   
   evidence_df <- data.table(matrix(NA,nrow=0,ncol=length(cols_tot)))
@@ -156,7 +156,8 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
       T_clt_averages <- cbind(rep(T_clt_th_avg,each=n_sim),rep(T_clt_emp_avg,each=n_sim),
                               rep(T_th_sd,each=n_sim),rep(T_clt_emp_sd,each=n_sim))
       
-      T_clt_df <- cbind(mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_clt_emp)),id="clt"),T_clt_averages)
+      p_clt <- pnorm(T_clt_emp,0,1,lower.tail=FALSE)
+      T_clt_df <- cbind(mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_clt_emp),t(p_clt)),id="clt"),T_clt_averages)
       
       #calculate theoretical and empirical evidence based on clt-vst, but using empirical sd instead of theoretical
       #this gives us values if we assume the clt holds, but we do not know the sd and just use the empirical sd instea
@@ -174,8 +175,10 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
       T_clt_stud_averages <- cbind(rep(T_clt_th_avg,each=n_sim),rep(T_clt_emp_stud_avg,each=n_sim),
                                    rep(T_th_sd,each=n_sim),rep(T_clt_emp_stud_sd,each=n_sim))
       
-      T_clt_stud_df <- cbind(mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_clt_emp_stud)),id="stud"),T_clt_stud_averages)
+      p_clt_stud <- pt(T_clt_emp_stud,n_study-1,0,lower.tail=FALSE)
       
+      T_clt_stud_df <- cbind(mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_clt_emp_stud),t(p_clt_stud)),id="stud"),T_clt_stud_averages)
+
       #calculate theoretical and empiral evidence based on Student-t vst
       T_vst_emp <- calc_T(mu0s,mu1_hats,sgm_hats,n_study,vst_var_est)
       T_vst_df <- mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_vst_emp)),id="vst")
@@ -191,7 +194,8 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
       T_vst_averages <- cbind(rep(T_vst_th_avg,each=n_sim),rep(T_vst_emp_avg,each=n_sim),
                               rep(T_th_sd,each=n_sim),rep(T_vst_emp_sd,each=n_sim))
       
-      T_vst_df <- cbind(mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_vst_emp)),id="vst"),T_vst_averages)
+      p_vst <- pnorm(T_vst_emp,0,1,lower.tail=FALSE)
+      T_vst_df <- cbind(mat2df(mats=list(mu1_hats,sgm_hats,sgm_th,t(T_vst_emp),t(p_vst)),id="vst"),T_vst_averages)
       
       
       T_df <- cbind(rbind(T_clt_df,T_clt_stud_df,T_vst_df),n_study,correction,mu0s)
@@ -284,7 +288,7 @@ evidence_in_mean <- function(mu0_vec,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_
 }
 
 ### functions needed for script "PublicationBias.R"
-funnel_plotter <- function(clt,vst,stud,xlim=2,figname,ctgs){
+funnel_plotter <- function(clt,vst,stud,xlim=2,ylim=8,figname,ctgs){
   #define colour code & legend that is consistent over all plots with "ctgs" (regardless of whether they appear in plot or not)
   n_ctgs <- length(ctgs)
   clrs <- brewer.pal(n_ctgs,"Paired")
@@ -293,23 +297,26 @@ funnel_plotter <- function(clt,vst,stud,xlim=2,figname,ctgs){
   
   #create plots
   p1 <- ggplot(data=clt,aes(x=Tn/sqrt(n_study),y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim) +
-        theme(legend.position = "none") + labs(x = expression(paste(italic("z"),"-statistic")),y= "n") + sc_col
+        theme(legend.position = "none") + labs(x = expression(paste(italic("z"),"-statistic")),y= "n") + sc_col + ylim(0,max(ctgs)+50)
   p2 <- ggplot(data=clt,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
-        theme(legend.position = "none") + labs(x = expression(paste(italic("z"),"-statistic")),y= expression(1/sqrt(SE(bar(X))))) + sc_col
+        theme(legend.position = "none") + labs(x = expression(paste(italic("z"),"-statistic")),y= expression(1/sqrt(SE(bar(X))))) + sc_col + 
+        ylim(0,ylim)
   p3 <- ggplot(data=stud,aes(x=Tn/sqrt(n_study),y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim)+
-        theme(legend.position = "none") + labs(x = expression(paste(italic("t"),"-statistic")),y= "n") + sc_col
+        theme(legend.position = "none") + labs(x = expression(paste(italic("t"),"-statistic")),y= "n") + sc_col + ylim(0,max(ctgs)+50)
   p4 <- ggplot(data=stud,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
-        theme(legend.position = "none") + labs(x = expression(paste(italic("t"),"-statistic")),y= expression(1/sqrt(SE(bar(X))))) + sc_col
+        theme(legend.position = "none") + labs(x = expression(paste(italic("t"),"-statistic")),y= expression(1/sqrt(SE(bar(X))))) + sc_col +
+        ylim(0,ylim)
   p5 <- ggplot(data=vst,aes(x=Tn/sqrt(n_study),y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim) +
-        theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= "n") + sc_col
+        theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= "n") + sc_col + ylim(0,max(ctgs)+50)
   p6 <- ggplot(data=vst,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
-        theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= expression(1/sqrt(SE(bar(X))))) + sc_col
+        theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= expression(1/sqrt(SE(bar(X))))) + sc_col +
+        ylim(0,ylim)
   p7 <- ggplot(data=clt,aes(x=mu1_hat,y=n_study,col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
-        theme(legend.position = "none") + labs(x = expression(bar(X)),y= "n") + sc_col
+        theme(legend.position = "none") + labs(x = expression(bar(X)),y= "n") + sc_col + ylim(0,max(ctgs)+50)
   p8 <- ggplot(data=clt,aes(x=mu1_hat,y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) + 
         guides(color = guide_legend(reverse = TRUE)) + labs(x = expression(bar(X)),y= expression(1/sqrt(SE(bar(X)))),color="n") +
-        theme(legend.title.align=0.5) + sc_col
-  
+        theme(legend.title.align=0.5) + sc_col + ylim(0,ylim)
+   
   #see here for more details on gridarrange: http://www.sthda.com/english/wiki/wiki.php?id_contents=7930
   leg <- get_legend(p8)
   #blankPlot <- ggplot()+geom_blank(aes(1,1))+cowplot::theme_nothing()
