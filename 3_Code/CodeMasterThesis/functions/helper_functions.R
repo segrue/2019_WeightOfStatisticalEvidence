@@ -22,7 +22,6 @@ clt <- function(p0,p1,n){
   return(Tn)
 }
 
-
 #vst for normally distributed variable - variance known (aka clt)
 vst_var_known <- function(mu0,mu1,sgm0,n_study){
   Tn <- (mu1-mu0)/sgm0*sqrt(n_study)
@@ -311,9 +310,9 @@ funnel_plotter <- function(clt,vst,stud,xlim=2,ylim=8,figname,ctgs){
   p6 <- ggplot(data=vst,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
         theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= expression(1/sqrt(SE(bar(X))))) + sc_col +
         ylim(0,ylim)
-  p7 <- ggplot(data=clt,aes(x=mu1_hat,y=n_study,col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
+  p7 <- ggplot(data=stud,aes(x=mu1_hat,y=n_study,col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
         theme(legend.position = "none") + labs(x = expression(bar(X)),y= "n") + sc_col + ylim(0,max(ctgs)+50)
-  p8 <- ggplot(data=clt,aes(x=mu1_hat,y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) + 
+  p8 <- ggplot(data=stud,aes(x=mu1_hat,y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) + 
         guides(color = guide_legend(reverse = TRUE)) + labs(x = expression(bar(X)),y= expression(1/sqrt(SE(bar(X)))),color="n") +
         theme(legend.title.align=0.5) + sc_col + ylim(0,ylim)
    
@@ -326,7 +325,7 @@ funnel_plotter <- function(clt,vst,stud,xlim=2,ylim=8,figname,ctgs){
   dev.off()
 }
 
-select_studies <- function(dat,probs,n_studies,n_total,seed,id){
+select_studies <- function(dat,probs,n_studies,n_total,seed,T_id){
   set.seed(seed)
   if (sum(probs)>1){
     stop("Sum of probabilties must not exceed 1.")
@@ -342,7 +341,7 @@ select_studies <- function(dat,probs,n_studies,n_total,seed,id){
   dat_selected <- data.table(matrix(NA,nrow=0,ncol=ncol(dat)))
   colnames(dat_selected) <- colnames(dat)
   for (i in 1:length(n_studies)){
-    temp_dat <- dat[n_study==n_studies[i] & id==id,]
+    temp_dat <- dat[n_study==n_studies[i] & id==T_id,]
     n <- dim(temp_dat)[1]
 
     if (n == 0){
