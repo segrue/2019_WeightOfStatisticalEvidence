@@ -294,27 +294,34 @@ funnel_plotter <- function(clt,vst,stud,xlim=2,ylim=8,figname,ctgs){
   names(clrs) <- ctgs
   sc_col <- scale_color_manual(values=clrs, drop=FALSE)
   
+  std_errs_inv <- seq(0.1,ylim,by=0.1)
+  x_cutoff <- qnorm(0.05,mean=0,lower.tail=F)/std_errs_inv
+  cutoff <- data.table(x_cutoff,std_errs_inv)
+  cutoff_norm <- data.table(x_cutoff=rep(qnorm(0.05,mean=0,lower.tail=F),length(std_errs_inv)),std_errs_inv)
+  
+
   #create plots
-  p1 <- ggplot(data=clt,aes(x=Tn/sqrt(n_study),y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim) +
+  p1 <- ggplot(data=clt,aes(x=Tn,y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim) +
         theme(legend.position = "none") + labs(x = expression(paste(italic("z"),"-statistic")),y= "n") + sc_col + ylim(0,max(ctgs)+50)
-  p2 <- ggplot(data=clt,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
-        theme(legend.position = "none") + labs(x = expression(paste(italic("z"),"-statistic")),y= expression(1/sqrt(SE(bar(X))))) + sc_col + 
-        ylim(0,ylim)
-  p3 <- ggplot(data=stud,aes(x=Tn/sqrt(n_study),y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim)+
+  p2 <- ggplot(data=clt,aes(x=Tn,y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
+        theme(legend.position = "none") + labs(x = expression(paste(italic("z"),"-statistic")),y= expression(1/SE(bar(X)))) + sc_col + 
+        ylim(0,ylim) + geom_line(data=cutoff_norm,aes(x=x_cutoff,y=std_errs_inv),inherit.aes=F,linetype=2)
+  p3 <- ggplot(data=stud,aes(x=Tn,y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim)+
         theme(legend.position = "none") + labs(x = expression(paste(italic("t"),"-statistic")),y= "n") + sc_col + ylim(0,max(ctgs)+50)
-  p4 <- ggplot(data=stud,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
-        theme(legend.position = "none") + labs(x = expression(paste(italic("t"),"-statistic")),y= expression(1/sqrt(SE(bar(X))))) + sc_col +
+  p4 <- ggplot(data=stud,aes(x=Tn,y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
+        theme(legend.position = "none") + labs(x = expression(paste(italic("t"),"-statistic")),y= expression(1/SE(bar(X)))) + sc_col +
         ylim(0,ylim)
-  p5 <- ggplot(data=vst,aes(x=Tn/sqrt(n_study),y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim) +
+  p5 <- ggplot(data=vst,aes(x=Tn,y=n_study,col=factor(n_study))) + geom_point() + xlim(-xlim,xlim) +
         theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= "n") + sc_col + ylim(0,max(ctgs)+50)
-  p6 <- ggplot(data=vst,aes(x=Tn/sqrt(n_study),y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
-        theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= expression(1/sqrt(SE(bar(X))))) + sc_col +
-        ylim(0,ylim)
+  p6 <- ggplot(data=vst,aes(x=Tn,y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
+        theme(legend.position = "none") + labs(x = expression(italic(T[vst])),y= expression(1/SE(bar(X)))) + sc_col +
+        ylim(0,ylim) + geom_line(data=cutoff_norm,aes(x=x_cutoff,y=std_errs_inv),inherit.aes=F,linetype=2)
   p7 <- ggplot(data=stud,aes(x=mu1_hat,y=n_study,col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) +
         theme(legend.position = "none") + labs(x = expression(bar(X)),y= "n") + sc_col + ylim(0,max(ctgs)+50)
   p8 <- ggplot(data=stud,aes(x=mu1_hat,y=1/(sgm_hat/sqrt(n_study)),col=factor(n_study))) + geom_point()+ xlim(-xlim,xlim) + 
-        guides(color = guide_legend(reverse = TRUE)) + labs(x = expression(bar(X)),y= expression(1/sqrt(SE(bar(X)))),color="n") +
-        theme(legend.title.align=0.5) + sc_col + ylim(0,ylim)
+        guides(color = guide_legend(reverse = TRUE)) + labs(x = expression(bar(X)),y= expression(1/SE(bar(X))),color="n") +
+        theme(legend.title.align=0.5) + sc_col + ylim(0,ylim) + geom_line(data=cutoff,aes(x=x_cutoff,y=std_errs_inv),inherit.aes=F,linetype=2)+
+        geom_line(data=vst,aes(x=mu1,y=seq(0,ylim,length.out=length(mu1))),inherit.aes=F,linetype=1)
    
   #see here for more details on gridarrange: http://www.sthda.com/english/wiki/wiki.php?id_contents=7930
   leg <- get_legend(p8)

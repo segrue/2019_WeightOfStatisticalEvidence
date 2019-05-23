@@ -34,12 +34,15 @@ fig_name <- paste0("Funnel_Ev_Mean_",correction,"_",n_sim,"_",seed)
 
 ### load required data sets ----
 load(paste0("data/",name,".RData"),verbose=TRUE) #load data set containing simulated values
-mu1_select <- 0.1
+mu1_select <- 0.2
 n_study_min <- 10
 n_study_max <- 200
+x_lim <- 5
+y_lim <- 8
 rng <- range(c(n_study_min,n_study_max))
 dat <- evidence_df[mu1==mu1_select & n_study %between% rng,]
 ctgs <- unique(dat$n_study)[unique(dat$n_study) %between% rng]
+sample_seed <- 10
 
 ### simulate publication bias
 ## Situtation 1A:
@@ -51,7 +54,7 @@ clt <- dat[id == "clt",]
 vst <- dat[id == "vst",]
 stud <- dat[id == "stud",]
 
-funnel_plotter(clt,vst,vst,xlim=2,ylim=8,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
+funnel_plotter(clt,vst,vst,xlim=x_lim,ylim=y_lim,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
 
 ## Situtation 1B:
 ## only keep studies which turned out to be significant
@@ -60,23 +63,23 @@ vst_sig <- vst[H1==1,]
 stud_sig <- stud[H1==1,]
 label <- "1B"
 
-funnel_plotter(clt_sig,vst_sig,stud_sig,xlim=2,ylim=8,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
+funnel_plotter(clt_sig,vst_sig,stud_sig,xlim=x_lim,ylim=y_lim,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
 
 ## Situtation 2A:
 ## only keep 100 studies in total, but weigh according to study size; 
 ## choose studies with lower sample size with higher probability
 n_studies_selected <- n_studies[n_studies %between% rng]
 probs <- c(0.29,0.24,0.2,0.14,0.09,0.03,0.01)
-n_tot <- 50
+n_tot <- 100
 label <- "2A"
 
-clt <- select_studies(dat,probs,n_studies_selected,n_total=n_tot,seed,T_id="clt")
-vst <- select_studies(dat,probs,n_studies_selected,n_total=n_tot,seed,T_id="vst")
-stud <- select_studies(dat,probs,n_studies_selected,n_total=n_tot,seed,T_id="stud")
+clt <- select_studies(dat,probs,n_studies_selected,n_total=n_tot,sample_seed,T_id="clt")
+vst <- select_studies(dat,probs,n_studies_selected,n_total=n_tot,sample_seed,T_id="vst")
+stud <- select_studies(dat,probs,n_studies_selected,n_total=n_tot,sample_seed,T_id="stud")
 
 stopifnot(sum(clt$mu1_hat-vst$mu1_hat)==0,sum(stud$mu1_hat-vst$mu1_hat)==0)
 
-funnel_plotter(clt,vst,vst,xlim=2,ylim=8,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
+funnel_plotter(clt,vst,vst,xlim=x_lim,ylim=y_lim,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
 
 ## Situtation 2B:
 ## only keep studies which turned out to be significant
@@ -85,18 +88,18 @@ vst_sig <- vst[H1==1,]
 stud_sig <- stud[H1==1,]
 label <- "2B"
 
-funnel_plotter(clt_sig,vst_sig,stud_sig,xlim=2,ylim=8,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
+funnel_plotter(clt_sig,vst_sig,stud_sig,xlim=x_lim,ylim=y_lim,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
 
 ## Situtation 2C:
 ## only keep studies which turned out to be significant and small percentage of non-significant studies
 n_nsig <- 5
 probs_mix <- c(0,0,0.1,0.1,0.1,0.1,0.1)
-clt_mix <- rbind(clt_sig,select_studies(clt[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,seed,T_id="clt"))
-vst_mix <- rbind(vst_sig,select_studies(vst[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,seed,T_id="vst"))
-stud_mix <- rbind(stud_sig,select_studies(stud[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,seed,T_id="stud"))
+clt_mix <- rbind(clt_sig,select_studies(clt[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,sample_seed,T_id="clt"))
+vst_mix <- rbind(vst_sig,select_studies(vst[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,sample_seed,T_id="vst"))
+stud_mix <- rbind(stud_sig,select_studies(stud[H1==0,],rev(probs),n_studies_selected,n_total=n_nsig,sample_seed,T_id="stud"))
 label <- "2C"
 
-funnel_plotter(clt_mix,vst_mix,stud_mix,xlim=2,ylim=8,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
+funnel_plotter(clt_mix,vst_mix,stud_mix,xlim=x_lim,ylim=y_lim,figname=paste0(fig_name,"_",label,"_",n_tot,".pdf"),ctgs)
 
 #function to calculate the aggregated mean of the studies
 aggregate_mean <- function(dat){
