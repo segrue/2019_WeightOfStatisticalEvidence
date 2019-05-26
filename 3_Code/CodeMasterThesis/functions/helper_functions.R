@@ -36,11 +36,15 @@ vst_var_est <- function(mu0,mu1,sgm_est,n_study,corr=F){
   }
 }
 
-calc_T <- function(mu0s,mu1s,sgm1s,n_study,func){
+calc_T <- function(mu0s,mu1s,sgm1s,n_study,func,T_corr){
   if (missing(sgm1s)){
     Tn <- apply(mu1s, 1, function(p1) sapply(mu0s, function(p0) func(p0,p1,n_study)))
   } else {
-    Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0,mu1s[mu1,],sgm1s[mu1,],n_study)))
+    if (missing(T_corr)){
+      Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0,mu1s[mu1,],sgm1s[mu1,],n_study)))  
+    } else {
+      Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0,mu1s[mu1,],sgm1s[mu1,],n_study,corr=T_corr)))
+    }
   }
   Tn[is.infinite(Tn)] <- NA
   return(Tn)

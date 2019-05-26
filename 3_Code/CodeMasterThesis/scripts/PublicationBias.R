@@ -220,9 +220,30 @@ z <- clt_mix$Tn
 test <- sapply(mus,function(mu) prod(trunc_sample_process(z,mu,alph=0.05)))
 plot(mus,test)
 T_corr <- mus[which(max(test)==test)]
-likelihood <- function(){
-  
+
+#implement same as above but with mu1_hats as starting points:
+calc_pub_prob <- function(z,alph){
+  pub_prob <- 0.1+ifelse(z>qnorm(alph,mean=0,sd=1,lower.tail=FALSE),0.9,0)
+  return(pub_prob)
 }
+
+exp_pub_prob <- function(mu,alph){
+  quant <- qnorm(alph,0,1,lower.tail=FALSE)
+  expect <- 0.1*pnorm(quant,mu,1)+1*pnorm(quant,mu,1,lower.tail = FALSE)
+  return(expect)
+}
+exp_pub_prob(0,0.05)
+
+likeli <- function(z,mu){
+  lik <- dnorm(z,mean=mu,1) #same as: dnorm(z-mu,0,1)
+  return(lik)
+}
+
+trunc_sample_process <- function(z,mu,alph){
+  lik <- calc_pub_prob(z,alph)/exp_pub_prob(mu,alph)*likeli(z,mu)
+  return(lik)
+}
+
 
 ### Calculate publication probability of studies according to Andrew & Kasy: 
 

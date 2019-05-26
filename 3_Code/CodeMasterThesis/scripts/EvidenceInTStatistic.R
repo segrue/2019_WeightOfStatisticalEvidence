@@ -81,7 +81,7 @@ for (n_study in n_studies) {
   
   #calculate theoretical and empiral evidence based on Student-t vst
   #question: does it make sense to use theoretical mu1 but empirical sigma_est? 
-  T_vst_emp <- calc_T(mu0s,mu1_hats,sgm_hats,n_study,vst_var_est)
+  T_vst_emp <- calc_T(mu0s,mu1_hats,sgm_hats,n_study,vst_var_est,T_corr=T_corr)
   T_vst_emp_avg <- T_averager(T_vst_emp,mu0s,mu1s)
   T_vst_emp_sd <- T_sd(T_vst_emp,mu0s,mu1s)
   
