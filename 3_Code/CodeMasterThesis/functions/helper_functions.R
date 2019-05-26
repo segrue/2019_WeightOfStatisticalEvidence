@@ -337,28 +337,38 @@ select_studies <- function(dat,probs,n_studies,n_total,seed,T_id){
   if (sum(probs)>1){
     stop("Sum of probabilties must not exceed 1.")
   } 
-  if (length(probs)!= length(n_studies)){
-    stop("Length or probs vector must be the same as length of n_studies vector.")
+  if (length(probs)!= length(n_studies) & (length(probs)>1)){
+    stop("Probs must be skalra or a vector of the same as length of n_studies vector.")
   }
   if (n_total > n_sim*length(probs)){
     stop("The total number of entries to be selected exceeds total number of studies available.")
   }
-  n_select <- ceiling(n_total*probs)
   
   dat_selected <- data.table(matrix(NA,nrow=0,ncol=ncol(dat)))
   colnames(dat_selected) <- colnames(dat)
-  for (i in 1:length(n_studies)){
-    temp_dat <- dat[n_study==n_studies[i] & id==T_id,]
-    n <- dim(temp_dat)[1]
-
-    if (n == 0){
-      next
-    } else if (n < n_select[i]){
-      selected_idx <- seq(1,n,1)
-    } else {
-      selected_idx <- sample(n,n_select[i])
+  
+  if (length(probs)>1){
+    n_select <- ceiling(n_total*probs)
+    for (i in 1:length(n_studies)){
+      temp_dat <- dat[n_study==n_studies[i] & id==T_id,]
+      n <- dim(temp_dat)[1]
+      
+      if (n == 0){
+        next
+      } else if (n < n_select[i]){
+        selected_idx <- seq(1,n,1)
+      } else {
+        selected_idx <- sample(n,n_select[i])
+      }
+      dat_selected <- rbind(dat_selected,temp_dat[selected_idx,])
     }
+  } else {
+    temp_dat <- dat[id==T_id & n_study %in% n_studies,]
+    n <- dim(temp_dat)[1]
+    n_select <- ceiling(n*probs)
+    selected_idx <- sample(n,n_select)
     dat_selected <- rbind(dat_selected,temp_dat[selected_idx,])
   }
+  
   return(dat_selected)
 }
