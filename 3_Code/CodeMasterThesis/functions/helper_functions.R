@@ -336,7 +336,7 @@ funnel_plotter <- function(clt,vst,stud,xlim=2,ylim=8,figname,ctgs){
   dev.off()
 }
 
-select_studies <- function(dat,probs,n_studies,n_total,seed,T_id){
+select_studies <- function(dat,probs,n_studies,n_select,seed,T_id){
   set.seed(seed)
   if (sum(probs)>1){
     stop("Sum of probabilties must not exceed 1.")
@@ -344,15 +344,15 @@ select_studies <- function(dat,probs,n_studies,n_total,seed,T_id){
   if (length(probs)!= length(n_studies) & (length(probs)>1)){
     stop("Probs must be skalra or a vector of the same as length of n_studies vector.")
   }
-  if (n_total > n_sim*length(probs)){
-    stop("The total number of entries to be selected exceeds total number of studies available.")
-  }
+  # if (n_select  > n_sim*length(probs)){
+  #   stop("The total number of entries to be selected exceeds total number of studies available.")
+  # }
   
   dat_selected <- data.table(matrix(NA,nrow=0,ncol=ncol(dat)))
   colnames(dat_selected) <- colnames(dat)
   
   if (length(probs)>1){
-    n_select <- ceiling(n_total*probs)
+    n_select <- ceiling(n_select*probs)
     for (i in 1:length(n_studies)){
       temp_dat <- dat[n_study==n_studies[i] & id==T_id,]
       n <- dim(temp_dat)[1]
