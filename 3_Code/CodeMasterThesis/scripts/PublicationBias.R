@@ -128,27 +128,175 @@ Z_list <- list(clt$Tn,vst$Tn,qnorm(stud$p,0,1,lower.tail=FALSE),clt_sig$Tn,vst_s
 X_list <- calc_filedrawer(Z_list,alphas)
 
 
-### Calculate publication probability based on publication probability
-#Hansen-Hurwitz estimator https://newonlinecourses.science.psu.edu/stat506/node/15/
+#### Calculate reweighted mean based on publication probability ---------------
+# Insired by the Hansen-Hurwitz estimator: 
+# https://newonlinecourses.science.psu.edu/stat506/node/15/
 
-calc_pub_prob <- function(dat,alph,p){
+# Calculate publication probability of individual studies ---------------------
+# calculates publication probability of studies below and above significance 
+# threshold, respectively. Studies with significant results are published with 
+# probability 1, studies with non-significant results are published with 
+# probability p. 
+# If max_N is given, studies with higher study size have probability of 
+# publication of p+min(1-p,n/N), where we assume that a study of size N has a 
+# probability of 1 of being published regardless of whether the results
+# are significant. If max_N is set to 0, all publication probabilities 
+# are set to 1, hence you can use these publications to calculate the 
+# unweighted mean of the data.
+
+calculate_pub_prob <- function(dat,p,max_N){
+  if (length(unique(dat$alpha))>1){
+    stop("Only test results evaluated at the same alpha threshold are permitted.")
+  } else {
+    alph <- dat$alpha[1]
+  }
   z <- dat$Tn
-  pub_prob <- p+ifelse(z>qnorm(alph,mean=0,sd=1,lower.tail=FALSE),1-p,0)
+  if (missing(max_N)){
+    pub_prob <- p+ifelse(z>qnorm(alph,mean=0,sd=1,lower.tail=FALSE),1-p,0)
+  } else {
+    n <- dat$n_study
+    pub_prob <- sapply(1:length(z), 
+                       function(i) p+ifelse(z[i]>qnorm(alph,mean=0,sd=1,lower.tail=FALSE),1-p,min(1-p,n[i]/max_N)))
+  }
   return(pub_prob)
 }
 
-reweighted_mean <- function(dat,probs){
-  y_i <- dat$mu1_hat*dat$n_study
-  n <- length(y_i)
+# Reweight mean of all studies based on publication probability ---------------
+# Calculates a reweighted of the means based on study size and publication 
+# probability given Evidence value; if probability values are not submitted, 
+# the step-function is assumed with p = 0.1 if Z non-significant
+# and p = 1 if Z is significant
+
+reweight_mean <- function(dat, probs){
+  mu_hat <- dat$mu1_hat*dat$n_study
+  n <- length(mu_hat)
+  
   if (missing(probs)){
     probs <- 0.1+0.9*dat$H1 
   }
-  weigh_mean <- sum(y_i/probs)/sum(1/probs*dat$n_study)
+  
+  if (n!=length(probs)){
+    stop("Vector of probabilities must be the same length as number of studiy results to be reweighted.")
+  }
+  
+  weigh_mean <- sum(mu_hat/probs)/sum(dat$n_study/probs)
   return(weigh_mean)
 }
 
-weigh_mean <- reweighted_mean(clt_mix)
-weigh_mean
+# Check calculate_pub_prob and reweight_mean ----------------------------------
+check_reweighting <- function(dat) {
+  # reweight with default probability 
+  weigh_mean_1 <- reweight_mean(dat)
+  
+  # reweight with default probability, but use "calculate_pub_prob"
+  pub_prob <- calculate_pub_prob(dat,p = 0.1) 
+  weigh_mean_2 <- reweight_mean(dat,pub_prob)
+  
+  # reweight probability based on study size
+  pub_prob <- calculate_pub_prob(dat,p = 0.1,max_N = 1000) 
+  weigh_mean_3 <- reweight_mean(dat,pub_prob)
+  
+  stopifnot(weigh_mean_1==weigh_mean_2,weigh_mean_1!=weigh_mean_3)
+  print("Functions 'calculate_pub_prob' and 'reweight_mean' work as expected.")
+  return(list(weigh_mean_1,weigh_mean_3))
+}
+
+check_reweighting(clt_mix)
+
+#### Implement trim and fill methods and variations thereof -------------------
+
+# Traditional trim and fill method according to Duval and Tweedie 2000 --------
+trim_and_fill <- function(dat) {
+  
+  # helper function to find signed ranks
+  find_ranks <- function(T_centered,avg_T){
+    ix <- sort(abs(T_centered),index.return=T)$ix
+    ranks <- sign(T_centered[ix])*sort(ix)
+    return(ranks)
+  }
+  n <- length(dat$Tn)
+  T_sorted <- sort(dat$Tn)
+  k0 <- 0
+  k0_new <- 0
+  i <- 0
+  while(TRUE){
+    k0 <- k0_new
+    if (k0==0){
+      avg_T <- mean(T_sorted)
+    } else {
+      T_trimmed <- head(T_sorted,-k0)
+      avg_T <- mean(T_trimmed)
+    }
+    T_centered <- T_sorted-avg_T
+    ranks <- find_ranks(T_centered,avg_T)
+    S_rank <- sum(ranks[ranks>0])
+    k0_new <- round((4*S_rank-n*(n+1))/(2*n-1))
+    if (k0_new <= k0){
+      break
+    }
+  }
+  T_filled <- c(T_centered,-tail(T_centered[T_centered>0],k0))
+  to_add <- tail(T_sorted,k0)
+  to_add <- dat[Tn %in% to_add,]
+  to_add$mu1_hat <- -to_add$mu1_hat
+  dat_filled <- rbind(dat,to_add)
+  return(dat_filled)
+}
+
+clt_mix_filled <- trim_and_fill(clt_mix)
+aggregate_mean(clt_mix_filled)
+aggregate_mean(clt_mix)
+#mean(clt_mix$mu1_hat)
+#mean(clt_mix_filled$mu1_hat)
+#trim and fill only works if assumption hold that most extreme values are omitted
+
+
+#trim_and_fill with known selection probability
+
+trim_and_fill_prob <- function(dat,p=0.1,alph){
+  n <- length(dat$Tn)
+  T_sorted <- sort(dat$Tn)
+  k0_new <- min(sum(T_sorted>qnorm(alph,0,1,lower.tail=FALSE)),round(sum(T_sorted<qnorm(alph,0,1,lower.tail=FALSE))/p))
+  find_ranks <- function(T_centered,avg_T){
+    ix <- sort(abs(T_centered),index.return=T)$ix
+    ranks <- sign(T_centered[ix])*sort(ix)
+    return(ranks)
+  }
+  i <- 0
+  while(TRUE){
+    k0 <- k0_new
+    if (k0==0){
+      avg_T <- mean(T_sorted)
+    } else {
+      T_trimmed <- head(T_sorted,-k0)
+      avg_T <- mean(T_trimmed)
+    }
+    T_centered <- T_sorted-avg_T
+    ranks <- find_ranks(T_centered,avg_T)
+    S_rank <- sum(ranks[ranks>0])
+    k0_new <- round((4*S_rank-n*(n+1))/(2*n-1))
+    if (k0_new == k0){
+      break
+    } else if (i > 100){
+      break
+    }
+    i <- i+1
+  }
+  T_filled <- c(T_centered,-tail(T_centered[T_centered>0],k0))
+  to_add <- tail(T_sorted,k0)
+  to_add <- dat[Tn %in% to_add,]
+  dat_filled <- rbind(dat,to_add)
+  return(dat_filled)
+}
+
+clt_mix_filled <- trim_and_fill_prob(clt_mix,p=0.1,alph=0.05)
+aggregate_mean(clt_mix_filled)
+aggregate_mean(clt_mix)
+
+
+
+
+#### Calculate reweighted mean based MLE estimator ----------------------------
 
 #Andrews-Kasy maximum likelihood estimator
 exp_pub_prob <- function(mu,alph,x){
@@ -345,92 +493,6 @@ equ(z[1],2)
 
 #draw from kernel density estimator: https://stats.stackexchange.com/questions/321542/how-can-i-draw-a-value-randomly-from-a-kernel-density-estimate?rq=1
 
-#trim and fill method
-
-trim_and_fill <- function(dat){
-  n <- length(dat$Tn)
-  T_sorted <- sort(dat$Tn)
-  k0 <- 0
-  k0_new <- 0
-  find_ranks <- function(T_centered,avg_T){
-    ix <- sort(abs(T_centered),index.return=T)$ix
-    ranks <- sign(T_centered[ix])*sort(ix)
-    return(ranks)
-  }
-  i <- 0
-  while(TRUE){
-    k0 <- k0_new
-    if (k0==0){
-      avg_T <- mean(T_sorted)
-    } else {
-      T_trimmed <- head(T_sorted,-k0)
-      avg_T <- mean(T_trimmed)
-    }
-    T_centered <- T_sorted-avg_T
-    ranks <- find_ranks(T_centered,avg_T)
-    S_rank <- sum(ranks[ranks>0])
-    k0_new <- round((4*S_rank-n*(n+1))/(2*n-1))
-    if (k0_new <= k0){
-      break
-    }
-  }
-  T_filled <- c(T_centered,-tail(T_centered[T_centered>0],k0))
-  to_add <- tail(T_sorted,k0)
-  to_add <- dat[Tn %in% to_add,]
-  to_add$mu1_hat <- -to_add$mu1_hat
-  dat_filled <- rbind(dat,to_add)
-  return(dat_filled)
-}
-
-clt_mix_filled <- trim_and_fill(clt_mix)
-aggregate_mean(clt_mix_filled)
-aggregate_mean(clt_mix)
-#mean(clt_mix$mu1_hat)
-#mean(clt_mix_filled$mu1_hat)
-#trim and fill only works if assumption hold that most extreme values are omitted
-
-
-#trim_and_fill with known selection probability
-
-trim_and_fill_prob <- function(dat,p=0.1,alph){
-  n <- length(dat$Tn)
-  T_sorted <- sort(dat$Tn)
-  k0_new <- min(sum(T_sorted>qnorm(alph,0,1,lower.tail=FALSE)),round(sum(T_sorted<qnorm(alph,0,1,lower.tail=FALSE))/p))
-  find_ranks <- function(T_centered,avg_T){
-    ix <- sort(abs(T_centered),index.return=T)$ix
-    ranks <- sign(T_centered[ix])*sort(ix)
-    return(ranks)
-  }
-  i <- 0
-  while(TRUE){
-    k0 <- k0_new
-    if (k0==0){
-      avg_T <- mean(T_sorted)
-    } else {
-      T_trimmed <- head(T_sorted,-k0)
-      avg_T <- mean(T_trimmed)
-    }
-    T_centered <- T_sorted-avg_T
-    ranks <- find_ranks(T_centered,avg_T)
-    S_rank <- sum(ranks[ranks>0])
-    k0_new <- round((4*S_rank-n*(n+1))/(2*n-1))
-    if (k0_new == k0){
-      break
-    } else if (i > 100){
-      break
-    }
-    i <- i+1
-  }
-  T_filled <- c(T_centered,-tail(T_centered[T_centered>0],k0))
-  to_add <- tail(T_sorted,k0)
-  to_add <- dat[Tn %in% to_add,]
-  dat_filled <- rbind(dat,to_add)
-  return(dat_filled)
-}
-
-clt_mix_filled <- trim_and_fill_prob(clt_mix,p=0.1,alph=0.05)
-aggregate_mean(clt_mix_filled)
-aggregate_mean(clt_mix)
 
 
 ##Gopas Selection
