@@ -380,7 +380,26 @@ select_studies <- function(dat,probs,n_studies,n_select,seed,T_id) {
 
 ### Functions needed diagnosing and correcting publication bias --------------
 
-## Calculate reweighted mean based on publication probability ----------------
+## Calculate number of papers stored in file drawer based Rosenthal 1984 ------
+## problem: Filedrawer problem only works for checking whether there is no null 
+## effect; it doesn't work in situations in which there really is an effects
+
+calc_filedrawer <- function(dat){
+  if (length(unique(dat$alpha))>1 | length(unique(dat$id))>1){
+    stop("Only test results evaluated at the same alpha threshold 
+         and using one evidence metric are permitted.")
+  } else {
+    alph <- dat$alpha[1]
+  }
+  Z <- qnorm(dat$p,0,1,lower.tail=FALSE)
+  k <- length(Z)
+  q <- qnorm(1-alph)
+  filedrawer <- (k*mean(Z)/q)^2-k
+  return(filedrawer)
+}
+
+
+## Calculate reweighted mean based on publication probability -----------------
 ## Insired by the Hansen-Hurwitz estimator: 
 ## https://newonlinecourses.science.psu.edu/stat506/node/15/
 
@@ -404,6 +423,7 @@ calculate_pub_prob <- function(dat,p,max_N){
   } else {
     alph <- dat$alpha[1]
   }
+  
   z <- dat$Tn
   if (missing(max_N)){
     pub_prob <- p+ifelse(z>qnorm(alph,mean=0,sd=1,lower.tail=FALSE),1-p,0)
@@ -444,11 +464,11 @@ check_reweighting <- function(dat) {
   weigh_mean_1 <- reweight_mean(dat)
   
   # reweight with default probability, but use "calculate_pub_prob"
-  pub_prob <- calculate_pub_prob(dat,p = 0.1) 
+  pub_prob <- calculate_pub_prob(dat, p = 0.1) 
   weigh_mean_2 <- reweight_mean(dat,pub_prob)
   
   # reweight probability based on study size
-  pub_prob <- calculate_pub_prob(dat,p = 0.1,max_N = 1000) 
+  pub_prob <- calculate_pub_prob(dat, p = 0.1,max_N = 1000) 
   weigh_mean_3 <- reweight_mean(dat,pub_prob)
   
   stopifnot(weigh_mean_1==weigh_mean_2,weigh_mean_1!=weigh_mean_3)
@@ -456,21 +476,112 @@ check_reweighting <- function(dat) {
   return(list(weigh_mean_1,weigh_mean_3))
 }
 
-## Calculate number of papers stored in file drawer based Rosenthal 1984 ------
-## problem: Filedrawer problem only works for checking whether there is no null effect; 
-## it doesn't work in situations in which there really is an effects
+## Trim and fill methods and variations thereof -------------------------------
 
-calc_filedrawer <- function(dat){
+# Traditional trim and fill method according to Duval and Tweedie 2000 --------
+trim_and_fill <- function(dat,pub_prob) {
   if (length(unique(dat$alpha))>1 | length(unique(dat$id))>1){
     stop("Only test results evaluated at the same alpha threshold 
          and using one evidence metric are permitted.")
   } else {
     alph <- dat$alpha[1]
   }
-  Z <- qnorm(dat$p,0,1,lower.tail=FALSE)
-  k <- length(Z)
-  q <- qnorm(1-alph)
-  filedrawer <- (k*mean(Z)/q)^2-k
-  return(filedrawer)
+  
+  # helper function to find signed ranks
+  find_ranks <- function(T_centered,avg_T){
+    ix <- sort(abs(T_centered),index.return=T)$ix
+    ranks <- sign(T_centered[ix])*sort(ix)
+    return(ranks)
+  }
+  
+  n <- length(dat$Tn)
+  T_sorted <- sort(dat$Tn,index.return=T)
+  k0 <- 0
+  
+  if (missing(pub_prob)){
+    k0_new <- 0
+  } else if (length(pub_prob) == 1) {
+    # if publication probability is known, trim off number of actually omitted
+    # studies in the beginning; if this number is larger than the number of 
+    # significant results, trim all significant results off.
+    k0_new <- min(sum(T_sorted$x>qnorm(alph,0,1,lower.tail=FALSE)),
+                  round(sum(T_sorted$x<qnorm(alph,0,1,lower.tail=FALSE))/pub_prob))
+  } else {
+    pub_prob_sorted <- pub_prob[T_sorted$ix]
+    significant <- T_sorted$x>qnorm(alph,0,1,lower.tail=FALSE)
+    k0_new <- min(sum(significant),
+                  round(sum(rep(1,n)[!significant]/pub_prob_sorted[!significant])))
+  }
+  
+  i <- 0
+  while(TRUE){
+    diff <- k0-k0_new
+    k0 <- k0_new #number of supposedly omitted studies
+    
+    if (k0==0){
+      avg_T <- mean(T_sorted$x)
+    } else {
+      T_trimmed <- head(T_sorted$x,-k0)
+      avg_T <- mean(T_trimmed)
+    }
+    
+    T_centered <- T_sorted$x-avg_T
+    ranks <- find_ranks(T_centered,avg_T)
+    S_rank <- sum(ranks[ranks>0])
+    
+    k0_new <- round((4*S_rank-n*(n+1))/(2*n-1))
+    
+    i <- i+1
+    
+    if (k0_new == k0 | i > 100 | diff == -(k0-k0_new)) {
+      break
+    }
+  }
+  
+  T_filled <- c(T_centered,-tail(T_centered[T_centered>0],k0))
+  to_add <- dat[Tn %in% tail(T_sorted$x,k0),] # add k0 studies with highest positive rank
+  to_add$mu1_hat <- -to_add$mu1_hat # invert sign of mu_hat
+  dat_filled <- rbind(dat,to_add)
+  
+  return(dat_filled)
 }
 
+trim_and_fill(clt_mix,pub_prob=0.1)
+
+#trim_and_fill with known selection probability
+
+trim_and_fill_prob <- function(dat,p=0.1,alph){
+  n <- length(dat$Tn)
+  T_sorted <- sort(dat$Tn)
+  k0_new <- min(sum(T_sorted>qnorm(alph,0,1,lower.tail=FALSE)),round(sum(T_sorted<qnorm(alph,0,1,lower.tail=FALSE))/p))
+  find_ranks <- function(T_centered,avg_T){
+    ix <- sort(abs(T_centered),index.return=T)$ix
+    ranks <- sign(T_centered[ix])*sort(ix)
+    return(ranks)
+  }
+  i <- 0
+  while(TRUE){
+    k0 <- k0_new
+    if (k0==0){
+      avg_T <- mean(T_sorted)
+    } else {
+      T_trimmed <- head(T_sorted,-k0)
+      avg_T <- mean(T_trimmed)
+    }
+    T_centered <- T_sorted-avg_T
+    ranks <- find_ranks(T_centered,avg_T)
+    S_rank <- sum(ranks[ranks>0])
+    k0_new <- round((4*S_rank-n*(n+1))/(2*n-1))
+    if (k0_new == k0){
+      break
+    } else if (i > 100){
+      break
+    }
+    i <- i+1
+  }
+  T_filled <- c(T_centered,-tail(T_centered[T_centered>0],k0))
+  to_add <- tail(T_sorted,k0)
+  to_add <- dat[Tn %in% to_add,]
+  dat_filled <- rbind(dat,to_add)
+  return(dat_filled)
+}

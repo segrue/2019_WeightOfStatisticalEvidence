@@ -112,7 +112,7 @@ aggregate_mean(vst)
 
 ### Calculate number of papers stored in file drawer based Rosenthal 1984 -----
 # problem: Filedrawer problem only works for checking whether there is no null effect; 
-# it doesn't work in situations in which there really is an effects
+# it doesn't work in situations in which there really is an effect
 dat_list <- list(clt,vst,stud,clt_sig,vst_sig,stud_sig)
 
 filedrawer <- c()
@@ -123,103 +123,24 @@ for (dat in dat_list){
 
 filedrawer
 
-### Reweight means by publication probability
+### Reweight means by publication probability ---------------------------------
 check_reweighting(clt_mix)
 
-#### Implement trim and fill methods and variations thereof -------------------
+pub_prob <- calculate_pub_prob(dat, p = 0.1) 
+weigh_mean <- reweight_mean(dat,pub_prob)
 
-# Traditional trim and fill method according to Duval and Tweedie 2000 --------
-trim_and_fill <- function(dat) {
-  
-  # helper function to find signed ranks
-  find_ranks <- function(T_centered,avg_T){
-    ix <- sort(abs(T_centered),index.return=T)$ix
-    ranks <- sign(T_centered[ix])*sort(ix)
-    return(ranks)
-  }
-  n <- length(dat$Tn)
-  T_sorted <- sort(dat$Tn)
-  k0 <- 0
-  k0_new <- 0
-  i <- 0
-  while(TRUE){
-    k0 <- k0_new
-    if (k0==0){
-      avg_T <- mean(T_sorted)
-    } else {
-      T_trimmed <- head(T_sorted,-k0)
-      avg_T <- mean(T_trimmed)
-    }
-    T_centered <- T_sorted-avg_T
-    ranks <- find_ranks(T_centered,avg_T)
-    S_rank <- sum(ranks[ranks>0])
-    k0_new <- round((4*S_rank-n*(n+1))/(2*n-1))
-    if (k0_new <= k0){
-      break
-    }
-  }
-  T_filled <- c(T_centered,-tail(T_centered[T_centered>0],k0))
-  to_add <- tail(T_sorted,k0)
-  to_add <- dat[Tn %in% to_add,]
-  to_add$mu1_hat <- -to_add$mu1_hat
-  dat_filled <- rbind(dat,to_add)
-  return(dat_filled)
-}
-
+### Trim and fill based methods -----------------------------------------------
+# Note: trim and fill only works if assumption that most extrem values are 
+# omitted holds
 clt_mix_filled <- trim_and_fill(clt_mix)
-aggregate_mean(clt_mix_filled)
+clt_mix_filled_2 <- trim_and_fill(clt_mix,pub_prob=0.1)
+
 aggregate_mean(clt_mix)
-#mean(clt_mix$mu1_hat)
-#mean(clt_mix_filled$mu1_hat)
-#trim and fill only works if assumption hold that most extreme values are omitted
-
-
-#trim_and_fill with known selection probability
-
-trim_and_fill_prob <- function(dat,p=0.1,alph){
-  n <- length(dat$Tn)
-  T_sorted <- sort(dat$Tn)
-  k0_new <- min(sum(T_sorted>qnorm(alph,0,1,lower.tail=FALSE)),round(sum(T_sorted<qnorm(alph,0,1,lower.tail=FALSE))/p))
-  find_ranks <- function(T_centered,avg_T){
-    ix <- sort(abs(T_centered),index.return=T)$ix
-    ranks <- sign(T_centered[ix])*sort(ix)
-    return(ranks)
-  }
-  i <- 0
-  while(TRUE){
-    k0 <- k0_new
-    if (k0==0){
-      avg_T <- mean(T_sorted)
-    } else {
-      T_trimmed <- head(T_sorted,-k0)
-      avg_T <- mean(T_trimmed)
-    }
-    T_centered <- T_sorted-avg_T
-    ranks <- find_ranks(T_centered,avg_T)
-    S_rank <- sum(ranks[ranks>0])
-    k0_new <- round((4*S_rank-n*(n+1))/(2*n-1))
-    if (k0_new == k0){
-      break
-    } else if (i > 100){
-      break
-    }
-    i <- i+1
-  }
-  T_filled <- c(T_centered,-tail(T_centered[T_centered>0],k0))
-  to_add <- tail(T_sorted,k0)
-  to_add <- dat[Tn %in% to_add,]
-  dat_filled <- rbind(dat,to_add)
-  return(dat_filled)
-}
-
-clt_mix_filled <- trim_and_fill_prob(clt_mix,p=0.1,alph=0.05)
 aggregate_mean(clt_mix_filled)
-aggregate_mean(clt_mix)
+aggregate_mean(clt_mix_filled_2)
 
 
-
-
-#### Calculate reweighted mean based MLE estimator ----------------------------
+### Calculate reweighted mean based MLE estimator -----------------------------
 
 #Andrews-Kasy maximum likelihood estimator
 exp_pub_prob <- function(mu,alph,x){
