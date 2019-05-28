@@ -110,97 +110,20 @@ aggregate_mean(stud)
 aggregate_mean(clt)
 aggregate_mean(vst)
 
-### Calculate number of papers stored in file drawer based Rosenthal 1984
-calc_filedrawer <- function(Z_list,alph){
-  min_filedrawer <- c()
-  for (Zs in Z_list){
-    k <- length(Zs)
-    q <- qnorm(1-alph)
-    X <- (k*mean(Zs)/q)^2-k
-    #X <- (k/z^2)*(k*mean(Zs)^2-z^2)
-    min_filedrawer <- c(min_filedrawer,X)
-  }
-  return(min_filedrawer)
+### Calculate number of papers stored in file drawer based Rosenthal 1984 -----
+# problem: Filedrawer problem only works for checking whether there is no null effect; 
+# it doesn't work in situations in which there really is an effects
+dat_list <- list(clt,vst,stud,clt_sig,vst_sig,stud_sig)
+
+filedrawer <- c()
+i <- 0
+for (dat in dat_list){
+  filedrawer <- c(filedrawer,calc_filedrawer(dat))
 }
 
-#problem: Filedrawer problem only works for checking whether there is no null effect; it doesn't work in situations in which there really is an effects
-Z_list <- list(clt$Tn,vst$Tn,qnorm(stud$p,0,1,lower.tail=FALSE),clt_sig$Tn,vst_sig$Tn,qnorm(stud_sig$p,0,1,lower.tail=FALSE))
-X_list <- calc_filedrawer(Z_list,alphas)
+filedrawer
 
-
-#### Calculate reweighted mean based on publication probability ---------------
-# Insired by the Hansen-Hurwitz estimator: 
-# https://newonlinecourses.science.psu.edu/stat506/node/15/
-
-# Calculate publication probability of individual studies ---------------------
-# calculates publication probability of studies below and above significance 
-# threshold, respectively. Studies with significant results are published with 
-# probability 1, studies with non-significant results are published with 
-# probability p. 
-# If max_N is given, studies with higher study size have probability of 
-# publication of p+min(1-p,n/N), where we assume that a study of size N has a 
-# probability of 1 of being published regardless of whether the results
-# are significant. If max_N is set to 0, all publication probabilities 
-# are set to 1, hence you can use these publications to calculate the 
-# unweighted mean of the data.
-
-calculate_pub_prob <- function(dat,p,max_N){
-  if (length(unique(dat$alpha))>1){
-    stop("Only test results evaluated at the same alpha threshold are permitted.")
-  } else {
-    alph <- dat$alpha[1]
-  }
-  z <- dat$Tn
-  if (missing(max_N)){
-    pub_prob <- p+ifelse(z>qnorm(alph,mean=0,sd=1,lower.tail=FALSE),1-p,0)
-  } else {
-    n <- dat$n_study
-    pub_prob <- sapply(1:length(z), 
-                       function(i) p+ifelse(z[i]>qnorm(alph,mean=0,sd=1,lower.tail=FALSE),1-p,min(1-p,n[i]/max_N)))
-  }
-  return(pub_prob)
-}
-
-# Reweight mean of all studies based on publication probability ---------------
-# Calculates a reweighted of the means based on study size and publication 
-# probability given Evidence value; if probability values are not submitted, 
-# the step-function is assumed with p = 0.1 if Z non-significant
-# and p = 1 if Z is significant
-
-reweight_mean <- function(dat, probs){
-  mu_hat <- dat$mu1_hat*dat$n_study
-  n <- length(mu_hat)
-  
-  if (missing(probs)){
-    probs <- 0.1+0.9*dat$H1 
-  }
-  
-  if (n!=length(probs)){
-    stop("Vector of probabilities must be the same length as number of studiy results to be reweighted.")
-  }
-  
-  weigh_mean <- sum(mu_hat/probs)/sum(dat$n_study/probs)
-  return(weigh_mean)
-}
-
-# Check calculate_pub_prob and reweight_mean ----------------------------------
-check_reweighting <- function(dat) {
-  # reweight with default probability 
-  weigh_mean_1 <- reweight_mean(dat)
-  
-  # reweight with default probability, but use "calculate_pub_prob"
-  pub_prob <- calculate_pub_prob(dat,p = 0.1) 
-  weigh_mean_2 <- reweight_mean(dat,pub_prob)
-  
-  # reweight probability based on study size
-  pub_prob <- calculate_pub_prob(dat,p = 0.1,max_N = 1000) 
-  weigh_mean_3 <- reweight_mean(dat,pub_prob)
-  
-  stopifnot(weigh_mean_1==weigh_mean_2,weigh_mean_1!=weigh_mean_3)
-  print("Functions 'calculate_pub_prob' and 'reweight_mean' work as expected.")
-  return(list(weigh_mean_1,weigh_mean_3))
-}
-
+### Reweight means by publication probability
 check_reweighting(clt_mix)
 
 #### Implement trim and fill methods and variations thereof -------------------

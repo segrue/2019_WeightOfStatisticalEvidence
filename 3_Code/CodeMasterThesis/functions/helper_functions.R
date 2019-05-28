@@ -98,7 +98,7 @@ get_legend<-function(myggplot){
 
 ### functions needed for the script "SimulateStudies.R" ----
 
-#brings data into the correct form to be handled in "SimulateStudies.R"
+# brings data into the correct form to be handled in "SimulateStudies.R"
 mat2df <- function(mats,id){
   if (length(mats) == 1){
     dat <- melt(mats[[1]]) 
@@ -336,7 +336,7 @@ funnel_plotter <- function(clt,vst,stud,xlim=2,ylim=8,figname,ctgs){
   dev.off()
 }
 
-select_studies <- function(dat,probs,n_studies,n_select,seed,T_id){
+select_studies <- function(dat,probs,n_studies,n_select,seed,T_id) {
   set.seed(seed)
   if (sum(probs)>1){
     stop("Sum of probabilties must not exceed 1.")
@@ -376,3 +376,101 @@ select_studies <- function(dat,probs,n_studies,n_select,seed,T_id){
   
   return(dat_selected)
 }
+
+
+### Functions needed diagnosing and correcting publication bias --------------
+
+## Calculate reweighted mean based on publication probability ----------------
+## Insired by the Hansen-Hurwitz estimator: 
+## https://newonlinecourses.science.psu.edu/stat506/node/15/
+
+# Calculate publication probability of individual studies ---------------------
+
+# calculates publication probability of studies below and above significance 
+# threshold, respectively. Studies with significant results are published with 
+# probability 1, studies with non-significant results are published with 
+# probability p. 
+# If max_N is given, studies with higher study size have probability of 
+# publication of p+min(1-p,n/N), where we assume that a study of size N has a 
+# probability of 1 of being published regardless of whether the results
+# are significant. If max_N is set to 0, all publication probabilities 
+# are set to 1, hence you can use these publications to calculate the 
+# unweighted mean of the data.
+
+calculate_pub_prob <- function(dat,p,max_N){
+  if (length(unique(dat$alpha))>1 | length(unique(dat$id))>1){
+    stop("Only test results evaluated at the same alpha threshold 
+         and using one evidence metric are permitted.")
+  } else {
+    alph <- dat$alpha[1]
+  }
+  z <- dat$Tn
+  if (missing(max_N)){
+    pub_prob <- p+ifelse(z>qnorm(alph,mean=0,sd=1,lower.tail=FALSE),1-p,0)
+  } else {
+    n <- dat$n_study
+    pub_prob <- sapply(1:length(z), 
+                       function(i) p+ifelse(z[i]>qnorm(alph,mean=0,sd=1,lower.tail=FALSE),1-p,min(1-p,n[i]/max_N)))
+  }
+  return(pub_prob)
+}
+
+# Reweight mean of all studies based on publication probability ---------------
+
+# Calculates a reweighted of the means based on study size and publication 
+# probability given Evidence value; if probability values are not submitted, 
+# the step-function is assumed with p = 0.1 if Z non-significant
+# and p = 1 if Z is significant
+
+reweight_mean <- function(dat, probs){
+  mu_hat <- dat$mu1_hat*dat$n_study
+  n <- length(mu_hat)
+  
+  if (missing(probs)){
+    probs <- 0.1+0.9*dat$H1 
+  }
+  
+  if (n!=length(probs)){
+    stop("Vector of probabilities must be the same length as number of studiy results to be reweighted.")
+  }
+  
+  weigh_mean <- sum(mu_hat/probs)/sum(dat$n_study/probs)
+  return(weigh_mean)
+}
+
+# Check calculate_pub_prob and reweight_mean ----------------------------------
+check_reweighting <- function(dat) {
+  # reweight with default probability 
+  weigh_mean_1 <- reweight_mean(dat)
+  
+  # reweight with default probability, but use "calculate_pub_prob"
+  pub_prob <- calculate_pub_prob(dat,p = 0.1) 
+  weigh_mean_2 <- reweight_mean(dat,pub_prob)
+  
+  # reweight probability based on study size
+  pub_prob <- calculate_pub_prob(dat,p = 0.1,max_N = 1000) 
+  weigh_mean_3 <- reweight_mean(dat,pub_prob)
+  
+  stopifnot(weigh_mean_1==weigh_mean_2,weigh_mean_1!=weigh_mean_3)
+  print("Functions 'calculate_pub_prob' and 'reweight_mean' work as expected.")
+  return(list(weigh_mean_1,weigh_mean_3))
+}
+
+## Calculate number of papers stored in file drawer based Rosenthal 1984 ------
+## problem: Filedrawer problem only works for checking whether there is no null effect; 
+## it doesn't work in situations in which there really is an effects
+
+calc_filedrawer <- function(dat){
+  if (length(unique(dat$alpha))>1 | length(unique(dat$id))>1){
+    stop("Only test results evaluated at the same alpha threshold 
+         and using one evidence metric are permitted.")
+  } else {
+    alph <- dat$alpha[1]
+  }
+  Z <- qnorm(dat$p,0,1,lower.tail=FALSE)
+  k <- length(Z)
+  q <- qnorm(1-alph)
+  filedrawer <- (k*mean(Z)/q)^2-k
+  return(filedrawer)
+}
+
