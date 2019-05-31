@@ -404,7 +404,7 @@ select_studies <- function(dat, probs, n_studies, n_select, seed, T_id) {
 calc_filedrawer <- function(dat) {
   if (length(unique(dat$alpha)) > 1 | length(unique(dat$id)) > 1) {
     stop("Only test results evaluated at the same alpha threshold 
-         and using one evidence metric are permitted.")
+         and based on the same evidence metric are permitted.")
   } else {
     alph <- dat$alpha[1]
   }
@@ -436,7 +436,7 @@ calc_filedrawer <- function(dat) {
 calculate_pub_prob <- function(dat, p, max_N) {
   if (length(unique(dat$alpha)) > 1 | length(unique(dat$id)) > 1) {
     stop("Only test results evaluated at the same alpha threshold 
-         and using one evidence metric are permitted.")
+         and based on the same evidence metric are permitted.")
   } else {
     alph <- dat$alpha[1]
   }
@@ -504,7 +504,7 @@ check_reweighting <- function(dat) {
 trim_and_fill <- function(dat, pub_prob) {
   if (length(unique(dat$alpha)) > 1 | length(unique(dat$id)) > 1) {
     stop("Only test results evaluated at the same alpha threshold 
-         and using one evidence metric are permitted.")
+         and based on the same evidence metric are permitted.")
   } else {
     alph <- dat$alpha[1]
   }
@@ -572,8 +572,6 @@ trim_and_fill <- function(dat, pub_prob) {
   return(dat_filled)
 }
 
-trim_and_fill(clt_mix, pub_prob = 0.1)
-
 # trim_and_fill with known selection probability
 
 trim_and_fill_prob <- function(dat, p = 0.1, alph) {
@@ -612,4 +610,72 @@ trim_and_fill_prob <- function(dat, p = 0.1, alph) {
   to_add <- dat[Tn %in% to_add, ]
   dat_filled <- rbind(dat, to_add)
   return(dat_filled)
+}
+
+## Adapation of correction proposed by Andrew & Kasy (2017) -------------------
+## It is essentially an MLE based on a reweighted likelihood function
+
+# expected publication probability
+# theta = mu/sgm
+exp_pub_prob <- function(theta, alph, p, n_study) {
+  quant <- qnorm(alph, 0, 1, lower.tail = FALSE)
+  expect <- p * pnorm(quant / sqrt(n_study), theta, 1 / sqrt(n_study)) + 
+    1 * (1 - pnorm(quant / sqrt(n_study), theta, 1 / sqrt(n_study)))
+  return(expect)
+}
+
+# likelihood function, theta = mu/sgm
+likeli <- function(z, theta, n_study) {
+  lik <- dnorm(z / sqrt(n_study), mean = theta, 1 / sqrt(n_study))
+  return(lik)
+}
+
+# calculate truncated likelihood of theta given the data and p
+trunc_likeli <- function(dat, theta, p) {
+  alph <- dat$alpha[1]
+  z <- dat$Tn
+  n_studies <- dat$n_study
+  likelihood <- sapply(1:length(z), 
+                       function(i) likeli(z[i], theta, n_studies[i]))
+  expected_pub_prob <- sapply(n_studies, 
+                              function(n_study) exp_pub_prob(theta, alph, p, n_study))
+  lik <- calculate_pub_prob(dat, p) / expected_pub_prob * likelihood
+  return(lik)
+}
+
+# calculate maximum likelihood estimator for truncated likelihood function;
+# if publication probability for non-significant studies ("p") is not given, 
+# a grid search is performed for all possible thetas and p in [0, 1]
+trunc_mle <- function(dat, thetas, p) {
+  if (length(unique(dat$alpha)) > 1 | length(unique(dat$id)) > 1) {
+    stop("Only test results evaluated at the same alpha threshold 
+         and based on the same evidence metric are permitted.")
+  } else {
+    alph <- dat$alpha[1]
+  }
+  
+  if (missing(p)){
+    ps <- seq(0, 1, by = 0.01)
+    trunc_likeli_helper <- function(theta_p, dat) {
+      -prod(trunc_likeli(dat, theta_p[[1]], theta_p[[2]]))
+    }
+    
+    T_corr_mle <- gridSearch(fun = trunc_likeli_helper, 
+                             levels = list(thetas, ps), dat = dat, 
+                             method = "multicore")
+    
+    mu_corr_mle <- T_corr_mle$minlevels[1] * dat$sgm_th[1]
+    p_mle <- T_corr_mle$minlevels[2]
+    
+    return(c(mu_corr_mle, p_mle))
+    
+  } else {
+    likelihoods <- sapply(thetas, 
+                          function(theta) prod(trunc_likeli(dat, theta, p)))
+    #plot(thetas, likelihoods, type = "l")
+    T_corr_mle <- thetas[which(max(likelihoods) == likelihoods)]
+    mu_corr_mle <- T_corr_mle * dat$sgm_th[1]
+    
+    return(mu_corr_mle)
+  } 
 }

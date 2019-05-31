@@ -7,6 +7,9 @@ require("data.table")
 require("ggplot2")
 require("gridExtra")
 
+# for optimisations
+require("NMOF") #gridSearch
+
 # custom functions
 source("./functions/helper_functions.R")
 
@@ -54,7 +57,8 @@ clt <- dat[id == "clt", ]
 vst <- dat[id == "vst", ]
 stud <- dat[id == "stud", ]
 
-funnel_plotter(clt, vst, vst, xlim = x_lim, ylim = y_lim, figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
+funnel_plotter(clt, vst, vst, xlim = x_lim, ylim = y_lim, 
+               figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
 
 ## Situtation 1B:
 ## only keep studies which turned out to be significant
@@ -63,7 +67,8 @@ vst_sig <- vst[H1 == 1, ]
 stud_sig <- stud[H1 == 1, ]
 label <- "1B"
 
-funnel_plotter(clt_sig, vst_sig, stud_sig, xlim = x_lim, ylim = y_lim, figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
+funnel_plotter(clt_sig, vst_sig, stud_sig, xlim = x_lim, ylim = y_lim, 
+               figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
 
 ## Situtation 2A:
 ## only keep 100 studies in total, but weigh according to study size;
@@ -73,14 +78,20 @@ probs <- c(0.29, 0.24, 0.2, 0.14, 0.09, 0.03, 0.01)
 n_tot <- 100
 label <- "2A"
 
-clt <- select_studies(dat, probs, n_studies_selected, n_select = n_tot, sample_seed, T_id = "clt")
-clt <- select_studies(dat, 0.2, n_studies_selected, n_select = NULL, sample_seed, T_id = "clt")
-vst <- select_studies(dat, probs, n_studies_selected, n_select = n_tot, sample_seed, T_id = "vst")
-stud <- select_studies(dat, probs, n_studies_selected, n_select = n_tot, sample_seed, T_id = "stud")
+clt <- select_studies(dat, probs, n_studies_selected, 
+                      n_select = n_tot, sample_seed, T_id = "clt")
+clt <- select_studies(dat, 0.2, n_studies_selected, 
+                      n_select = NULL, sample_seed, T_id = "clt")
+vst <- select_studies(dat, probs, n_studies_selected, 
+                      n_select = n_tot, sample_seed, T_id = "vst")
+stud <- select_studies(dat, probs, n_studies_selected, 
+                       n_select = n_tot, sample_seed, T_id = "stud")
 
-stopifnot(sum(clt$mu1_hat - vst$mu1_hat) == 0, sum(stud$mu1_hat - vst$mu1_hat) == 0)
+stopifnot(sum(clt$mu1_hat - vst$mu1_hat) == 0, 
+          sum(stud$mu1_hat - vst$mu1_hat) == 0)
 
-funnel_plotter(clt, vst, vst, xlim = x_lim, ylim = y_lim, figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
+funnel_plotter(clt, vst, vst, xlim = x_lim, ylim = y_lim, 
+               figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
 
 ## Situtation 2B:
 ## only keep studies which turned out to be significant
@@ -89,18 +100,27 @@ vst_sig <- vst[H1 == 1, ]
 stud_sig <- stud[H1 == 1, ]
 label <- "2B"
 
-funnel_plotter(clt_sig, vst_sig, stud_sig, xlim = x_lim, ylim = y_lim, figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
+funnel_plotter(clt_sig, vst_sig, stud_sig, xlim = x_lim, ylim = y_lim, 
+               figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
 
 ## Situtation 2C:
-## only keep studies which turned out to be significant and small percentage of non-significant studies
+## only keep studies which turned out to be significant and small percentage of 
+## non-significant studies
 sel_prob <- 0.1 # percentage of significant studies to keep
 probs_mix <- c(0, 0, 0.1, 0.1, 0.1, 0.1, 0.1)
-clt_mix <- rbind(clt_sig, select_studies(clt[H1 == 0, ], sel_prob, n_studies_selected, n_select = NULL, sample_seed, T_id = "clt"))
-vst_mix <- rbind(vst_sig, select_studies(vst[H1 == 0, ], sel_prob, n_studies_selected, n_select = NULL, sample_seed, T_id = "vst"))
-stud_mix <- rbind(stud_sig, select_studies(stud[H1 == 0, ], sel_prob, n_studies_selected, n_select = NULL, sample_seed, T_id = "stud"))
+clt_mix <- rbind(clt_sig, 
+                 select_studies(clt[H1 == 0, ], sel_prob, n_studies_selected, 
+                                n_select = NULL, sample_seed, T_id = "clt"))
+vst_mix <- rbind(vst_sig, 
+                 select_studies(vst[H1 == 0, ], sel_prob, n_studies_selected, 
+                                n_select = NULL, sample_seed, T_id = "vst"))
+stud_mix <- rbind(stud_sig, 
+                  select_studies(stud[H1 == 0, ], sel_prob, n_studies_selected, 
+                                 n_select = NULL, sample_seed, T_id = "stud"))
 label <- "2C"
 
-funnel_plotter(clt_mix, vst_mix, stud_mix, xlim = x_lim, ylim = y_lim, figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
+funnel_plotter(clt_mix, vst_mix, stud_mix, xlim = x_lim, ylim = y_lim, 
+               figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
 
 # function to calculate the aggregated mean of the studies
 aggregate_mean <- function(dat) {
@@ -112,8 +132,8 @@ aggregate_mean(clt)
 aggregate_mean(vst)
 
 ### Calculate number of papers stored in file drawer based Rosenthal 1984 -----
-# problem: Filedrawer problem only works for checking whether there is no null effect;
-# it doesn't work in situations in which there really is an effect
+# problem: Filedrawer problem only works for checking whether there is no null 
+# effect; it doesn't work in situations in which there really is an effect
 dat_list <- list(clt, vst, stud, clt_sig, vst_sig, stud_sig)
 
 filedrawer <- c()
@@ -141,43 +161,31 @@ aggregate_mean(clt_mix_filled)
 aggregate_mean(clt_mix_filled_2)
 
 ### Calculate reweighted mean based MLE estimator -----------------------------
+## Andrews-Kasy maximum likelihood estimator
 
-# Andrews-Kasy maximum likelihood estimator, assuming pub_prob is known
+# calculate mle with known p
+theta_0 <- mean(clt_mix$Tn)/clt_mix$sgm_th[1]
 
-# expected publication probability
-# theta = mu/sgm
-exp_pub_prob <- function(theta, alph, p, n_study) {
-  quant <- qnorm(alph, 0, 1, lower.tail = FALSE)
-  expect <- p * pnorm(quant / sqrt(n_study), theta, 1 / sqrt(n_study)) + 
-            1 * pnorm(quant / sqrt(n_study), theta, 1 / sqrt(n_study), lower.tail = FALSE)
-  return(expect)
-}
+thetas <- seq(theta_0-2, theta_0, by = 0.001) # theta = mu / sgm_th
+mu_mle_corr <- trunc_mle(clt_mix, thetas, p = 0.1)
+mu_mle_corr
 
-# likelihood function
-likeli <- function(z, theta, n_study) {
-  lik <- dnorm(z / sqrt(n_study), mean = theta, 1 / sqrt(n_study)) # same as: dnorm(z-theta,0,1)
-  return(lik)
-}
+# calculate mle without known p
+ps <- seq(0, 1, by = 0.01)
+start.time <- Sys.time()
+min_levels <- trunc_mle(clt_mix, thetas)
+print(Sys.time() - start.time)
 
-# calculate truncated likelihood of theta given the data
-trunc_likeli <- function(dat, theta, p) {
-  alph <- dat$alpha[1]
-  z <- dat$Tn
-  n_studies <- dat$n_study
-  likelihood <- sapply(1:length(z), function(i) likeli(z[i], theta, n_studies[i]))
-  expected_pub_prob <- sapply(n_studies, function(n_study) exp_pub_prob(theta, alph, p, n_study))
-  lik <- calculate_pub_prob(dat, p) / expected_pub_prob * likelihood
+mu_mle_corr <- min_levels[1]
+mu_mle_corr
+p_mle <- min_levels[2]
+p_mle
 
-  return(lik)
-}
+# next steps: 
+# Add publication probility dependent on study size 
+# add implementation with unknown sigma
 
-thetas <- seq(-3, 3, by = 0.01) # theta = mu / sgm_th
-
-likelihoods <- sapply(thetas, function(theta) prod(trunc_likeli(clt_mix, theta, p = .1)))
-plot(thetas, likelihoods, type = "l")
-T_corr_mle <- thetas[which(max(likelihoods) == likelihoods)]
-mu_corr_mle <- T_corr_mle*clt_mix$sgm_th[1]
-mu_corr_mle
+mu_corr <- sapply(ps, function(p) trunc_mle(clt_mix, thetas, p))
 
 # transform Z scores into estimates of mu
 z_to_mu <- function(z, n, sgm_X) {
