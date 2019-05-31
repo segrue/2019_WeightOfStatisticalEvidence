@@ -74,6 +74,7 @@ n_tot <- 100
 label <- "2A"
 
 clt <- select_studies(dat, probs, n_studies_selected, n_select = n_tot, sample_seed, T_id = "clt")
+clt <- select_studies(dat, 0.2, n_studies_selected, n_select = NULL, sample_seed, T_id = "clt")
 vst <- select_studies(dat, probs, n_studies_selected, n_select = n_tot, sample_seed, T_id = "vst")
 stud <- select_studies(dat, probs, n_studies_selected, n_select = n_tot, sample_seed, T_id = "stud")
 
@@ -144,44 +145,39 @@ aggregate_mean(clt_mix_filled_2)
 # Andrews-Kasy maximum likelihood estimator, assuming pub_prob is known
 
 # expected publication probability
-exp_pub_prob <- function(theta, alph, p) {
+# theta = mu/sgm
+exp_pub_prob <- function(theta, alph, p, n_study) {
   quant <- qnorm(alph, 0, 1, lower.tail = FALSE)
-  expect <- p * pnorm(quant, theta, 1) + 1 * pnorm(quant, theta, 1, lower.tail = FALSE)
+  expect <- p * pnorm(quant / sqrt(n_study), theta, 1 / sqrt(n_study)) + 
+            1 * pnorm(quant / sqrt(n_study), theta, 1 / sqrt(n_study), lower.tail = FALSE)
   return(expect)
 }
-exp_pub_prob(0, 0.05, 0.2)
 
 # likelihood function
-likeli <- function(z, theta) {
-  lik <- dnorm(z, mean = theta, 1) # same as: dnorm(z-theta,0,1)
+likeli <- function(z, theta, n_study) {
+  lik <- dnorm(z / sqrt(n_study), mean = theta, 1 / sqrt(n_study)) # same as: dnorm(z-theta,0,1)
   return(lik)
 }
 
 # calculate truncated likelihood of theta given the data
 trunc_likeli <- function(dat, theta, p) {
   alph <- dat$alpha[1]
-  z <- dat$Tn / sqrt(dat$n_study)
-  # checking whether all alpha levels and all transformations are the same
-  # is done by "calculate_pub_prob"
-  lik <- calculate_pub_prob(dat, p) / exp_pub_prob(theta, alph, p) * likeli(z, theta)
-  #lik <- calculate_pub_prob(dat, p) * likeli(z, theta)
-  #idea: EM algorithm for this value
+  z <- dat$Tn
+  n_studies <- dat$n_study
+  likelihood <- sapply(1:length(z), function(i) likeli(z[i], theta, n_studies[i]))
+  expected_pub_prob <- sapply(n_studies, function(n_study) exp_pub_prob(theta, alph, p, n_study))
+  lik <- calculate_pub_prob(dat, p) / expected_pub_prob * likelihood
+
   return(lik)
 }
 
-thetas <- seq(-4, 4, by = 0.01)
+thetas <- seq(-3, 3, by = 0.01) # theta = mu / sgm_th
 
-likelihoods <- sapply(thetas, function(theta) prod(trunc_likeli(clt_mix, theta, p = 0.1)))
-plot(thetas, likelihoods)
-T_corr <- thetas[which(max(likelihoods) == likelihoods)]
-T_corr
-
-prod(calculate_pub_prob(clt_mix, 0.1) / exp_pub_prob(0.54, 0.05, 0.1) * likeli(clt_mix$Tn, 0.54))
-
-theta <- 2
-
-tes <- calculate_pub_prob(clt_mix,0.1)/exp_pub_prob(theta,0.05,0.1)*likeli(clt_mix$Tn,theta)
-plot(clt_mix$Tn,tes)
+likelihoods <- sapply(thetas, function(theta) prod(trunc_likeli(clt_mix, theta, p = .1)))
+plot(thetas, likelihoods, type = "l")
+T_corr_mle <- thetas[which(max(likelihoods) == likelihoods)]
+mu_corr_mle <- T_corr_mle*clt_mix$sgm_th[1]
+mu_corr_mle
 
 # transform Z scores into estimates of mu
 z_to_mu <- function(z, n, sgm_X) {
@@ -190,8 +186,6 @@ z_to_mu <- function(z, n, sgm_X) {
 }
 
 z_to_mu(T_corr,sum(clt_mix$n_study),clt_mix$sgm_th[1])
-
-
 
 Tn_to_mu_hat <- function(T_corr, dat) {
   mu_hat <- T_corr * sqrt(sum(dat$n_study * dat$sgm_th^2)) / sum(dat$n_study)
