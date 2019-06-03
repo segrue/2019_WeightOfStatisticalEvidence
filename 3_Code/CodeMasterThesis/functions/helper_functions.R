@@ -401,17 +401,27 @@ select_studies <- function(dat, probs, n_studies, n_select, seed, T_id) {
 ## problem: Filedrawer problem only works for checking whether there is no null
 ## effect; it doesn't work in situations in which there really is an effects
 
-calc_filedrawer <- function(dat) {
+calc_filedrawer <- function(dat, exact = F) {
   if (length(unique(dat$alpha)) > 1 | length(unique(dat$id)) > 1) {
     stop("Only test results evaluated at the same alpha threshold 
          and based on the same evidence metric are permitted.")
   } else {
     alph <- dat$alpha[1]
   }
-  Z <- qnorm(dat$p, 0, 1, lower.tail = FALSE)
-  k <- length(Z)
+  
+  z <- qnorm(dat$p, 0, 1, lower.tail = FALSE)
+  z_k <- mean(z)
+  k <- length(z)
   q <- qnorm(1 - alph)
-  filedrawer <- (k * mean(Z) / q)^2 - k
+  
+  if (exact == F){
+    filedrawer <- (k * z_k / q)^2 - k
+  } else {
+    z_x <- -dnorm(q) / pnorm(q) # mean of truncated standard normal distribution
+    filedrawer <- (-2 * k * z_k * z_x + q^2 - 
+                    q * sqrt(4 * k * z_x^2 - 4 * k * z_k * z_x + q^2)) /
+                  (2 * z_x^2)
+  }
   return(filedrawer)
 }
 
