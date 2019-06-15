@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557852325107.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "5ACA4528",
+    "lastKnownWriteTime" : 1560167782,
+    "last_content_update" : 1560167782766,
+    "path" : "~/Tresorit_Local/EPFL_COMP_SC_ENG/MasterThesis/2019_StatisticalEvidence/3_Code/CodeMasterThesis/scripts/PublicationBias.R",
+    "project_path" : "scripts/PublicationBias.R",
+    "properties" : {
+        "cursorPosition" : "12,18",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

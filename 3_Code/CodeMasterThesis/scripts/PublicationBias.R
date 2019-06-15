@@ -123,13 +123,13 @@ funnel_plotter(clt_mix, vst_mix, stud_mix, xlim = x_lim, ylim = y_lim,
                figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
 
 # function to calculate the aggregated mean of the studies
-aggregate_mean <- function(dat) {
+weighted_mean <- function(dat) {
   agg_mean <- sum(dat$mu1_hat * dat$n_study) / sum(dat$n_study)
   return(agg_mean)
 }
-aggregate_mean(stud)
-aggregate_mean(clt)
-aggregate_mean(vst)
+weighted_mean(stud)
+weighted_mean(clt)
+weighted_mean(vst)
 
 ### Calculate number of papers stored in file drawer based Rosenthal 1984 -----
 # problem: Filedrawer problem only works for checking whether there is no null 
@@ -156,9 +156,9 @@ weigh_mean <- reweight_mean(dat, pub_prob)
 clt_mix_filled <- trim_and_fill(clt_mix)
 clt_mix_filled_2 <- trim_and_fill(clt_mix, pub_prob = 0.1)
 
-aggregate_mean(clt_mix)
-aggregate_mean(clt_mix_filled)
-aggregate_mean(clt_mix_filled_2)
+weighted_mean(clt_mix)
+weighted_mean(clt_mix_filled)
+weighted_mean(clt_mix_filled_2)
 
 ### Calculate reweighted mean based MLE estimator -----------------------------
 ## Andrews-Kasy maximum likelihood estimator
@@ -185,7 +185,35 @@ p_mle
 # Add publication probility dependent on study size 
 # add implementation with unknown sigma
 
+## Ioannidis - excess of p values
+# chi square test
+
+# binomial test
+e <- c(32.6,22.2,35,18.6,27.4,29.6,6.1,4.1)
+o <- c(37,20,40,27,36,35,11,7)
+n <- c(98,55,80,70,75,64,135,155)
+p <- e/n
+
+pval <- function(o, e, n, p){
+  if (o < e){
+    p <- pbinom(o, n, p) + pbinom(2*e - o, n, p, lower.tail =F)
+  } else {
+    p <- pbinom(o, n, p, lower.tail = F) + pbinom(2*e - o, n, p)
+  }
+  return(p)
+}
+
+A <- ((o-e)^2/e+(o-e)^2/(n-e))
+
+pchisq(A,1,ncp=0, lower.tail = F)
+
+ps <- sapply(1:length(e), function(i) pval(o[i], e[i], n[i], p[i]))
+ps
+
 mu_corr <- sapply(ps, function(p) trunc_mle(clt_mix, thetas, p))
+
+require("poibin")
+dpoibin()
 
 # transform Z scores into estimates of mu
 z_to_mu <- function(z, n, sgm_X) {
@@ -229,7 +257,7 @@ calc_T_tot <- function(dat) {
 
 calc_T_tot(clt_mix)
 
-aggregate_mean(clt_mix)
+weighted_mean(clt_mix)
 
 # calculate median bias
 median_bias <- function(mu, alph, n) {
@@ -330,7 +358,7 @@ pub_prob <- calc_pub_prob(z, trunc_dens_T, 0.2)
 rew_mean <- reweighted_mean(clt_mix, pub_prob)
 rew_mean
 
-aggregate_mean(clt_mix)
+weighted_mean(clt_mix)
 
 
 

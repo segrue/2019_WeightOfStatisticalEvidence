@@ -1,4 +1,4 @@
-### import packages ----
+### import packages ------------------------------------------------------------
 
 #for plotting
 require("ggplot2") #http://www.sthda.com/english/wiki/ggplot2-histogram-plot-quick-start-guide-r-software-and-data-visualization
@@ -20,7 +20,7 @@ plotter <- function(dat){
     ylim(0,1) + ggtitle(bquote("Study size"==.(dat$n_study[1]))) + labs(x= "Quantiles", y = "Cumulative Probability")
 }
 
-#task: plott all four figurs (one for each n_study) on the same
+#task: plot all four figurs (one for each n_study) on the same page
 pdf(paste0("./figs/quantiles_binom_",corr,".pdf"),onefile=TRUE)
 p1 <- plotter(quantiles[quantiles$n_study==5,])
 p2 <- plotter(quantiles[quantiles$n_study==10,])

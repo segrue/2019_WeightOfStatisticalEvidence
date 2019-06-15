@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557759572011.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "C22D2FC5",
+    "lastKnownWriteTime" : 1560582764,
+    "last_content_update" : 1560582764501,
+    "path" : "~/Tresorit_Local/EPFL_COMP_SC_ENG/MasterThesis/2019_StatisticalEvidence/3_Code/CodeMasterThesis/scripts/Figures.R",
+    "project_path" : "scripts/Figures.R",
+    "properties" : {
+        "cursorPosition" : "4,20",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

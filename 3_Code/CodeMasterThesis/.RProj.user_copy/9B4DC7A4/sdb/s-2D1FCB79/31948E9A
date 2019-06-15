@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "# Simulate p-values - Binomial case ----\n\n# set up initialisation values ----\nrequire(\"RColorBrewer\")\nn <- 100\np0 <- 0.5\nps <- seq(0.0,1,by=0.1)\ncols <- brewer.pal(length(ps), \"Set3\")\nsims <- 10000\nn_bins <- 10\nhist_breaks=seq(0,1,l=n_bins+1)\nmid_points <- seq(1/n_bins/2,1-(1/n_bins/2),by=1/n_bins)\n\n# the easy-peasy way using the \"TeachingDemos\" package\nrequire(\"TeachingDemos\")\n\nhelper_pval <- function(p){\n  pval <- Pvalue.binom.sim(n=n,p=p,p0=p0,test=\"exact\",alternative=\"greater\",\n                         alpha=0.05,B=sims)\n  #p_dens <- density(pval,bw=0.01,kernel=\"gaussian\",weights=rep(1/sims,sims),from=0,to=1,n=hist_bins+1,\n                    #cut=0,adjust=1)\n  #plot(p_dens,ylim=c(0,1))\n  pval_density <- hist(pval,breaks=hist_breaks,plot=FALSE)$density/n_bins\n  return(pval_density)\n}\n\npvals <- data.frame(sapply(ps,helper_pval))\npvals <- cbind(mid_points,pvals)\ncolnames(pvals) <- c(\"mid\",as.character(ps))\n\n# plot values\nrequire(\"ggplot2\") #http://www.sthda.com/english/wiki/ggplot2-histogram-plot-quick-start-guide-r-software-and-data-visualization\nrequire(\"reshape2\") #https://stackoverflow.com/questions/21563864/ggplot2-overlay-density-plots-r\n\ndata <- melt(pvals,id.vars = \"mid\")\nggplot(data,aes(x=mid,y=value,color=variable))+geom_line()+scale_color_manual(values=cols)\n\n# the more tedious, but also more insightful way\n\n\n# Simulate p-values - approximately normall case ----\nn <- 100000\np0 <- 0.5\nps <- seq(0.0,1,by=0.1)\ncols <- brewer.pal(length(ps), \"Set3\")\nsims <- 10000\nn_bins <- 10\nhist_breaks=seq(0,1,l=n_bins+1)\nmid_points <- seq(1/n_bins/2,1-(1/n_bins/2),by=1/n_bins)\n\n\nhelper_pval <- function(p){\n  pval <- Pvalue.binom.sim(n=n,p=p,p0=p0,test=\"exact\",alternative=\"greater\",\n                           alpha=0.05,B=sims)\n  #p_dens <- density(pval,bw=0.01,kernel=\"gaussian\",weights=rep(1/sims,sims),from=0,to=1,n=hist_bins+1,\n  #cut=0,adjust=1)\n  #plot(p_dens,ylim=c(0,1))\n  pval_density <- hist(pval,breaks=hist_breaks,plot=FALSE)$density/n_bins\n  return(pval_density)\n}\n\nx <- ribnom(n,p)\n",
+    "created" : 1551647274962.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1571680152",
+    "id" : "31948E9A",
+    "lastKnownWriteTime" : 1551743276,
+    "last_content_update" : 1551743862509,
+    "path" : "~/Tresorit_Local/EPFL_COMP_SC_ENG/MasterThesis/3_Code/CodeMasterThesis/SimulationPValues.R",
+    "project_path" : "SimulationPValues.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

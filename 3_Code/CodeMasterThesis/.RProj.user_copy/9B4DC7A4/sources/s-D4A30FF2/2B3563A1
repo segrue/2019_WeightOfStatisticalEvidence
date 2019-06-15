@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557839682668.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "254|27|344|3|\n",
+    "hash" : "0",
+    "id" : "2B3563A1",
+    "lastKnownWriteTime" : 1557852595,
+    "last_content_update" : 1557852595714,
+    "path" : "~/Tresorit_Local/EPFL_COMP_SC_ENG/MasterThesis/2019_StatisticalEvidence/3_Code/CodeMasterThesis/scripts/OneSampleBinomialTest.R",
+    "project_path" : "scripts/OneSampleBinomialTest.R",
+    "properties" : {
+        "cursorPosition" : "177,0",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

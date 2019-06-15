@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557759389443.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "4FDEDF5F",
+    "lastKnownWriteTime" : 1558858566,
+    "last_content_update" : 1558858566947,
+    "path" : "~/Tresorit_Local/EPFL_COMP_SC_ENG/MasterThesis/2019_StatisticalEvidence/3_Code/CodeMasterThesis/scripts/EvidenceInTStatistic.R",
+    "project_path" : "scripts/EvidenceInTStatistic.R",
+    "properties" : {
+        "cursorPosition" : "83,78",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

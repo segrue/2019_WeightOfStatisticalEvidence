@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557759384270.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "6A3303F1",
+    "lastKnownWriteTime" : 1558287386,
+    "last_content_update" : 1558287386108,
+    "path" : "~/Tresorit_Local/EPFL_COMP_SC_ENG/MasterThesis/2019_StatisticalEvidence/3_Code/CodeMasterThesis/scripts/SimulateStudies.R",
+    "project_path" : "scripts/SimulateStudies.R",
+    "properties" : {
+        "cursorPosition" : "5,17",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
