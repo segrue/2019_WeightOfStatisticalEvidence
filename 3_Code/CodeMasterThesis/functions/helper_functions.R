@@ -11,13 +11,13 @@ require("RColorBrewer")
 
 ### functions needed for simulation of evidence in multiple scripts ----
 # vst for binomial variable
-vst <- function(p0, p1, n) {
+vst_binom <- function(p0, p1, n) {
   Tn <- 2 * sqrt(n) * (asin(sqrt(p1)) - asin(sqrt(p0)))
   return(Tn)
 }
 
 # z-statistic based on CLT for binomial variable
-clt <- function(p0, p1, n) {
+z_stat_binom <- function(p0, p1, n) {
   Tn <- (p1 - p0) / sqrt((p1 * (1 - p1) / n))
   return(Tn)
 }
