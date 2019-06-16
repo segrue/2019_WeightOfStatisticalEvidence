@@ -7,20 +7,6 @@ require("data.table")
 source("./functions/helper_functions.R")
 
 # Define starting assumptions and conditions ----
-# hypotheses:
-# H0: p = p0
-# H1: p > p0
-# Note: all calculations be
-n_studies <- seq(5,1000)
-n_sim <- 5e3
-n_sim_rss <- 1000
-alpha <- 0.001
-p1s <- seq(0.01,0.99,by=0.01)
-p0 <- 0
-probs <- seq(0.01,0.99,length.out=100) #probs for which to calculate quantiles
-seed <- 20190505
-set.seed(20190505)
-
 #calculates rss
 rss_calculator <- function(x,y,avg=T){
   if (avg==T){
@@ -42,6 +28,10 @@ dat_transform_quantiles <- function(T_avg,id,n_study){
 }
 
 #calculate and save theoretical distributions Zn and Vn
+# hypotheses:
+# H0: p <= p0
+# H1: p > p0
+# Note: all calculations be
 p1s <- c(0.1,0.5,0.9)
 p0 <- 0
 n_studies <- c(5,10,20,30)
@@ -49,7 +39,7 @@ probs <- seq(0.01,0.99,length.out=100)
 n_sim <- 5e3
 cols <- c("cdf","p1","quantile","id","n_study","p0")
 seed <- 20190505
-corr <- T
+corr <- F
 correction <- ifelse(corr,"Ans","MLE")
 name <- paste0("binom_quantiles_",correction,"_",n_sim,"_",seed)
 
@@ -77,13 +67,18 @@ for (i in 1:length(n_studies)){
   } else {
     #MLE estimator without continuity correction p_hat <- x/n 
     p1_hats <- sapply(p1s, function(p1) rbinom(n_sim,n_study,p1))/n_study 
+    p1_hats[p1_hats==0] <- 1e-6 #add small value to prevent infinity values
+    p1_hats[p1_hats==1] <- 1-1e-6 #remove small value to prevent infinity values
   }
   # calculate quantiles of Vn and Zn
   # difference (diffs <- mus_Zn-mus_Vn) needs to be added so that Vn and Zn 
   # are centered around the same mean to facilitate comparison of normalty
   Vn <- sapply(idx, function(j) vst_binom(p0,p1_hats[,j],n_study)+diffs[j])
   Zn <- sapply(idx, function(j) z_stat_binom(p0,p1_hats[,j],n_study))
+  #replace infinity values by NA
   Zn[is.infinite(Zn)] <- NA
+  #replace infinity values with 999 or -999 to enable calculation
+  #Zn[is.infinite(Zn)] <- 999*sign(Zn[is.infinite(Zn)])
   
   Zn_q <- dat_transform_quantiles((sapply(idx, function(j) quantile(Zn[,j],probs,na.rm=T))),"Zn",n_study)
   Vn_q <- dat_transform_quantiles((sapply(idx, function(j) quantile(Vn[,j],probs,na.rm=T))),"Vn",n_study)

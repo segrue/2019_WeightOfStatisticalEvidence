@@ -36,7 +36,7 @@ vst_var_est <- function(mu0, mu1, sgm_est, n_study, corr = F) {
   }
 }
 
-calc_T <- function(mu0s, mu1s, sgm1s, n_study, func, T_corr) {
+calc_evidence <- function(mu0s, mu1s, sgm1s, n_study, func, T_corr) {
   if (missing(sgm1s)) {
     Tn <- apply(mu1s, 1, function(p1) sapply(mu0s, function(p0) func(p0, p1, n_study)))
   } else {
@@ -46,13 +46,17 @@ calc_T <- function(mu0s, mu1s, sgm1s, n_study, func, T_corr) {
       Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0, mu1s[mu1, ], sgm1s[mu1, ], n_study, corr = T_corr)))
     }
   }
+  
+  #replace infinity values by NA
   Tn[is.infinite(Tn)] <- NA
+  #replace infinity values with 999 or -999 to enable calculation
+  #Tn[is.infinite(Tn)] <- 999*sign(Tn[is.infinite(Tn)])
   return(Tn)
 }
 
 # brings data into the correct form for plottings
-dat_transform <- function(T_avg, T_sd, th_emp, id, n_study, cols, mu0s, mu1s) {
-  dat <- merge(melt(T_avg), melt(T_sd), by = c("Var1", "Var2"), sort = FALSE)
+dat_transform <- function(T_avg, evd_sd, th_emp, id, n_study, cols, mu0s, mu1s) {
+  dat <- merge(melt(T_avg), melt(evd_sd), by = c("Var1", "Var2"), sort = FALSE)
   dat <- cbind(dat, th_emp, id, n_study)
   colnames(dat) <- cols
   dat[, 1] <- rep(mu0s, times = length(mu1s))
@@ -78,12 +82,12 @@ ci_coverage <- function(Ts, T_avg, crit_val) {
   return(Ts_coverage)
 }
 
-T_averager <- function(Ts, mu0s, mu1s) {
+avg_evidence <- function(Ts, mu0s, mu1s) {
   Ts_avg <- matrix(apply(Ts, 1, mean, na.rm = TRUE), length(mu0s), length(mu1s), byrow = TRUE)
   return(Ts_avg)
 }
 
-T_sd <- function(Ts, mu0s, mu1s) {
+sd_evidence <- function(Ts, mu0s, mu1s) {
   Ts_avg <- matrix(apply(Ts, 1, sd, na.rm = TRUE), length(mu0s), length(mu1s), byrow = TRUE)
   return(Ts_avg)
 }
@@ -119,7 +123,7 @@ mat2df <- function(mats, id) {
 evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_studies, n_sim, fig_name) {
   cols_tot <- c(
     "sim", "mu1", "mu1_hat", "sgm_hat", "sgm_th", "Tn", "p", "id", "T_avg_th", "T_avg_emp",
-    "T_sd_th", "T_sd_emp", "n_study", "correction", "mu0", "mu1_hat_mean", "sgm_hat_mean", "CI", "CI_crit_value", "alpha", "H1", "H0_crit_val"
+    "evd_sd_th", "evd_sd_emp", "n_study", "correction", "mu0", "mu1_hat_mean", "sgm_hat_mean", "CI", "CI_crit_value", "alpha", "H1", "H0_crit_val"
   )
 
   evidence_df <- data.table(matrix(NA, nrow = 0, ncol = length(cols_tot)))
@@ -136,7 +140,7 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
       # calculate empirical and theoretical mus
       set.seed(seed)
       mu1_hats <- sapply(mu1s, function(mu1) sapply(1:n_sim, function(y) mean(rnorm(n_study, mu1, sgm0))))
-      mu1_hats_mean <- T_averager(t(mu1_hats), mu0s, mu1s)
+      mu1_hats_mean <- avg_evidence(t(mu1_hats), mu0s, mu1s)
 
       # calculate empirical and theoretical sgm
       set.seed(seed)
@@ -148,16 +152,16 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
             function(sim) sqrt(1 / (n_study - 1) * sum((rnorm(n_study, mu1s[mu1], sgm0) - mu1_hats[sim, mu1])^2))
           )
       )
-      sgm_hats_mean <- T_averager(t(sgm_hats), mu0s, mu1s)
+      sgm_hats_mean <- avg_evidence(t(sgm_hats), mu0s, mu1s)
 
       sgm_th <- matrix(rep(sgm0, length(mu1_hats)), n_sim, length(mu1s), byrow = TRUE)
 
       # calculate theoretical and empiral evidence based on clt-vst
       # this gives the distribution of the values if the clt holds, i.e. if we know the sd
-      T_clt_emp <- calc_T(mu0s, mu1_hats, sgm_th, n_study, vst_var_known)
+      T_clt_emp <- calc_evidence(mu0s, mu1_hats, sgm_th, n_study, vst_var_known)
 
-      T_clt_emp_avg <- T_averager(T_clt_emp, mu0s, mu1s)
-      T_clt_emp_sd <- T_sd(T_clt_emp, mu0s, mu1s)
+      T_clt_emp_avg <- avg_evidence(T_clt_emp, mu0s, mu1s)
+      T_clt_emp_sd <- sd_evidence(T_clt_emp, mu0s, mu1s)
 
       T_clt_th_avg <- sapply(mu1s, function(mu1) vst_var_known(mu0s, mu1, sgm0, n_study))
       T_th_sd <- matrix(1, nrow = dim(matrix(T_clt_th_avg))[1], ncol = dim(matrix(T_clt_th_avg))[2])
@@ -172,10 +176,10 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
 
       # calculate theoretical and empirical evidence based on clt-vst, but using empirical sd instead of theoretical
       # this gives us values if we assume the clt holds, but we do not know the sd and just use the empirical sd instea
-      T_clt_emp_stud <- calc_T(mu0s, mu1_hats, sgm_hats, n_study, vst_var_known)
+      T_clt_emp_stud <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, vst_var_known)
 
-      T_clt_emp_stud_avg <- T_averager(T_clt_emp_stud, mu0s, mu1s)
-      T_clt_emp_stud_sd <- T_sd(T_clt_emp_stud, mu0s, mu1s)
+      T_clt_emp_stud_avg <- avg_evidence(T_clt_emp_stud, mu0s, mu1s)
+      T_clt_emp_stud_sd <- sd_evidence(T_clt_emp_stud, mu0s, mu1s)
       #
       # #not that the "theoretical" distribution of T_clt_stud is the same as the theoretical
       # #distribution of T_clt, which admittedly is pretty nonsensical in this context
@@ -193,11 +197,11 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
       T_clt_stud_df <- cbind(mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(T_clt_emp_stud), t(p_clt_stud)), id = "stud"), T_clt_stud_averages)
 
       # calculate theoretical and empiral evidence based on Student-t vst
-      T_vst_emp <- calc_T(mu0s, mu1_hats, sgm_hats, n_study, vst_var_est)
+      T_vst_emp <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, vst_var_est)
       T_vst_df <- mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(T_vst_emp)), id = "vst")
 
-      T_vst_emp_avg <- T_averager(T_vst_emp, mu0s, mu1s)
-      T_vst_emp_sd <- T_sd(T_vst_emp, mu0s, mu1s)
+      T_vst_emp_avg <- avg_evidence(T_vst_emp, mu0s, mu1s)
+      T_vst_emp_sd <- sd_evidence(T_vst_emp, mu0s, mu1s)
 
       T_vst_th_avg <- sapply(mu1s, function(mu1) vst_var_est(mu0s, mu1, sgm0, n_study))
       #

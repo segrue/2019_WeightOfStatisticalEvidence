@@ -101,10 +101,11 @@ ggsave(filename= paste0(out_path,figname,".pdf"),plot=fig1,
 ### Figure 2.2: Normal fit of Zn & Vn based on binomial ------------------------
 ### (fig:normal_fit_binomial_[Corr])
 corr <- "MLE" # either "MLE" for no correction or "Ans" vor Anscombe correction
+
 # define figure name
 figname <- paste0("ch2_fig2_normal_fit_binomial_",corr)
 
-#load quantiles
+#load data
 load(paste0(in_path,"binom_quantiles_",corr,"_5000_20190505.RData"),
      verbose=TRUE)
 # variables are
@@ -119,32 +120,37 @@ load(paste0(in_path,"binom_quantiles_",corr,"_5000_20190505.RData"),
 #plotting multiple plots in one window: https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html
 #n=5
 
-cdf_plotter <- function(dat){
+cdf_plotter <- function(dat) {
+  q_min <- min(dat[id=="th",]$quantile)
+  q_max <- max(dat[id=="th",]$quantile)
   cdf_plot <- ggplot(data=dat,aes(x=quantile,y=cdf, col=id, 
                                 group=interaction(p1,id),linetype=factor(p1))) + 
     geom_line() + scale_color_manual(name = "F(x):", 
                                      labels = c(bquote(Phi(x-E*"["*Z[n]*"]")),bquote(Z[n]),
                                                 bquote(V[n]-E*"["*V[n]*"]"+E*"["*Z[n]*"]")),
-                                     values=c("th"=2,"Zn"=3,"Vn"=4))+
+                                     values=c("th"="green","Zn"="blue","Vn"="red"))+
     scale_linetype_manual(name = bquote(H[1]~":"), 
                           labels = c(bquote(p==0.1), bquote(p==0.5),
                                      bquote(p==0.9)),
                           values = c("solid","dashed","dotdash")) +
-    ylim(0,1) + ggtitle(bquote("x"==.(dat$n_study[1]))) + 
-    labs(x= "x", y = "F(x)") +
+    ylim(0,1) + ggtitle(bquote("n"==.(dat$n_study[1]))) + 
+    labs(x= "x", y = "F(x)") + coord_cartesian(xlim=c(q_min,q_max)) +
     theme(text=element_text(size=font_size, family=font_family),
           plot.title = element_text(size=font_size))
 }
 
 qq_plotter <- function(dat){
+  q_min <- min(dat[id=="th",]$quantile)
+  q_max <- max(dat[id=="th",]$quantile)
   th_quantiles <- qnorm(seq(0.01,0.99,
                             along.with=dat[id=="th" & p1==0.1,quantile]),0,1)
   dat$q_theoretical <- rep(th_quantiles,dim(unique(dat[,.(id,p1)]))[1])
   q_plot <- ggplot(data=dat,aes(x = q_theoretical, y= quantile, col=id, 
                                 group=interaction(p1,id),linetype=factor(p1))) + 
-  geom_line() + scale_color_manual(values=c("th"=2,"Zn"=3,"Vn"=4)) +
+  geom_line() + scale_color_manual(values=c("th"="green","Zn"="blue","Vn"="red")) +
   scale_linetype_manual(values = c("solid","dashed","dotdash")) +
   labs(x= bquote(Phi^{-1}*(x)), y = bquote(F^{-1}*(x))) +
+  coord_cartesian(ylim=c(q_min,q_max)) +
   theme(text=element_text(size=font_size, family=font_family), 
         legend.position="none")
 }
@@ -164,3 +170,92 @@ fig2 <- ggarrange(p1,p2,p3,p4,p5,p6,ncol=2,nrow=3,
 ggsave(filename= paste0(out_path,figname,".pdf"),plot=fig2,
        width=A4[1], height=0.9*A4[2], device = cairo_pdf)
 
+
+### Figure 2.3: Plot Zn & Vn against p1 ----------------------------------------
+### (fig:evidence_binom_[Corr])
+corr <- "MLE"
+
+# define figure name
+figname <- paste0("ch2_fig3_evidence_binom_",corr)
+
+# load data
+load(paste0("data/Ev_Binom_",corr,"_1e+05_20190504.RData"),verbose=TRUE)
+
+
+# plot fit of empirical distribution of Zn and Vn with theoretical dist
+fit_plotter <- function(dat){
+  dat <- dat[id %in% c("Zn","Vn"),]
+  dat_emp <- dat[th_emp=="emp", ]
+  y_min <- min(dat[th_emp=="th" ,]$evd_mean/sqrt(dat$n_study[1]),na.rm=T)
+  y_max <- max(dat[th_emp=="th",]$evd_mean/sqrt(dat$n_study[1]),na.rm=T)
+  fit_plot <- ggplot(data=dat,aes(x=p1,y=evd_mean/sqrt(n_study),
+                                   col=id,group=interaction(factor(p0),th_emp,id),
+                                   linetype=th_emp)) + 
+    geom_line() + 
+    geom_point(data=dat_emp[seq(1, nrow(dat_emp), 2),], 
+               aes(shape=factor(p0)),alpha=1, size = 1) +
+    scale_color_manual(name = "Statistic:", 
+                       labels = c(bquote(Z[n]), bquote(V[n])),
+                       values=c("Zn"="blue","Vn"="red")) +
+    scale_linetype_manual(name="emp/th:", 
+                          values = c("th"="dashed","emp"="solid"))+
+    coord_cartesian(ylim=c(y_min,y_max)) +
+    scale_shape_manual(name = bquote(H[0]*":"),
+                       labels = c(bquote(p==0),bquote(p==0.5),bquote(p==1)),
+                       values = c("0"=3,"0.5"=1,"1"=4)) +
+    labs(x= bquote(p[1]), y = bquote(tau*"/"*sqrt(n))) + 
+    ggtitle(bquote("n"==.(dat$n_study[1]))) +
+    theme(text=element_text(size=font_size, family=font_family),
+          plot.title = element_text(size=font_size))
+
+  return(fit_plot)
+}
+
+# plot empirical variance around Zn and Vn
+sd_plotter <- function(dat) {
+  dat <- dat[p0 == 0.5]
+  y_min <- min(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
+  y_max <- max(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
+  sd_plot <- ggplot(
+    data = dat[(id == "Zn" | id == "Vn") & th_emp == "emp" & p0 == 0.5, ],
+    aes(
+      x = p1, y = evd_mean / sqrt(n_study),
+      col = id, group = interaction(factor(p0), th_emp, id),
+      linetype = th_emp
+    )
+  ) +
+    geom_line() + geom_ribbon(
+      data = dat[(id == "Zn" | id == "Vn") & th_emp == "emp", ],
+      aes(
+        ymin = (evd_mean - evd_sd) / sqrt(n_study),
+        ymax = (evd_mean + evd_sd) / sqrt(n_study), fill = id
+      ),
+      alpha = 0.5, linetype = "blank"
+    ) +
+    scale_color_manual(
+      name = "Statistic:",
+      labels = c(bquote(Z[n]), bquote(V[n])),
+      values = c("Zn" = "blue", "Vn" = "red"),
+      guide = F
+    ) +
+    scale_fill_manual(name = "Statistic:",
+                      values = c("Zn" = "blue", "Vn" = "red")) +
+    coord_cartesian(ylim = c(y_min, y_max)) +
+    labs(x = bquote(p[1]), y = bquote(tau*"/"*sqrt(n))) +
+    theme(text = element_text(size = font_size, family = font_family))
+  return(sd_plot)
+}
+
+
+p1 <- fit_plotter(evidence_binom[evidence_binom$n_study==10,])
+p2 <- sd_plotter(evidence_binom[evidence_binom$n_study==10,])
+p3 <- fit_plotter(evidence_binom[evidence_binom$n_study==30,])
+p4 <- sd_plotter(evidence_binom[evidence_binom$n_study==30,])
+p5 <- fit_plotter(evidence_binom[evidence_binom$n_study==50,])
+p6 <- sd_plotter(evidence_binom[evidence_binom$n_study==50,])
+
+fig3 <- ggarrange(p1,p2,p3,p4,p5,p6,ncol=2,nrow=3,
+                  align="hv",legend="top",common.legend = T,
+                  labels = c("A", "","B","","C",""))
+ggsave(filename= paste0(out_path,figname,".pdf"),plot=fig3,
+       width=A4[1], height=0.9*A4[2], device = cairo_pdf)
