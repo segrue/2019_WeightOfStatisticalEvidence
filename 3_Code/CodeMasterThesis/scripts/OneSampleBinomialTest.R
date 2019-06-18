@@ -14,12 +14,12 @@ source("functions/helper_functions.R")
 # hypotheses:
 # H0: p = p0
 # H1: p > p0
-n_studies <- c(5, 10, 20, 30, 40, 50, 100, 200, 500, 1000)
+n_studies <- c(5, 10, 20, 30, 40, 50, 100)
 n_sim <- 1e5
 p0s <- c(0.1,0.5,0.9)
 p1s <- seq(0.01, 0.99, by = 0.01)
 alphas <- c(0.05)
-corr <- T
+corr <- F
 seed <- 20190504
 set.seed(seed)
 correction <- ifelse(corr, "Ans", "MLE")
@@ -161,164 +161,4 @@ save(evidence_binom, file = paste0("data/", name, ".RData")) # save data so that
 # question/todo: a lot of 0 values are created empirical SE and low n_study > leads to infinity values for the z-scores based on the empirical variance.
 # can be amended by the continuity correction.
 
-### plot values (to be transferred to a different script!) ----
-# plot
-# for math notation, see here: https://www.r-bloggers.com/math-notation-for-r-plot-titles-expression-and-bquote/
-
 # NamingConvention: Ev_Binom_corr_1e4.pdf; EV_DIST_CORR_NUMSIM.pdf
-
-pdf(paste0("./figs/", name, ".pdf"), onefile = TRUE)
-i <- 1
-for (sim in sims) {
-  Zn <- sim[[1]]
-  Vn <- sim[[2]]
-  T_std_norm <- sim[[3]]
-  T_std_norm$evd_mean <- T_std_norm$evd_mean
-
-  Ts <- merger(dats = list(Zn, Vn, T_std_norm), ids = c("Zn", "Vn", "T_std_norm"))
-  Ts <- Ts[Ts$th_emp == "th", ]
-
-  T_plot <- ggplot(data = Ts, aes(x = p1, y = evd_mean / sqrt(n_studies[i]), col = id, group = interaction(p0, th_emp, id), linetype = th_emp)) +
-    geom_line() + scale_color_manual(values = c("Zn" = 2, "Vn" = 3, "T_std_norm" = 4)) +
-    geom_point(data = Ts[Ts$th_emp == "emp", ], aes(shape = factor(p0)), alpha = 0.5) +
-    ylim(-3, 3) + xlim(0, 1) + ggtitle(bquote("Study size" == .(n_studies[i]))) + labs(x = expression(p[1]), y = "Evidence")
-  print(T_plot)
-
-  # T_plot <- ggplot(data=Ts,aes(x=p1,y=evd_mean/sqrt(n_studies[i]),col=factor(p0),group=interaction(p0,th_emp,id),linetype=id,alpha=th_emp)) +
-  #   geom_line() + scale_linetype_manual(values=c("Zn"=2,"Vn"=1)) + scale_alpha_manual(values=c("emp"=1,"th"=0.5))+
-  #   ylim(-3,3) + xlim(0,1) + ggtitle(bquote("Study size"==.(n_studies[i]))) + labs(x= expression(p[1]), y = "vst (solid), clt (dashed)")
-  # print(T_plot)
-
-  # plot the power
-  pows <- sim[[4]]
-  j <- 1
-  for (pow in pows) {
-    pow_bin <- pow[[1]]
-    pow_Zn <- pow[[2]]
-    pow_Vn <- pow[[3]]
-
-    pows_merged <- merger(dats = list(pow_bin, pow_Zn, pow_Vn), ids = c("pow_bin", "pow_Zn", "pow_Vn"))
-    # pows_merged <- pows_merged[pows_merged$th_emp=="th",]
-
-    # pows_merged <- pows_merged[pows_merged$th_emp=="emp" & pows_merged$id =="pow_bin" & pows_merged$p0 == "0.7",]
-
-    cutoff <- data.frame(x = c(0, 1), y = alphas[j], cutoff = factor(alphas[j]))
-    p0_cutoff <- data.frame(x = rep(p0s, each = 2), y = rep(c(0, 1), length(p0s)))
-
-    pow_plot <- ggplot(data = pows_merged, aes(x = p1, y = evd_mean, col = id, group = interaction(p0, th_emp, id), linetype = th_emp)) +
-      geom_line() + scale_color_manual(values = c("pow_Zn" = 2, "pow_Vn" = 3, "pow_bin" = 4)) +
-      geom_point(data = pows_merged[pows_merged$th_emp == "emp", ], aes(shape = factor(p0)), alpha = .5) +
-      geom_line(aes(x, y, group = factor(x)), p0_cutoff, inherit.aes = FALSE, alpha = .2) + geom_line(aes(x, y), cutoff, inherit.aes = FALSE, alpha = .2) +
-      ggtitle(bquote("Study size" == .(n_studies[i]) ~ ", alpha" == .(alphas[j]))) + labs(x = expression(mu[1]), y = "power")
-    print(pow_plot)
-
-    # pow_plot <- ggplot(data=pows_merged,aes(x=p1,y=evd_mean,col=factor(p0),group=interaction(p0,th_emp,id),linetype=id,alpha=th_emp)) +
-    #   geom_line() + scale_linetype_manual(values=c("pow_bin"=2,"pow_Vn"=1)) +  scale_alpha_manual(values=c("emp"=1,"th"=0.5))+
-    #   geom_line(aes(x, y,group=factor(x)),p0_cutoff,inherit.aes=FALSE,alpha=.2) + geom_line(aes(x, y),cutoff,inherit.aes=FALSE,alpha=.2) +
-    #   ggtitle(bquote("Study size"==.(n_studies[i])~", alpha"==.(alphas[j]))) + labs(x= expression(p[1]), y = "power")
-    # print(pow_plot)
-    j <- j + 1
-  }
-
-  i <- i + 1
-}
-dev.off()
-# questions:
-# 1) where do the gaps between 0.1 and 0 as well as between 0.9 and 1 come from?
-# 2) why do vst and clt diverge so much at these values?
-# 3) why does exact binomial test have lower power for p0 and p1 large, but higher power for p0 low and p1 large?
-
-# Calculate p-values and Type II errors for the different statistics
-# https://www.cyclismo.org/tutorial/R/power.html
-
-### discontinued functions ----
-# dat_transform_th_emp <- function(dats,th_emps=c("th", "emp")){
-#   for (i in 1:length(th_emps)){
-#     dat <- dat_transform(dats[[i]])
-#     th_emp <- rep(th_emps[i],dim(dat)[1])
-#     dat$th_emp <- th_emp
-#     dats[[i]] <- dat
-#   }
-#   dats <- do.call("rbind",dats)
-#   return(dats)
-# }
-#
-# merger <- function(dats,ids){
-#   for (i in 1:length(ids)){
-#     id <- rep(ids[i],dim(dats[[i]])[1])
-#     dat <- dats[[i]]
-#     dat$id <- id
-#     dats[[i]] <- dat
-#   }
-#   dats <- do.call("rbind",dats)
-#   return(dats)
-# }
-
-# calcualtes SE of binomial variable X/n
-# SE_calculator <- function(p,n){
-#   SE <- sqrt(p*(1-p)/n)
-#   return(SE)
-# }
-
-# calc_Zn <- function(p0s,p1s,n_study,func){
-#   evd_mean <- sapply(1:dim(p1s)[1], function(p1) sapply(p0s, function(p0) func(p0,p1s[p1,],n_study,SEs[p1,])))
-#   evd_mean[is.infinite(evd_mean)] <- NA
-#   return(evd_mean)
-# }
-
-# vst_binom <- function(p0,p1,n){
-#   evd_mean <- 2*sqrt(n)*(asin(sqrt(p1))-asin(sqrt(p0)))
-#   return(evd_mean)
-# }
-#
-# #z-statistic based on CLT
-# z_stat_binom <- function(p0,p1,n){
-#   evd_mean <- (p1-p0)/sqrt((p1*(1-p1)/n))
-#   return(evd_mean)
-# }
-# question: what changes when we use the theoretical variance instead of the empirical? fit should get better, shouldn't it?
-# also: where do peaks come from?
-
-# calc_evidenc <- function(p0s,p1s,n_study,func){
-#   evd_mean <- apply(p1s, 1, function(p1) sapply(p0s, function(p0) func(p0,p1,n_study)))
-#   evd_mean[is.infinite(evd_mean)] <- NA
-#   return(evd_mean)
-# }
-
-# brings data into the correct form for plottings
-# dat_transform <- function(T_avg,sd_evidence,th_emp,id,n_study,cols){
-#   dat <- merge(melt(T_avg),melt(sd_evidence),by=c("Var1","Var2"),sort=FALSE)
-#   dat <- cbind(dat,th_emp,id,n_study)
-#   colnames(dat) <- cols
-#   dat$p1 <- rep(p1s,times=1,each=length(p0s))
-#   dat$p0 <- rep(p0s,times=length(p1s))
-#   return(dat)
-# }
-
-# test_func <- function(val,crit_val){
-#   return((val>crit_val)*1)
-# }
-#
-# ci_coverage <- function(Ts,T_avg,crit_val){
-#   T_avg <- as.vector(t(T_avg))
-#   vals <- t(abs(sapply(1:dim(Ts)[1], function(i) Ts[i,]-T_avg[i])))
-#   Ts_coverage <- 1-test_func(vals,crit_val)
-#   return(Ts_coverage)
-# }
-
-# avg_evidence <- function(Ts){
-#   Ts_avg <- matrix(apply(Ts,1,mean,na.rm=TRUE),length(p0s),length(p1s),byrow=TRUE)
-#   return(Ts_avg)
-# }
-#
-# sd_evidence <- function(Ts){
-#   Ts_avg <- matrix(apply(Ts,1,sd,na.rm=TRUE),length(p0s),length(p1s),byrow=TRUE)
-#   return(Ts_avg)
-# }
-# dat_transform_power <- function(pow_avg,th_emp,id,alph,n_study,cols){
-#   dat <- cbind(melt(pow_avg),th_emp,id,alph,n_study)
-#   colnames(dat) <- cols
-#   dat$p1 <- rep(p1s,times=1,each=length(p0s))
-#   dat$p0 <- rep(p0s,times=length(p1s))
-#   return(dat)
-# }

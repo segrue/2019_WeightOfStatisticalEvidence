@@ -18,32 +18,32 @@ vst_binom <- function(p0, p1, n) {
 
 # z-statistic based on CLT for binomial variable
 z_stat_binom <- function(p0, p1, n) {
-  Tn <- (p1 - p0) / sqrt((p1 * (1 - p1) / n))
-  return(Tn)
+  Zn <- (p1 - p0) / sqrt((p1 * (1 - p1) / n))
+  return(Zn)
 }
 
 # vst for normally distributed variable - variance known (aka clt)
-vst_var_known <- function(mu0, mu1, sgm0, n_study) {
-  Tn <- (mu1 - mu0) / sgm0 * sqrt(n_study)
+z_stat_norm <- function(mu0, mu1, sgm0, n_study) {
+  Zn <- (mu1 - mu0) / sgm0 * sqrt(n_study)
 }
 
 # vast for normally distributed variable - variance unknown
-vst_var_est <- function(mu0, mu1, sgm_est, n_study, corr = F) {
-  if (corr == T) {
-    Tn <- sqrt(2 * n_study) * asinh((mu1 - mu0) / (sgm_est * sqrt(2))) * (1 - 0.7 / (n_study - 1))
+vst_student <- function(mu0, mu1, sgm_est, n_study, evd_corr = F) {
+  if (evd_corr == T) {
+    Vn <- sqrt(2 * n_study) * asinh((mu1 - mu0) / (sgm_est * sqrt(2))) * (1 - 0.7 / (n_study - 1))
   } else {
-    Tn <- sqrt(2 * n_study) * asinh((mu1 - mu0) / (sgm_est * sqrt(2)))
+    Vn <- sqrt(2 * n_study) * asinh((mu1 - mu0) / (sgm_est * sqrt(2)))
   }
 }
 
-calc_evidence <- function(mu0s, mu1s, sgm1s, n_study, func, T_corr) {
+calc_evidence <- function(mu0s, mu1s, sgm1s, n_study, func, evd_corr) {
   if (missing(sgm1s)) {
     Tn <- apply(mu1s, 1, function(p1) sapply(mu0s, function(p0) func(p0, p1, n_study)))
   } else {
-    if (missing(T_corr)) {
+    if (missing(evd_corr)) {
       Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0, mu1s[mu1, ], sgm1s[mu1, ], n_study)))
     } else {
-      Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0, mu1s[mu1, ], sgm1s[mu1, ], n_study, corr = T_corr)))
+      Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0, mu1s[mu1, ], sgm1s[mu1, ], n_study, evd_corr = evd_corr)))
     }
   }
   
@@ -77,8 +77,8 @@ test_func <- function(val, crit_val) {
 
 ci_coverage <- function(Ts, T_avg, crit_val) {
   T_avg <- as.vector(t(T_avg))
-  vals <- t(abs(sapply(1:dim(Ts)[1], function(i) Ts[i, ] - T_avg[i])))
-  Ts_coverage <- 1 - test_func(vals, crit_val)
+  vals <- t(sapply(1:dim(Ts)[1], function(i) T_avg[i]-Ts[i, ]))
+  Ts_coverage <- 1*((vals < crit_val) & (vals > -crit_val)) #find avlues inside CI
   return(Ts_coverage)
 }
 
@@ -120,7 +120,7 @@ mat2df <- function(mats, id) {
 }
 
 # function to simulate a lot of different data_sets to take as basis for additional calculations
-evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_studies, n_sim, fig_name) {
+evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, evd_corr = F, seed, n_studies, n_sim, fig_name) {
   cols_tot <- c(
     "sim", "mu1", "mu1_hat", "sgm_hat", "sgm_th", "Tn", "p", "id", "T_avg_th", "T_avg_emp",
     "evd_sd_th", "evd_sd_emp", "n_study", "correction", "mu0", "mu1_hat_mean", "sgm_hat_mean", "CI", "CI_crit_value", "alpha", "H1", "H0_crit_val"
@@ -129,7 +129,7 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
   evidence_df <- data.table(matrix(NA, nrow = 0, ncol = length(cols_tot)))
   colnames(evidence_df) <- cols_tot
 
-  correction <- ifelse(T_corr, "Corr", "MLE")
+  correction <- ifelse(evd_corr, "Corr", "MLE")
   name <- paste0("DF_Ev_Mean_", correction, "_", n_sim, "_", seed)
 
   i <- 1
@@ -158,12 +158,12 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
 
       # calculate theoretical and empiral evidence based on clt-vst
       # this gives the distribution of the values if the clt holds, i.e. if we know the sd
-      T_clt_emp <- calc_evidence(mu0s, mu1_hats, sgm_th, n_study, vst_var_known)
+      T_clt_emp <- calc_evidence(mu0s, mu1_hats, sgm_th, n_study, z_stat_norm)
 
       T_clt_emp_avg <- avg_evidence(T_clt_emp, mu0s, mu1s)
       T_clt_emp_sd <- sd_evidence(T_clt_emp, mu0s, mu1s)
 
-      T_clt_th_avg <- sapply(mu1s, function(mu1) vst_var_known(mu0s, mu1, sgm0, n_study))
+      T_clt_th_avg <- sapply(mu1s, function(mu1) z_stat_norm(mu0s, mu1, sgm0, n_study))
       T_th_sd <- matrix(1, nrow = dim(matrix(T_clt_th_avg))[1], ncol = dim(matrix(T_clt_th_avg))[2])
 
       T_clt_averages <- cbind(
@@ -176,7 +176,7 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
 
       # calculate theoretical and empirical evidence based on clt-vst, but using empirical sd instead of theoretical
       # this gives us values if we assume the clt holds, but we do not know the sd and just use the empirical sd instea
-      T_clt_emp_stud <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, vst_var_known)
+      T_clt_emp_stud <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, z_stat_norm)
 
       T_clt_emp_stud_avg <- avg_evidence(T_clt_emp_stud, mu0s, mu1s)
       T_clt_emp_stud_sd <- sd_evidence(T_clt_emp_stud, mu0s, mu1s)
@@ -197,13 +197,13 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
       T_clt_stud_df <- cbind(mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(T_clt_emp_stud), t(p_clt_stud)), id = "stud"), T_clt_stud_averages)
 
       # calculate theoretical and empiral evidence based on Student-t vst
-      T_vst_emp <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, vst_var_est)
+      T_vst_emp <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, vst_student)
       T_vst_df <- mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(T_vst_emp)), id = "vst")
 
       T_vst_emp_avg <- avg_evidence(T_vst_emp, mu0s, mu1s)
       T_vst_emp_sd <- sd_evidence(T_vst_emp, mu0s, mu1s)
 
-      T_vst_th_avg <- sapply(mu1s, function(mu1) vst_var_est(mu0s, mu1, sgm0, n_study))
+      T_vst_th_avg <- sapply(mu1s, function(mu1) vst_student(mu0s, mu1, sgm0, n_study))
       #
       # T_vst <- rbind(dat_transform(T_vst_emp_avg,T_vst_emp_sd,"emp","vst",n_study,cols_evidence,mu0s,mu1s),
       #                dat_transform(T_vst_th_avg,T_th_sd,"th","vst",n_study,cols_evidence,mu0s,mu1s))
@@ -261,7 +261,7 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
         # calculate theoretical and empirical power for test using the exact noncentral Student t test
         crit_val_stud <- qt(alph, n_study - 1, 0, lower.tail = FALSE)
 
-        # pows_avg_stud_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pt(crit_val_stud,n_study-1,vst_var_known(mu0,mu1,sgm0,n_study))))
+        # pows_avg_stud_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pt(crit_val_stud,n_study-1,z_stat_norm(mu0,mu1,sgm0,n_study))))
         pows_avg_stud_emp <- t(1 * (T_clt_emp_stud > crit_val_stud))
 
         # pows_avg_stud <- rbind(melt(pows_avg_stud_emp),melt(pows_avg_stud_th))$value
@@ -269,13 +269,13 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, T_corr = F, seed, n_st
         # calculate theoretical and empirical power for test using the clt and the normal distribution
         crit_val_norm <- qnorm(alph, mean = 0, sd = 1, lower.tail = FALSE)
 
-        # pows_avg_clt_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,vst_var_known(mu0,mu1,sgm0,n_study),sd=1)))
+        # pows_avg_clt_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,z_stat_norm(mu0,mu1,sgm0,n_study),sd=1)))
         pows_avg_clt_emp <- t(1 * (T_clt_emp > crit_val_norm))
 
         # pows_avg_clt <- rbind(melt(pows_avg_clt_emp),melt(pows_avg_clt_th))$value
 
         # calculate theoretical and empirical power for test using the vst (non-central Student t distribution)
-        # pows_avg_vst_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,vst_var_est(mu0,mu1,sgm0,n_study),sd=1)))
+        # pows_avg_vst_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,vst_student(mu0,mu1,sgm0,n_study),sd=1)))
         pows_avg_vst_emp <- t(1 * (T_vst_emp > crit_val_norm))
 
         # pows_avg_vst <- rbind(melt(pows_avg_vst_emp),melt(pows_avg_vst_th))$value
@@ -674,12 +674,12 @@ trunc_mle <- function(dat, thetas, p) {
       -prod(trunc_likeli(dat, theta_p[[1]], theta_p[[2]]))
     }
     
-    T_corr_mle <- gridSearch(fun = trunc_likeli_helper, 
+    evd_corr_mle <- gridSearch(fun = trunc_likeli_helper, 
                              levels = list(thetas, ps), dat = dat, 
                              method = "multicore")
     
-    mu_corr_mle <- T_corr_mle$minlevels[1] * dat$sgm_th[1]
-    p_mle <- T_corr_mle$minlevels[2]
+    mu_corr_mle <- evd_corr_mle$minlevels[1] * dat$sgm_th[1]
+    p_mle <- evd_corr_mle$minlevels[2]
     
     return(c(mu_corr_mle, p_mle))
     
@@ -687,8 +687,8 @@ trunc_mle <- function(dat, thetas, p) {
     likelihoods <- sapply(thetas, 
                           function(theta) prod(trunc_likeli(dat, theta, p)))
     #plot(thetas, likelihoods, type = "l")
-    T_corr_mle <- thetas[which(max(likelihoods) == likelihoods)]
-    mu_corr_mle <- T_corr_mle * dat$sgm_th[1]
+    evd_corr_mle <- thetas[which(max(likelihoods) == likelihoods)]
+    mu_corr_mle <- evd_corr_mle * dat$sgm_th[1]
     
     return(mu_corr_mle)
   } 

@@ -6,7 +6,7 @@ require("data.table")
 #custom functions
 source("./functions/helper_functions.R")
 
-# Define starting assumptions and conditions ----
+# Define starting assumptions and conditions----
 #calculates rss
 rss_calculator <- function(x,y,avg=T){
   if (avg==T){
@@ -18,7 +18,7 @@ rss_calculator <- function(x,y,avg=T){
 }
 
 #brings data into the correct form for plottings
-dat_transform_quantiles <- function(T_avg,id,n_study){
+dat_transform_quantiles_binom <- function(T_avg,id,n_study){
   dat <- cbind(melt(T_avg),id,n_study)
   dat$p0 <- p0
   colnames(dat) <- cols
@@ -27,7 +27,16 @@ dat_transform_quantiles <- function(T_avg,id,n_study){
   return(dat)
 }
 
-#calculate and save theoretical distributions Zn and Vn
+dat_transform_quantiles_student <- function(T_avg,id,n_study){
+  dat <- cbind(melt(T_avg),id,n_study)
+  dat$p0 <- p0
+  colnames(dat) <- cols
+  dat$cdf <- rep(probs,length(mu1s))
+  dat$mu1 <- rep(mu1s,each=length(probs))
+  return(dat)
+}
+
+# calculate & save theoretical distributions Zn and Vn in the binomial case----
 # hypotheses:
 # H0: p <= p0
 # H1: p > p0
@@ -39,8 +48,8 @@ probs <- seq(0.01,0.99,length.out=100)
 n_sim <- 5e3
 cols <- c("cdf","p1","quantile","id","n_study","p0")
 seed <- 20190505
-corr <- F
-correction <- ifelse(corr,"Ans","MLE")
+evd_corr <- F
+correction <- ifelse(evd_corr,"Ans","MLE")
 name <- paste0("binom_quantiles_",correction,"_",n_sim,"_",seed)
 
 quantiles <- data.table(matrix(NA,nrow=0,ncol=6))
@@ -57,11 +66,11 @@ for (i in 1:length(n_studies)){
   diffs <- mus_Zn-mus_Vn 
   
   #Calculate theoretical quantiles of normal distribution with mean mu_Zn and Var = 1
-  Qnorms_th <- dat_transform_quantiles((sapply(mus_Zn,
+  Qnorms_th <- dat_transform_quantiles_binom((sapply(mus_Zn,
                                      function(mu) qnorm(probs,mu,1))),"th",n_study)
   
   # calculate estimator for p1
-  if (corr==T){
+  if (evd_corr==T){
     #Anscombe estimator (includes continuity correction) p_anscombe <- (x+3/8)/(n+3/4)  
     p1_hats <- (sapply(p1s,function(x) rbinom(n_sim,n_study,x))+3/8)/(n_study+3/4)
   } else {
@@ -80,11 +89,75 @@ for (i in 1:length(n_studies)){
   #replace infinity values with 999 or -999 to enable calculation
   #Zn[is.infinite(Zn)] <- 999*sign(Zn[is.infinite(Zn)])
   
-  Zn_q <- dat_transform_quantiles((sapply(idx, function(j) quantile(Zn[,j],probs,na.rm=T))),"Zn",n_study)
-  Vn_q <- dat_transform_quantiles((sapply(idx, function(j) quantile(Vn[,j],probs,na.rm=T))),"Vn",n_study)
+  Zn_q <- dat_transform_quantiles_binom((sapply(idx, function(j) quantile(Zn[,j],probs,na.rm=T))),"Zn",n_study)
+  Vn_q <- dat_transform_quantiles_binom((sapply(idx, function(j) quantile(Vn[,j],probs,na.rm=T))),"Vn",n_study)
   quantiles <- rbind(quantiles,Qnorms_th,Zn_q,Vn_q)
 }
 save(quantiles,file=paste0("data/",name,".RData"))
+
+#calculate and simulate quantiles based on difference in means ----------------
+# hypotheses:
+# H0: mu <= p0
+# H1: mu > p0
+# Note: all calculations be
+mu1s <- c(-2,0,2)
+mu0 <- 0
+sgm0 <- sgm1 <- 2
+
+n_studies <- c(5,10,20,30)
+probs <- seq(0.01,0.99,length.out=100)
+n_sim <- 5e3
+cols <- c("cdf","mu1","quantile","id","n_study","mu0")
+seed <- 20190505
+evd_corr <- T
+correction <- ifelse(evd_corr,"Corr","MLE")
+name <- paste0("student_quantiles_",correction,"_",n_sim,"_",seed)
+
+student_quantiles <- data.table(matrix(NA,nrow=0,ncol=6))
+colnames(student_quantiles) <- cols
+#need to adjust for the expectation of Vn!! E(Tn_vst) = sqrt(n)*K(theta)
+set.seed(seed)
+for (i in 1:length(n_studies)){
+  idx <- 1:length(mu1s)
+  n_study <- n_studies[i]
+  sgms <- rep(sgm0,3)
+  #sgm_hats <- sqrt(1/(n_study-1)*sum((rnorm(n_study,mu1s[mu1],sgm0)-mu1_hats[sim,mu1])^2))
+  mus_Tn <- sqrt(n_study)*(mu1s-mu0)/sgms # expected value of theoretical (Zn); note that mus_Tn = mus_Zns
+  mus_Vn <- vst_student(mu0, mu1s, sgms, n_study, evd_corr) #exptected value of Vn 
+  diffs <- mus_Tn-mus_Vn 
+
+  #Calculate theoretical quantiles of normal distribution with mean mu_Zn and Var = 1
+  Qnorms_th <- dat_transform_quantiles_student((sapply(mus_Tn,
+                                               function(mu) qnorm(probs,mu,1))),"th",n_study)
+  
+  set.seed(seed)
+  mu1_hats <- sapply(mu1s,function(mu1) sapply(1:n_sim, function(y) mean(rnorm(n_study,mu1,sgm0))))
+  
+  #calculate empirical and theoretical sgm
+  set.seed(seed) #note: one could also simply sample the variances from a chi-square distribution
+  sgm_hats <- sapply(1:length(mu1s),
+                     function(mu1) sapply(1:n_sim, 
+                                          function(sim) sqrt(1/(n_study-1)*sum((rnorm(n_study,mu1s[mu1],sgm0)-mu1_hats[sim,mu1])^2))))
+  #sgm_th <- matrix(rep(sgm0,length(mu1_hats)),n_sim,length(mu1s),byrow=TRUE)
+  
+  # calculate quantiles for Zn, Vn and Tn
+  #Zn <- sapply(idx, function(j) z_stat_norm(mu0,mu1_hats[,j],sgm_th[,j],n_study))
+  Tn <- sapply(idx, function(j) z_stat_norm(mu0,mu1_hats[,j],sgm_hats[,j],n_study))
+  if (evd_corr==T){
+    #finite sample correction
+    Vn <- sapply(idx, function(j) vst_student(mu0,mu1_hats[,j],sgm_hats[,j],n_study,corr=T) + diffs[j])
+  } else {
+    Vn <- sapply(idx, function(j) vst_student(mu0,mu1_hats[,j],sgm_hats[,j],n_study,corr=F) +diffs[j])
+  }
+  
+  Tn_q <- dat_transform_quantiles_student((sapply(idx, function(j) quantile(Tn[,j],probs,na.rm=T))),"Tn",n_study)
+  #Zn_q <- dat_transform_quantiles((sapply(idx, function(j) quantile(Zn[,j],probs,na.rm=T))),"Zn",n_study)
+  Vn_q <- dat_transform_quantiles_student((sapply(idx, function(j) quantile(Vn[,j],probs,na.rm=T))),"Vn",n_study)
+  student_quantiles <- rbind(student_quantiles,Qnorms_th,Tn_q,Vn_q)
+}
+save(student_quantiles,file=paste0("data/",name,".RData"))
+
+#-------------------------------
 
 #simulate values and calculate RSS
 #Qnorm_th <- qnorm(probs,0,1) #theoretical quantiles of standard normal
