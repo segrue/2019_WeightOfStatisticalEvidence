@@ -29,7 +29,7 @@ dat_transform_quantiles_binom <- function(T_avg,id,n_study){
 
 dat_transform_quantiles_student <- function(T_avg,id,n_study){
   dat <- cbind(melt(T_avg),id,n_study)
-  dat$p0 <- p0
+  dat$mu0 <- mu0
   colnames(dat) <- cols
   dat$cdf <- rep(probs,length(mu1s))
   dat$mu1 <- rep(mu1s,each=length(probs))
@@ -122,7 +122,7 @@ for (i in 1:length(n_studies)){
   n_study <- n_studies[i]
   sgms <- rep(sgm0,3)
   #sgm_hats <- sqrt(1/(n_study-1)*sum((rnorm(n_study,mu1s[mu1],sgm0)-mu1_hats[sim,mu1])^2))
-  mus_Tn <- sqrt(n_study)*(mu1s-mu0)/sgms # expected value of theoretical (Zn); note that mus_Tn = mus_Zns
+  mus_Tn <- z_stat_norm(mu0,mu1s,sgms,n_study,evd_corr) # expected value of theoretical (Zn); note that mus_Tn = mus_Zns
   mus_Vn <- vst_student(mu0, mu1s, sgms, n_study, evd_corr) #exptected value of Vn 
   diffs <- mus_Tn-mus_Vn 
 
@@ -142,14 +142,9 @@ for (i in 1:length(n_studies)){
   
   # calculate quantiles for Zn, Vn and Tn
   #Zn <- sapply(idx, function(j) z_stat_norm(mu0,mu1_hats[,j],sgm_th[,j],n_study))
-  Tn <- sapply(idx, function(j) z_stat_norm(mu0,mu1_hats[,j],sgm_hats[,j],n_study))
-  if (evd_corr==T){
-    #finite sample correction
-    Vn <- sapply(idx, function(j) vst_student(mu0,mu1_hats[,j],sgm_hats[,j],n_study,corr=T) + diffs[j])
-  } else {
-    Vn <- sapply(idx, function(j) vst_student(mu0,mu1_hats[,j],sgm_hats[,j],n_study,corr=F) +diffs[j])
-  }
-  
+  Tn <- sapply(idx, function(j) z_stat_norm(mu0,mu1_hats[,j],sgm_hats[,j],n_study,evd_corr))
+  Vn <- sapply(idx, function(j) vst_student(mu0,mu1_hats[,j],sgm_hats[,j],n_study,evd_corr) + diffs[j])
+
   Tn_q <- dat_transform_quantiles_student((sapply(idx, function(j) quantile(Tn[,j],probs,na.rm=T))),"Tn",n_study)
   #Zn_q <- dat_transform_quantiles((sapply(idx, function(j) quantile(Zn[,j],probs,na.rm=T))),"Zn",n_study)
   Vn_q <- dat_transform_quantiles_student((sapply(idx, function(j) quantile(Vn[,j],probs,na.rm=T))),"Vn",n_study)

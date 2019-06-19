@@ -128,7 +128,6 @@ ggsave(
 
 ### Figure 2.2: Normal fit of Zn & Vn based on binomial ------------------------
 ### (fig:normal_fit_binomial_[Corr])
-corr_bin <- "MLE" # either "MLE" for no correction or "Ans" vor Anscombe correction
 
 # define figure name
 figname <- paste0("ch2_fig2_normal_fit_binomial_", corr_bin)
@@ -332,12 +331,12 @@ sd_plotter <- function(dat) {
 }
 
 
-p1 <- fit_plotter(dat[dat$n_study == 10, ])
-p2 <- sd_plotter(dat[dat$n_study == 10, ])
-p3 <- fit_plotter(dat[dat$n_study == 30, ])
-p4 <- sd_plotter(dat[dat$n_study == 30, ])
-p5 <- fit_plotter(dat[dat$n_study == 50, ])
-p6 <- sd_plotter(dat[dat$n_study == 50, ])
+p1 <- fit_plotter(dat[dat$n_study == 5, ])
+p2 <- sd_plotter(dat[dat$n_study == 5, ])
+p3 <- fit_plotter(dat[dat$n_study == 10, ])
+p4 <- sd_plotter(dat[dat$n_study == 10, ])
+p5 <- fit_plotter(dat[dat$n_study == 20, ])
+p6 <- sd_plotter(dat[dat$n_study == 20, ])
 
 fig3 <- ggarrange(p1, p2, p3, p4, p5, p6,
   ncol = 2, nrow = 3,
@@ -368,7 +367,7 @@ power_plotter <- function(dat) {
     scale_color_manual(
       name = "Test:",
       labels = c("Zn" = bquote(Z[n] > z[(1-alpha)]), "Vn"= bquote(V[n] > z[(1-alpha)]), 
-                 "binom" = "exact Binomial"),
+                 "binom" = "binomial"),
       values = c("Zn" = "blue", "Vn" = "red", "binom" = "black")
     ) +
     geom_point(
@@ -407,19 +406,19 @@ power_plotter <- function(dat) {
 }
 
 # p0 <- power_plotter(dat[n_study==5,])
-p1 <- power_plotter(dat[n_study==10,])
-p2 <- power_plotter(dat[n_study==30,])
-p3 <- power_plotter(dat[n_study==50,])
+p1 <- power_plotter(dat[n_study==5,])
+p2 <- power_plotter(dat[n_study==10,])
+p3 <- power_plotter(dat[n_study==20,])
 #p4 <- power_plotter(dat[n_study==100,])
 
 fig4 <- ggarrange(
   # p0 + ggtitle(bquote("n" == 5)),
   # p0 + coord_cartesian(ylim=c(0,0.1)), 
-  p1 + ggtitle(bquote("n" == 10)), 
+  p1 + ggtitle(bquote("n" == 5)), 
   p1 + coord_cartesian(ylim=c(0,0.1)), 
-  p2 + ggtitle(bquote("n" == 30)), 
+  p2 + ggtitle(bquote("n" == 10)), 
   p2 +coord_cartesian(ylim=c(0,0.1)),
-  p3 + ggtitle(bquote("n" == 50)), 
+  p3 + ggtitle(bquote("n" == 20)), 
   p3 + coord_cartesian(ylim=c(0,0.1)),
   # p4 + ggtitle(bquote("n" == 100)), 
   # p4 + coord_cartesian(ylim=c(0,0.1)), 
@@ -455,8 +454,8 @@ CI_plotter <- function(dat) {
     geom_line(alpha=1) +
     scale_color_manual(
       name = "CI:",
-      labels = c("Zn" = bquote(Z[n]~"\U00B1"*z[(1-alpha)]), 
-                 "Vn"= bquote(V[n]~"\U00B1"*z[(1-alpha)])),
+      labels = c("Zn" = bquote(Z[n]~"\U00B1"*z[(1-alpha/2)]), 
+                 "Vn"= bquote(V[n]~"\U00B1"*z[(1-alpha/2)])),
       values = c("Zn" = "blue", "Vn" = "red")
     ) +
     scale_shape_manual(
@@ -473,14 +472,14 @@ CI_plotter <- function(dat) {
       data = dat[p1 %in% seq(0.01, 0.99, 0.05), ],
       aes(shape = factor(p0)), alpha = 0.5, size = 1
     ) +
-    labs(x = bquote(p[1]), y = "Empirical coverage") +
+    labs(x = bquote(p[1]), y = "Coverage") +
     theme(
       text = element_text(size = font_size, family = font_family),
       plot.title = element_text(size = font_size)
     ) + 
     geom_segment(aes(x = 0, y = .95, xend = 1, yend = 0.95),
                  col = "black", size = 0.3, linetype = "dotted"
-    ) 
+    ) + coord_cartesian(ylim=c(0,1))
   return(CI_plot)
 }
 
@@ -532,8 +531,10 @@ load(paste0(in_path, "student_quantiles_", corr_student, "_5000_20190505.RData")
 # n=5
 
 cdf_plotter <- function(dat) {
-  q_min <- min(dat[id == "th", ]$quantile)
-  q_max <- max(dat[id == "th", ]$quantile)
+  # q_min <- min(dat[id == "th", ]$quantile)
+  # q_max <- max(dat[id == "th", ]$quantile)
+  q_min <- -6
+  q_max <- 6
   cdf_plot <- ggplot(data = dat, aes(
     x = quantile, y = cdf, col = id,
     group = interaction(mu1, id), linetype = factor(mu1)
@@ -628,7 +629,7 @@ dat <- evidence_student
 
 # plot fit of empirical distribution of Zn and Vn with theoretical dist
 fit_plotter <- function(dat) {
-  dat <- dat[(id %in% c("Tn", "Vn")), ]
+  dat <- dat[(id %in% c("Zn", "Vn")), ]
   y_min <- min(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
   y_max <- max(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
   fit_plot <- ggplot(data = dat, aes(
@@ -643,8 +644,8 @@ fit_plotter <- function(dat) {
     ) +
     scale_color_manual(
       name = "Statistic:",
-      labels = c("Vn"= bquote(V[n]),"Tn" = bquote(T[n])),
-      values = c("Vn" = "red","Tn"="blue")
+      labels = c("Vn"= bquote(V[n]),"Zn" = bquote(T[n])),
+      values = c("Vn" = "red","Zn"="blue")
     ) +
     scale_linetype_manual(
       name = "emp/th:",
@@ -667,7 +668,7 @@ fit_plotter <- function(dat) {
 
 # plot empirical variance around Zn and Vn
 sd_plotter <- function(dat) {
-  dat <- dat[(id %in% c("Tn", "Vn")) & mu0==0,]
+  dat <- dat[(id %in% c("Zn", "Vn")) & mu0==0,]
   y_min <- min(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
   y_max <- max(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
   # dat_th <- dat[th_emp == "th" & id=="Zn" & mu0 == 0, ]
@@ -699,14 +700,14 @@ sd_plotter <- function(dat) {
     )  +
     scale_color_manual(
       name = "Statistic:",
-      labels = c("Tn" = bquote(T[n]), "Vn"= bquote(V[n])),
-      values = c("Tn" = "blue", "Vn" = "red"),
+      labels = c("Zn" = bquote(T[n]), "Vn"= bquote(V[n])),
+      values = c("Zn" = "blue", "Vn" = "red"),
       guide = F
     ) +
     scale_fill_manual(
       name = "Statistic:",
-      labels = c("Tn" = bquote(T[n]), "Vn"= bquote(V[n])),
-      values = c("Tn" = "blue", "Vn" = "red")
+      labels = c("Zn" = bquote(T[n]), "Vn"= bquote(V[n])),
+      values = c("Zn" = "blue", "Vn" = "red")
     ) +
     scale_shape_manual(
       name = bquote(H[0] * ":"),
@@ -719,12 +720,12 @@ sd_plotter <- function(dat) {
   return(sd_plot)
 }
 
-p1 <- fit_plotter(dat[dat$n_study == 10, ])
-p2 <- sd_plotter(dat[dat$n_study == 10, ])
-p3 <- fit_plotter(dat[dat$n_study == 30, ])
-p4 <- sd_plotter(dat[dat$n_study == 30, ])
-p5 <- fit_plotter(dat[dat$n_study == 50, ])
-p6 <- sd_plotter(dat[dat$n_study == 50, ])
+p1 <- fit_plotter(dat[dat$n_study == 5, ])
+p2 <- sd_plotter(dat[dat$n_study == 5, ])
+p3 <- fit_plotter(dat[dat$n_study == 10, ])
+p4 <- sd_plotter(dat[dat$n_study == 10, ])
+p5 <- fit_plotter(dat[dat$n_study == 20, ])
+p6 <- sd_plotter(dat[dat$n_study == 20, ])
 
 fig7 <- ggarrange(p1, p2, p3, p4, p5, p6,
                   ncol = 2, nrow = 3,
@@ -795,19 +796,19 @@ power_plotter <- function(dat) {
 }
 
 # p0 <- power_plotter(dat[n_study==5 & th_emp=="emp",])
-p1 <- power_plotter(dat[n_study==10,])
-p2 <- power_plotter(dat[n_study==30 & th_emp == "emp",])
-p3 <- power_plotter(dat[n_study==50 & th_emp == "emp",])
+p1 <- power_plotter(dat[n_study==5,])
+p2 <- power_plotter(dat[n_study==10 & th_emp == "emp",])
+p3 <- power_plotter(dat[n_study==20 & th_emp == "emp",])
 #p4 <- power_plotter(dat[n_study==100 & th_emp == "emp",])
 
 fig8 <- ggarrange(
   # p0 + ggtitle(bquote("n" == 5)),
   # p0 + coord_cartesian(ylim=c(0,0.1)), 
-  p1 + ggtitle(bquote("n" == 10)), 
+  p1 + ggtitle(bquote("n" == 5)), 
   p1 + coord_cartesian(ylim=c(0,0.1)), 
-  p2 + ggtitle(bquote("n" == 30)), 
+  p2 + ggtitle(bquote("n" == 10)), 
   p2 +coord_cartesian(ylim=c(0,0.1)),
-  p3 + ggtitle(bquote("n" == 50)), 
+  p3 + ggtitle(bquote("n" == 20)), 
   p3 + coord_cartesian(ylim=c(0,0.1)),
   # p4 + ggtitle(bquote("n" == 100)), 
   # p4 + coord_cartesian(ylim=c(0,0.1)), 
@@ -823,7 +824,7 @@ ggsave(
 
 
 ### Figure 2.9: Plot CI of Zn, Vn & Student T ----------------------------------
-### (fig:CI_student_[Corr])
+### (fig:CI_student)
 
 # define figure name
 figname <- paste0("ch2_fig9_CI_student")
@@ -837,15 +838,15 @@ ev_stud_corr <- evidence_student
 
 # plot üpwer curves
 CI_plotter <- function(dat) {
-  dat <- dat[th_emp == "emp",]
+  dat <- dat[th_emp == "emp" & (id %in% c("Vn","Zn")),]
   CI_plot <- ggplot(data = dat, aes(
     x = mu1,y=CI,col=id,group=interaction(mu0,id,th_emp,n_study))) +
     geom_line(alpha=1) +
     scale_color_manual(
       name = "CI:",
-      labels = c("Zn" = bquote(T[n]~"\U00B1"*z[(1-alpha)]), 
-                 "Vn"= bquote(V[n]~"\U00B1"*z[(1-alpha)]), 
-                 "Tn" = T[n]~"\U00B1"*t[(n-1*","*1-alpha)]),
+      labels = c("Zn" = bquote(T[n]~"\U00B1"*z[(1-alpha/2)]), 
+                 "Vn"= bquote(V[n]~"\U00B1"*z[(1-alpha/2)]), 
+                 "Tn" = T[n]~"\U00B1"*t[(n-1*","*1-alpha/2)]),
       values = c("Zn" = "blue", "Vn" = "red","Tn" = "black")
     ) +
     scale_shape_manual(
@@ -862,7 +863,7 @@ CI_plotter <- function(dat) {
       data = dat[mu1 %in% seq(-2, 2, 0.4), ],
       aes(shape = factor(mu0)), alpha = 0.5, size = 1
     ) +
-    labs(x = bquote(mu[1]), y = "Empirical coverage") +
+    labs(x = bquote(mu[1]), y = "Coverage") +
     theme(
       text = element_text(size = font_size, family = font_family),
       plot.title = element_text(size = font_size)
@@ -884,7 +885,7 @@ p5 <- CI_plotter(ev_stud_mle[n_study==30 & mu0==0,]) +
 p6 <- CI_plotter(ev_stud_corr[n_study==30 & mu0==0,])
 p7 <- CI_plotter(ev_stud_mle[n_study==50 & mu0==0,]) + 
   ggtitle(bquote("n" == 50))
-p8 <- CI_plotter(ev_stud_corr[n_study==50 & mu0==0,])
+p8 <- CI_plotter(ev_stud_corr[n_study==100 & mu0==0,])
 
 fig9 <- ggarrange(p1,p2,p3,p4,p5,p6,p7,p8,
                   ncol = 2, nrow = 4,

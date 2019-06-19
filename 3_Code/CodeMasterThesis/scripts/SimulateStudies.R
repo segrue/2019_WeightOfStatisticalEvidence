@@ -24,4 +24,4 @@ alphas <- c(0.05)
 T_corr <- F #whether correction should be used or not when calculating vst
 
 ### simulate individual studies and calculate according summary and evidence statistics ----
-df <- evidence_in_mean(mu0_vec=mu0s,mu1s,sgm0,alphas,T_corr=F,seed,n_studies,n_sim)
+df <- evidence_in_mean(mu0_vec=mu0s,mu1s,sgm0,alphas,evd_corr=F,seed,n_studies,n_sim)

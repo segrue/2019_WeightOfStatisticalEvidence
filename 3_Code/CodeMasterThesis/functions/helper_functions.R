@@ -23,8 +23,12 @@ z_stat_binom <- function(p0, p1, n) {
 }
 
 # vst for normally distributed variable - variance known (aka clt)
-z_stat_norm <- function(mu0, mu1, sgm0, n_study) {
-  Zn <- (mu1 - mu0) / sgm0 * sqrt(n_study)
+z_stat_norm <- function(mu0, mu1, sgm0, n_study, evd_corr = F) {
+  if (evd_corr == T) {
+    Zn <- (mu1 - mu0) / sgm0 * sqrt(n_study) * (1 - 0.7 / (n_study - 1))
+  } else {
+    Zn <- (mu1 - mu0) / sgm0 * sqrt(n_study)
+  }
 }
 
 # vast for normally distributed variable - variance unknown
@@ -40,11 +44,7 @@ calc_evidence <- function(mu0s, mu1s, sgm1s, n_study, func, evd_corr) {
   if (missing(sgm1s)) {
     Tn <- apply(mu1s, 1, function(p1) sapply(mu0s, function(p0) func(p0, p1, n_study)))
   } else {
-    if (missing(evd_corr)) {
-      Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0, mu1s[mu1, ], sgm1s[mu1, ], n_study)))
-    } else {
-      Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0, mu1s[mu1, ], sgm1s[mu1, ], n_study, evd_corr = evd_corr)))
-    }
+    Tn <- sapply(1:dim(mu1s)[1], function(mu1) sapply(mu0s, function(mu0) func(mu0, mu1s[mu1, ], sgm1s[mu1, ], n_study, evd_corr = evd_corr)))
   }
   
   #replace infinity values by NA
@@ -122,7 +122,7 @@ mat2df <- function(mats, id) {
 # function to simulate a lot of different data_sets to take as basis for additional calculations
 evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, evd_corr = F, seed, n_studies, n_sim, fig_name) {
   cols_tot <- c(
-    "sim", "mu1", "mu1_hat", "sgm_hat", "sgm_th", "Tn", "p", "id", "T_avg_th", "T_avg_emp",
+    "sim", "mu1", "mu1_hat", "sgm_hat", "sgm_th", "Tn", "p", "id", "evd_mean_th", "evd_mean_emp",
     "evd_sd_th", "evd_sd_emp", "n_study", "correction", "mu0", "mu1_hat_mean", "sgm_hat_mean", "CI", "CI_crit_value", "alpha", "H1", "H0_crit_val"
   )
 
@@ -158,69 +158,70 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, evd_corr = F, seed, n_
 
       # calculate theoretical and empiral evidence based on clt-vst
       # this gives the distribution of the values if the clt holds, i.e. if we know the sd
-      T_clt_emp <- calc_evidence(mu0s, mu1_hats, sgm_th, n_study, z_stat_norm)
+      Zn_emp <- calc_evidence(mu0s, mu1_hats, sgm_th, n_study, z_stat_norm,evd_corr)
 
-      T_clt_emp_avg <- avg_evidence(T_clt_emp, mu0s, mu1s)
-      T_clt_emp_sd <- sd_evidence(T_clt_emp, mu0s, mu1s)
+      Zn_emp_avg <- avg_evidence(Zn_emp, mu0s, mu1s)
+      Zn_emp_sd <- sd_evidence(Zn_emp, mu0s, mu1s)
 
-      T_clt_th_avg <- sapply(mu1s, function(mu1) z_stat_norm(mu0s, mu1, sgm0, n_study))
-      T_th_sd <- matrix(1, nrow = dim(matrix(T_clt_th_avg))[1], ncol = dim(matrix(T_clt_th_avg))[2])
+      Zn_th_avg <- sapply(mu1s, function(mu1) z_stat_norm(mu0s, mu1, sgm0, n_study))
+      Zn_th_sd <- matrix(1, nrow = dim(matrix(Zn_th_avg))[1], ncol = dim(matrix(Zn_th_avg))[2])
 
-      T_clt_averages <- cbind(
-        rep(T_clt_th_avg, each = n_sim), rep(T_clt_emp_avg, each = n_sim),
-        rep(T_th_sd, each = n_sim), rep(T_clt_emp_sd, each = n_sim)
+      Zn_averages <- cbind(
+        rep(Zn_th_avg, each = n_sim), rep(Zn_emp_avg, each = n_sim),
+        rep(Zn_th_sd, each = n_sim), rep(Zn_emp_sd, each = n_sim)
       )
 
-      p_clt <- pnorm(T_clt_emp, 0, 1, lower.tail = FALSE)
-      T_clt_df <- cbind(mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(T_clt_emp), t(p_clt)), id = "clt"), T_clt_averages)
+      p_Zn <- pnorm(Zn_emp, 0, 1, lower.tail = FALSE)
+      Zn_df <- cbind(mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(Zn_emp), t(p_Zn)), id = "Zn"), Zn_averages)
 
       # calculate theoretical and empirical evidence based on clt-vst, but using empirical sd instead of theoretical
       # this gives us values if we assume the clt holds, but we do not know the sd and just use the empirical sd instea
-      T_clt_emp_stud <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, z_stat_norm)
+      Tn_emp <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, z_stat_norm, evd_corr =F)
 
-      T_clt_emp_stud_avg <- avg_evidence(T_clt_emp_stud, mu0s, mu1s)
-      T_clt_emp_stud_sd <- sd_evidence(T_clt_emp_stud, mu0s, mu1s)
+      Tn_emp_avg <- avg_evidence(Tn_emp, mu0s, mu1s)
+      Tn_emp_sd <- sd_evidence(Tn_emp, mu0s, mu1s)
       #
-      # #not that the "theoretical" distribution of T_clt_stud is the same as the theoretical
+      # #not that the "theoretical" distribution of Zn_stud is the same as the theoretical
       # #distribution of T_clt, which admittedly is pretty nonsensical in this context
-      # T_clt_stud <-  rbind(dat_transform(T_clt_emp_stud_avg,T_clt_emp_stud_sd,"emp","clt",n_study,cols_evidence,mu0s,mu1s),
-      #                      dat_transform(T_clt_th_avg,T_th_sd,"th","clt",n_study,cols_evidence,mu0s,mu1s))
+      # Zn_stud <-  rbind(dat_transform(Tn_emp_avg,Tn_emp_sd,"emp","Zn",n_study,cols_evidence,mu0s,mu1s),
+      #                      dat_transform(Zn_th_avg,Zn_th_sd,"th","Zn",n_study,cols_evidence,mu0s,mu1s))
 
 
-      T_clt_stud_averages <- cbind(
-        rep(T_clt_th_avg, each = n_sim), rep(T_clt_emp_stud_avg, each = n_sim),
-        rep(T_th_sd, each = n_sim), rep(T_clt_emp_stud_sd, each = n_sim)
+      Tn_averages <- cbind(
+        rep(Zn_th_avg, each = n_sim), rep(Tn_emp_avg, each = n_sim),
+        rep(Zn_th_sd, each = n_sim), rep(Tn_emp_sd, each = n_sim)
       )
 
-      p_clt_stud <- pt(T_clt_emp_stud, n_study - 1, 0, lower.tail = FALSE)
+      p_Tn <- pt(Tn_emp, n_study - 1, 0, lower.tail = FALSE)
 
-      T_clt_stud_df <- cbind(mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(T_clt_emp_stud), t(p_clt_stud)), id = "stud"), T_clt_stud_averages)
+      Tn_df <- cbind(mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(Tn_emp), t(p_Tn)), id = "Tn"), Tn_averages)
 
       # calculate theoretical and empiral evidence based on Student-t vst
-      T_vst_emp <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, vst_student)
-      T_vst_df <- mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(T_vst_emp)), id = "vst")
+      Vn_emp <- calc_evidence(mu0s, mu1_hats, sgm_hats, n_study, vst_student,evd_corr = T)
+      Vn_df <- mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(Vn_emp)), id = "Vn")
 
-      T_vst_emp_avg <- avg_evidence(T_vst_emp, mu0s, mu1s)
-      T_vst_emp_sd <- sd_evidence(T_vst_emp, mu0s, mu1s)
+      Vn_emp_avg <- avg_evidence(Vn_emp, mu0s, mu1s)
+      Vn_emp_sd <- sd_evidence(Vn_emp, mu0s, mu1s)
 
-      T_vst_th_avg <- sapply(mu1s, function(mu1) vst_student(mu0s, mu1, sgm0, n_study))
+      Vn_th_avg <- sapply(mu1s, function(mu1) vst_student(mu0s, mu1, sgm0, n_study))
+      Vn_th_sd <- Zn_th_sd
       #
-      # T_vst <- rbind(dat_transform(T_vst_emp_avg,T_vst_emp_sd,"emp","vst",n_study,cols_evidence,mu0s,mu1s),
-      #                dat_transform(T_vst_th_avg,T_th_sd,"th","vst",n_study,cols_evidence,mu0s,mu1s))
+      # T_vst <- rbind(dat_transform(Vn_emp_avg,Vn_emp_sd,"emp","Vn",n_study,cols_evidence,mu0s,mu1s),
+      #                dat_transform(Vn_th_avg,Zn_th_sd,"th","Vn",n_study,cols_evidence,mu0s,mu1s))
 
-      T_vst_averages <- cbind(
-        rep(T_vst_th_avg, each = n_sim), rep(T_vst_emp_avg, each = n_sim),
-        rep(T_th_sd, each = n_sim), rep(T_vst_emp_sd, each = n_sim)
+      Vn_averages <- cbind(
+        rep(Vn_th_avg, each = n_sim), rep(Vn_emp_avg, each = n_sim),
+        rep(Vn_th_sd, each = n_sim), rep(Vn_emp_sd, each = n_sim)
       )
 
-      p_vst <- pnorm(T_vst_emp, 0, 1, lower.tail = FALSE)
-      T_vst_df <- cbind(mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(T_vst_emp), t(p_vst)), id = "vst"), T_vst_averages)
+      p_Vn <- pnorm(Vn_emp, 0, 1, lower.tail = FALSE)
+      Vn_df <- cbind(mat2df(mats = list(mu1_hats, sgm_hats, sgm_th, t(Vn_emp), t(p_Vn)), id = "Vn"), Vn_averages)
 
 
-      T_df <- cbind(rbind(T_clt_df, T_clt_stud_df, T_vst_df), n_study, correction, mu0s)
-      T_df[, 2] <- rep(mu1s, times = 3, each = n_sim)
-      T_df <- cbind(T_df, rep(mu1_hats_mean, times = 3, each = n_sim), rep(sgm_hats_mean, times = 3, each = n_sim))
-      # colnames(T_df) <- c("sim","mu1","mu1_hat","sgm_hat","sgm_th","Tn","id","n_study","correction","mu0")
+      ev_df <- cbind(rbind(Zn_df, Tn_df, Vn_df), n_study, correction, mu0s)
+      ev_df[, 2] <- rep(mu1s, times = 3, each = n_sim)
+      ev_df <- cbind(ev_df, rep(mu1_hats_mean, times = 3, each = n_sim), rep(sgm_hats_mean, times = 3, each = n_sim))
+      # colnames(ev_df) <- c("sim","mu1","mu1_hat","sgm_hat","sgm_th","Tn","id","n_study","correction","mu0")
 
       # things to add:
       # column with critical value for CI -> done
@@ -231,18 +232,18 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, evd_corr = F, seed, n_
       # calculate power & confidence intervals
       for (alph in alphas) {
         # confidence_intervals
-        crit_val_ci <- qnorm((1 - alph / 2), 0, 1)
+        crit_val_ci_norm <- qnorm((1 - alph / 2), 0, 1)
         crit_val_ci_stud <- qt((1 - alph / 2), n_study - 1, 0)
 
         # question: how to calculate empirical CI coverage
-        emp_ci_clt <- t(ci_coverage(T_clt_emp, T_clt_th_avg, crit_val_ci))
-        emp_ci_clt_stud <- t(ci_coverage(T_clt_emp_stud, T_clt_th_avg, crit_val_ci_stud))
-        emp_ci_vst <- t(ci_coverage(T_vst_emp, T_vst_th_avg, crit_val_ci))
+        emp_ci_clt <- t(ci_coverage(Zn_emp, Zn_th_avg, crit_val_ci_norm))
+        emp_ci_clt_stud <- t(ci_coverage(Tn_emp, Zn_th_avg, crit_val_ci_stud))
+        emp_ci_vst <- t(ci_coverage(Vn_emp, Vn_th_avg, crit_val_ci_norm))
 
         ci_df <- rbind(
-          cbind(melt(emp_ci_clt)$value, crit_val_ci),
+          cbind(melt(emp_ci_clt)$value, crit_val_ci_norm),
           cbind(melt(emp_ci_clt_stud)$value, crit_val_ci_stud),
-          cbind(melt(emp_ci_vst)$value, crit_val_ci)
+          cbind(melt(emp_ci_vst)$value, crit_val_ci_norm)
         )
 
         # th_ci <- matrix((1-alph),nrow=dim(emp_ci_clt)[1],ncol=dim(emp_ci_clt)[2])
@@ -251,9 +252,9 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, evd_corr = F, seed, n_
         # ci_clt_stud <- rbind(melt(emp_ci_clt_stud),melt(th_ci))$value
         # ci_vst <- rbind(melt(emp_ci_vst),melt(th_ci))$value
 
-        T_df <- cbind(T_df, ci_df, alph)
+        ev_df <- cbind(ev_df, ci_df, alph)
         # T_clt <- cbind(T_clt,alph,ci_clt)
-        # T_clt_stud <- cbind(T_clt_stud,alph,ci_clt)
+        # Zn_stud <- cbind(Zn_stud,alph,ci_clt)
         # T_vst <- cbind(T_vst,alph,ci_vst)
 
         # colnames(T_vst) <- c(cols_evidence,"CI","alpha")
@@ -262,43 +263,43 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, evd_corr = F, seed, n_
         crit_val_stud <- qt(alph, n_study - 1, 0, lower.tail = FALSE)
 
         # pows_avg_stud_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pt(crit_val_stud,n_study-1,z_stat_norm(mu0,mu1,sgm0,n_study))))
-        pows_avg_stud_emp <- t(1 * (T_clt_emp_stud > crit_val_stud))
+        pows_avg_Tn_emp <- t(1 * (Tn_emp > crit_val_stud))
 
-        # pows_avg_stud <- rbind(melt(pows_avg_stud_emp),melt(pows_avg_stud_th))$value
+        # pows_avg_stud <- rbind(melt(pows_avg_Tn_emp),melt(pows_avg_stud_th))$value
 
         # calculate theoretical and empirical power for test using the clt and the normal distribution
         crit_val_norm <- qnorm(alph, mean = 0, sd = 1, lower.tail = FALSE)
 
         # pows_avg_clt_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,z_stat_norm(mu0,mu1,sgm0,n_study),sd=1)))
-        pows_avg_clt_emp <- t(1 * (T_clt_emp > crit_val_norm))
+        pows_avg_Zn_emp <- t(1 * (Zn_emp > crit_val_norm))
 
-        # pows_avg_clt <- rbind(melt(pows_avg_clt_emp),melt(pows_avg_clt_th))$value
+        # pows_avg_clt <- rbind(melt(pows_avg_Zn_emp),melt(pows_avg_clt_th))$value
 
         # calculate theoretical and empirical power for test using the vst (non-central Student t distribution)
         # pows_avg_vst_th <- sapply(mu1s, function(mu1) sapply(mu0s, function(mu0) 1-pnorm(crit_val_norm,vst_student(mu0,mu1,sgm0,n_study),sd=1)))
-        pows_avg_vst_emp <- t(1 * (T_vst_emp > crit_val_norm))
+        pows_avg_Vn <- t(1 * (Vn_emp > crit_val_norm))
 
-        # pows_avg_vst <- rbind(melt(pows_avg_vst_emp),melt(pows_avg_vst_th))$value
+        # pows_avg_vst <- rbind(melt(pows_avg_Vn),melt(pows_avg_vst_th))$value
 
         pows <- rbind(
-          cbind(melt(pows_avg_clt_emp)$value, crit_val_norm),
-          cbind(melt(pows_avg_stud_emp)$value, crit_val_stud),
-          cbind(melt(pows_avg_vst_emp)$value, crit_val_norm)
+          cbind(melt(pows_avg_Zn_emp)$value, crit_val_norm),
+          cbind(melt(pows_avg_Tn_emp)$value, crit_val_stud),
+          cbind(melt(pows_avg_Vn)$value, crit_val_norm)
         )
-        # pows <- rbind(pows_avg_clt_emp,pows_avg_stud_emp,pows_avg_vst_emp)
+        # pows <- rbind(pows_avg_Zn_emp,pows_avg_Tn_emp,pows_avg_Vn)
 
-        T_df <- cbind(T_df, pows)
-        colnames(T_df) <- cols_tot
+        ev_df <- cbind(ev_df, pows)
+        colnames(ev_df) <- cols_tot
         # T_clt <- cbind(T_clt,pows_avg_clt)
         # colnames(T_clt) <- cols_tot
 
-        # T_clt_stud <- cbind(T_clt_stud,pows_avg_stud)
-        # colnames(T_clt_stud) <- cols_tot
+        # Zn_stud <- cbind(Zn_stud,pows_avg_stud)
+        # colnames(Zn_stud) <- cols_tot
 
         # T_vst <- cbind(T_vst,pows_avg_vst)
         # colnames(T_vst) <- cols_tot
 
-        evidence_df <- rbind(evidence_df, T_df)
+        evidence_df <- rbind(evidence_df, ev_df)
       }
 
       diff.time <- Sys.time() - start.time

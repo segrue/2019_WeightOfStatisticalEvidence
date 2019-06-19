@@ -47,7 +47,7 @@ for (n_study in n_studies) {
   #calculate theoretical and empiral evidence based on Zn-vst
   #this gives the distribution of the values if the Zn holds, i.e. if we know the sd
   #question: can I use empirical SE to calculate Zn_th > how is distribution of this statistic?
-  Zn_emp <- calc_evidence(mu0s,mu1_hats,sgm_hats,n_study,z_stat_norm)
+  Zn_emp <- calc_evidence(mu0s,mu1_hats,sgm_hats,n_study,z_stat_norm,evd_corr)
   Zn_emp_avg <- avg_evidence(Zn_emp,mu0s,mu1s)
   Zn_emp_sd <- sd_evidence(Zn_emp,mu0s,mu1s)
   
@@ -59,8 +59,8 @@ for (n_study in n_studies) {
   
   #calculate theoretical and empirical evidence based on clt-vst, but using empirical sd instead of theoretical
   #this gives us values if we assume the clt holds, but we do not know the sd and just use the empirical sd instead
-
-  Tn_emp <- calc_evidence(mu0s,mu1_hats,sgm_hats,n_study,z_stat_norm)
+  
+  Tn_emp <- calc_evidence(mu0s,mu1_hats,sgm_hats,n_study,z_stat_norm,evd_corr=F)
   
   #Tn_th_avg <- avg_evidence(Tn_th)
   Tn_emp_avg <- avg_evidence(Tn_emp,mu0s,mu1s)
