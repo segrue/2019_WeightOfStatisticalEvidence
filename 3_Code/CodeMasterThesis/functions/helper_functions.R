@@ -54,6 +54,12 @@ calc_evidence <- function(mu0s, mu1s, sgm1s, n_study, func, evd_corr) {
   return(Tn)
 }
 
+# function to calculate the aggregated mean of the studies
+weighted_mean <- function(dat) {
+  agg_mean <- sum(dat$mu1_hat * dat$n_study) / sum(dat$n_study)
+  return(agg_mean)
+}
+
 # brings data into the correct form for plottings
 dat_transform <- function(T_avg, evd_sd, th_emp, id, n_study, cols, mu0s, mu1s) {
   dat <- merge(melt(T_avg), melt(evd_sd), by = c("Var1", "Var2"), sort = FALSE)
@@ -312,59 +318,60 @@ evidence_in_mean <- function(mu0_vec, mu1s, sgm0, alphas, evd_corr = F, seed, n_
 }
 
 ### functions needed for script "PublicationBias.R"
-funnel_plotter <- function(clt, vst, stud, xlim = 2, ylim = 8, figname, ctgs) {
-  # define colour code & legend that is consistent over all plots with "ctgs" (regardless of whether they appear in plot or not)
-  n_ctgs <- length(ctgs)
-  clrs <- brewer.pal(n_ctgs, "Paired")
-  names(clrs) <- ctgs
-  sc_col <- scale_color_manual(values = clrs, drop = FALSE)
+# funnel_plotter <- function(clt, vst, stud, xlim = 2, ylim = 8, figname, ctgs) {
+#   # define colour code & legend that is consistent over all plots with "ctgs" (regardless of whether they appear in plot or not)
+#   n_ctgs <- length(ctgs)
+#   clrs <- brewer.pal(n_ctgs, "Paired")
+#   names(clrs) <- ctgs
+#   sc_col <- scale_color_manual(values = clrs, drop = FALSE)
+# 
+#   std_errs_inv <- seq(0.1, ylim, by = 0.1)
+#   x_cutoff <- qnorm(0.05, mean = 0, lower.tail = F) / std_errs_inv
+#   cutoff <- data.table(x_cutoff, std_errs_inv)
+#   cutoff_norm <- data.table(x_cutoff = rep(qnorm(0.05, mean = 0, lower.tail = F), length(std_errs_inv)), std_errs_inv)
+# 
+# 
+#   # create plots
+#   p1 <- ggplot(data = clt, aes(x = Tn, y = n_study, col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
+#     theme(legend.position = "none") + labs(x = expression(paste(italic("z"), "-statistic")), y = "n") + sc_col + ylim(0, max(ctgs) + 50)
+#   p2 <- ggplot(data = clt, aes(x = Tn, y = 1 / (sgm_hat / sqrt(n_study)), col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
+#     theme(legend.position = "none") + labs(x = expression(paste(italic("z"), "-statistic")), y = expression(1 / SE(bar(X)))) + sc_col +
+#     ylim(0, ylim) + geom_line(data = cutoff_norm, aes(x = x_cutoff, y = std_errs_inv), inherit.aes = F, linetype = 2)
+#   p3 <- ggplot(data = stud, aes(x = Tn, y = n_study, col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
+#     theme(legend.position = "none") + labs(x = expression(paste(italic("t"), "-statistic")), y = "n") + sc_col + ylim(0, max(ctgs) + 50)
+#   p4 <- ggplot(data = stud, aes(x = Tn, y = 1 / (sgm_hat / sqrt(n_study)), col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
+#     theme(legend.position = "none") + labs(x = expression(paste(italic("t"), "-statistic")), y = expression(1 / SE(bar(X)))) + sc_col +
+#     ylim(0, ylim)
+#   p5 <- ggplot(data = vst, aes(x = Tn, y = n_study, col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
+#     theme(legend.position = "none") + labs(x = expression(italic(T[vst])), y = "n") + sc_col + ylim(0, max(ctgs) + 50)
+#   p6 <- ggplot(data = vst, aes(x = Tn, y = 1 / (sgm_hat / sqrt(n_study)), col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
+#     theme(legend.position = "none") + labs(x = expression(italic(T[vst])), y = expression(1 / SE(bar(X)))) + sc_col +
+#     ylim(0, ylim) + geom_line(data = cutoff_norm, aes(x = x_cutoff, y = std_errs_inv), inherit.aes = F, linetype = 2)
+#   p7 <- ggplot(data = stud, aes(x = mu1_hat, y = n_study, col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
+#     theme(legend.position = "none") + labs(x = expression(bar(X)), y = "n") + sc_col + ylim(0, max(ctgs) + 50)
+#   p8 <- ggplot(data = stud, aes(x = mu1_hat, y = 1 / (sgm_hat / sqrt(n_study)), col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
+#     guides(color = guide_legend(reverse = TRUE)) + labs(x = expression(bar(X)), y = expression(1 / SE(bar(X))), color = "n") +
+#     theme(legend.title.align = 0.5) + sc_col + ylim(0, ylim) + geom_line(data = cutoff, aes(x = x_cutoff, y = std_errs_inv), inherit.aes = F, linetype = 2) +
+#     geom_line(data = vst, aes(x = mu1, y = seq(0, ylim, length.out = length(mu1))), inherit.aes = F, linetype = 1)
+# 
+#   # see here for more details on gridarrange: http://www.sthda.com/english/wiki/wiki.php?id_contents=7930
+#   leg <- get_legend(p8)
+#   # blankPlot <- ggplot()+geom_blank(aes(1,1))+cowplot::theme_nothing()
+#   pdf(paste0("./figs/", figname), onefile = TRUE)
+#   grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8 + theme(legend.position = "none"), leg,
+#     nrow = 4, ncol = 3, widths = c(3, 3, 1), layout_matrix = cbind(c(1, 3, 5, 7), c(2, 4, 6, 8), c(9, 9, 9, 9))
+#   )
+#   dev.off()
+# }
 
-  std_errs_inv <- seq(0.1, ylim, by = 0.1)
-  x_cutoff <- qnorm(0.05, mean = 0, lower.tail = F) / std_errs_inv
-  cutoff <- data.table(x_cutoff, std_errs_inv)
-  cutoff_norm <- data.table(x_cutoff = rep(qnorm(0.05, mean = 0, lower.tail = F), length(std_errs_inv)), std_errs_inv)
-
-
-  # create plots
-  p1 <- ggplot(data = clt, aes(x = Tn, y = n_study, col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
-    theme(legend.position = "none") + labs(x = expression(paste(italic("z"), "-statistic")), y = "n") + sc_col + ylim(0, max(ctgs) + 50)
-  p2 <- ggplot(data = clt, aes(x = Tn, y = 1 / (sgm_hat / sqrt(n_study)), col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
-    theme(legend.position = "none") + labs(x = expression(paste(italic("z"), "-statistic")), y = expression(1 / SE(bar(X)))) + sc_col +
-    ylim(0, ylim) + geom_line(data = cutoff_norm, aes(x = x_cutoff, y = std_errs_inv), inherit.aes = F, linetype = 2)
-  p3 <- ggplot(data = stud, aes(x = Tn, y = n_study, col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
-    theme(legend.position = "none") + labs(x = expression(paste(italic("t"), "-statistic")), y = "n") + sc_col + ylim(0, max(ctgs) + 50)
-  p4 <- ggplot(data = stud, aes(x = Tn, y = 1 / (sgm_hat / sqrt(n_study)), col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
-    theme(legend.position = "none") + labs(x = expression(paste(italic("t"), "-statistic")), y = expression(1 / SE(bar(X)))) + sc_col +
-    ylim(0, ylim)
-  p5 <- ggplot(data = vst, aes(x = Tn, y = n_study, col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
-    theme(legend.position = "none") + labs(x = expression(italic(T[vst])), y = "n") + sc_col + ylim(0, max(ctgs) + 50)
-  p6 <- ggplot(data = vst, aes(x = Tn, y = 1 / (sgm_hat / sqrt(n_study)), col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
-    theme(legend.position = "none") + labs(x = expression(italic(T[vst])), y = expression(1 / SE(bar(X)))) + sc_col +
-    ylim(0, ylim) + geom_line(data = cutoff_norm, aes(x = x_cutoff, y = std_errs_inv), inherit.aes = F, linetype = 2)
-  p7 <- ggplot(data = stud, aes(x = mu1_hat, y = n_study, col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
-    theme(legend.position = "none") + labs(x = expression(bar(X)), y = "n") + sc_col + ylim(0, max(ctgs) + 50)
-  p8 <- ggplot(data = stud, aes(x = mu1_hat, y = 1 / (sgm_hat / sqrt(n_study)), col = factor(n_study))) + geom_point() + xlim(-xlim, xlim) +
-    guides(color = guide_legend(reverse = TRUE)) + labs(x = expression(bar(X)), y = expression(1 / SE(bar(X))), color = "n") +
-    theme(legend.title.align = 0.5) + sc_col + ylim(0, ylim) + geom_line(data = cutoff, aes(x = x_cutoff, y = std_errs_inv), inherit.aes = F, linetype = 2) +
-    geom_line(data = vst, aes(x = mu1, y = seq(0, ylim, length.out = length(mu1))), inherit.aes = F, linetype = 1)
-
-  # see here for more details on gridarrange: http://www.sthda.com/english/wiki/wiki.php?id_contents=7930
-  leg <- get_legend(p8)
-  # blankPlot <- ggplot()+geom_blank(aes(1,1))+cowplot::theme_nothing()
-  pdf(paste0("./figs/", figname), onefile = TRUE)
-  grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8 + theme(legend.position = "none"), leg,
-    nrow = 4, ncol = 3, widths = c(3, 3, 1), layout_matrix = cbind(c(1, 3, 5, 7), c(2, 4, 6, 8), c(9, 9, 9, 9))
-  )
-  dev.off()
-}
-
-select_studies <- function(dat, probs, n_studies, n_select, seed, T_id) {
+select_studies <- function(dat, probs, n_select, seed, evd_id) {
   set.seed(seed)
+  n_studies <- unique(dat$n_study)
   if (sum(probs) > 1) {
     stop("Sum of probabilties must not exceed 1.")
   }
   if (length(probs) != length(n_studies) & (length(probs) > 1)) {
-    stop("Probs must be skalra or a vector of the same as length of n_studies vector.")
+    stop("Probs must be skalar or a vector of the same as length of n_studies vector.")
   }
   # if (n_select  > n_sim*length(probs)){
   #   stop("The total number of entries to be selected exceeds total number of studies available.")
@@ -376,25 +383,31 @@ select_studies <- function(dat, probs, n_studies, n_select, seed, T_id) {
   if (length(probs) > 1) {
     n_select <- ceiling(n_select * probs)
     for (i in 1:length(n_studies)) {
-      temp_dat <- dat[n_study == n_studies[i] & id == T_id, ]
-      n <- dim(temp_dat)[1]
+      temp_dat <- dat[n_study == n_studies[i] & id == evd_id, ]
+      n <- dim(temp_dat)[1] #number of data points available for study size = n_studies[i]
 
       if (n == 0) {
-        next
+        next #if no data available, jump to next loop instance
       } else if (n < n_select[i]) {
-        selected_idx <- seq(1, n, 1)
+        selected_idx <- seq(1, n, 1) #if the total number of available studies is smaller than n_select, just pick all studies available
       } else {
         selected_idx <- sample(n, n_select[i])
       }
       dat_selected <- rbind(dat_selected, temp_dat[selected_idx, ])
     }
-  } else {
-    temp_dat <- dat[id == T_id & n_study %in% n_studies, ]
+  } else if (probs == FALSE) { # if not probability is provided, just pick n_select random samples
+    temp_dat <- dat[id == evd_id, ]
     n <- dim(temp_dat)[1]
-    n_select <- ceiling(n * probs)
     selected_idx <- sample(n, n_select)
     dat_selected <- rbind(dat_selected, temp_dat[selected_idx, ])
   }
+    else { # if a single probability is provided, pick prob*n_tot random samples
+      temp_dat <- dat[id == evd_id, ]
+      n <- dim(temp_dat)[1]
+      n_select <- ceiling(n * probs)
+      selected_idx <- sample(n, n_select)
+      dat_selected <- rbind(dat_selected, temp_dat[selected_idx, ])
+    }
 
   return(dat_selected)
 }
@@ -417,6 +430,7 @@ calc_filedrawer <- function(dat, exact = F) {
   z <- qnorm(dat$p, 0, 1, lower.tail = FALSE)
   z_k <- mean(z)
   k <- length(z)
+  print(paste0("Number of studies: ",k))
   q <- qnorm(1 - alph)
   
   if (exact == F){
@@ -427,6 +441,7 @@ calc_filedrawer <- function(dat, exact = F) {
                     q * sqrt(4 * k * z_x^2 - 4 * k * z_k * z_x + q^2)) /
                   (2 * z_x^2)
   }
+  print(paste0("Filedrawer = ", filedrawer))
   return(filedrawer)
 }
 

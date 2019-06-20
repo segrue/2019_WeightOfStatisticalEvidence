@@ -10,7 +10,7 @@ source("./functions/helper_functions.R")
 # hypotheses:
 # H0: p <= mu0
 # H1: p > mu0
-n_sim <- 1e2 #number of times the setting below shall be simulated
+n_sim <- 1e3 #number of times the setting below shall be simulated
 seed <- 20190514
 set.seed(seed)
 
@@ -21,7 +21,7 @@ mu1s <- round(seq(-2,2,by=0.1),1)
 sgm0 <- sgm1 <- 2
 alphas <- c(0.05)
 
-T_corr <- F #whether correction should be used or not when calculating vst
+T_corr <- T #whether correction should be used or not when calculating vst
 
 ### simulate individual studies and calculate according summary and evidence statistics ----
 df <- evidence_in_mean(mu0_vec=mu0s,mu1s,sgm0,alphas,evd_corr=F,seed,n_studies,n_sim)

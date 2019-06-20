@@ -122,11 +122,6 @@ label <- "2C"
 funnel_plotter(clt_mix, vst_mix, stud_mix, xlim = x_lim, ylim = y_lim, 
                figname = paste0(fig_name, "_", label, "_", n_tot, ".pdf"), ctgs)
 
-# function to calculate the aggregated mean of the studies
-weighted_mean <- function(dat) {
-  agg_mean <- sum(dat$mu1_hat * dat$n_study) / sum(dat$n_study)
-  return(agg_mean)
-}
 weighted_mean(stud)
 weighted_mean(clt)
 weighted_mean(vst)
@@ -355,7 +350,7 @@ plot(z, calc_pub_prob(z, trunc_dens_T, 0))
 
 pub_prob <- calc_pub_prob(z, trunc_dens_T, 0.2)
 
-rew_mean <- reweighted_mean(clt_mix, pub_prob)
+rew_mean <- reweight_mean(clt_mix, pub_prob)
 rew_mean
 
 weighted_mean(clt_mix)

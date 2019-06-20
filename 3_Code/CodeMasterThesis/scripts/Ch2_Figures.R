@@ -27,7 +27,7 @@ font_size <- 16
 font_family <- "Palatino Linotype"
 A4 <- c(8.27, 11.69) # width and height of A4 page in inches
 A5 <- c(5.8, 8.3) # width and height of an A5 page
-corr_student <- "Corr" # either "MLE" for no correction or "Corr" for finite sample correction 
+corr_student <- "Corr" # either "MLE" for no correction or "Corr" for finite sample correction
 corr_bin <- "Ans" # either "MLE" for no correction or "Ans" for Anscombe correction
 n_sim <- "1e+05"
 
@@ -74,7 +74,7 @@ p1 <- ggplot(data = data.table(x), aes(x = x)) +
   ) +
   scale_x_continuous(
     breaks = c(x_major_breaks, q_alpha),
-    labels = c(x_major_breaks, bquote(z[(1 - alpha)])),
+    labels = c(x_major_breaks, bquote(z[0.95])),
     minor_breaks = x_minor_breaks
   ) +
   theme(
@@ -231,7 +231,7 @@ ggsave(
 figname <- paste0("ch2_fig3_evidence_binom_", corr_bin)
 
 # load data
-load(paste0("data/Ev_Binom_", corr_bin, "_",n_sim,"_20190504.RData"), verbose = TRUE)
+load(paste0("data/Ev_Binom_", corr_bin, "_", n_sim, "_20190504.RData"), verbose = TRUE)
 dat <- evidence_binom
 
 # plot fit of empirical distribution of Zn and Vn with theoretical dist
@@ -252,7 +252,7 @@ fit_plotter <- function(dat) {
     ) +
     scale_color_manual(
       name = "Statistic:",
-      labels = c("Zn" = bquote(Z[n]), "Vn"= bquote(V[n])),
+      labels = c("Zn" = bquote(Z[n]), "Vn" = bquote(V[n])),
       values = c("Zn" = "blue", "Vn" = "red")
     ) +
     scale_linetype_manual(
@@ -262,7 +262,7 @@ fit_plotter <- function(dat) {
     coord_cartesian(ylim = c(y_min, y_max)) +
     scale_shape_manual(
       name = bquote(H[0] * ":"),
-      labels = c("0.1"= bquote(p == 0.1), "0.5" =bquote(p == 0.5), "0.9"= bquote(p == 0.9)),
+      labels = c("0.1" = bquote(p == 0.1), "0.5" = bquote(p == 0.5), "0.9" = bquote(p == 0.9)),
       values = c("0.1" = 3, "0.5" = 1, "0.9" = 4)
     ) +
     labs(x = bquote(p[1]), y = bquote(tau * "/" * sqrt(n))) +
@@ -277,7 +277,7 @@ fit_plotter <- function(dat) {
 
 # plot empirical variance around Zn and Vn
 sd_plotter <- function(dat) {
-  dat <- dat[(id %in% c("Zn", "Vn")) & p0==0.5, ]
+  dat <- dat[(id %in% c("Zn", "Vn")) & p0 == 0.5, ]
   y_min <- min(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
   y_max <- max(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
   sd_plot <- ggplot(
@@ -302,7 +302,7 @@ sd_plotter <- function(dat) {
         ymin = (evd_mean - evd_sd) / sqrt(n_study),
         ymax = (evd_mean + evd_sd) / sqrt(n_study)
       ),
-      alpha = 1, fill=NA
+      alpha = 1, fill = NA
     ) +
     geom_point(
       data = dat[p1 %in% seq(0.01, 0.99, 0.1), ],
@@ -310,18 +310,18 @@ sd_plotter <- function(dat) {
     ) +
     scale_color_manual(
       name = "Statistic:",
-      labels = c("Zn" = bquote(Z[n]), "Vn"= bquote(V[n])),
+      labels = c("Zn" = bquote(Z[n]), "Vn" = bquote(V[n])),
       values = c("Zn" = "blue", "Vn" = "red"),
       guide = F
     ) +
     scale_shape_manual(
       name = bquote(H[0] * ":"),
-      labels = c("0.1"= bquote(p == 0.1), "0.5" =bquote(p == 0.5), "0.9"= bquote(p == 0.9)),
+      labels = c("0.1" = bquote(p == 0.1), "0.5" = bquote(p == 0.5), "0.9" = bquote(p == 0.9)),
       values = c("0.1" = 3, "0.5" = 1, "0.9" = 4)
     ) +
     scale_fill_manual(
       name = "Statistic:",
-      labels = c("Zn" = bquote(Z[n]), "Vn"= bquote(V[n])),
+      labels = c("Zn" = bquote(Z[n]), "Vn" = bquote(V[n])),
       values = c("Zn" = "blue", "Vn" = "red")
     ) +
     coord_cartesian(ylim = c(y_min, y_max)) +
@@ -355,19 +355,22 @@ ggsave(
 figname <- paste0("ch2_fig4_power_binom_", corr_bin)
 
 # load data
-load(paste0("data/Ev_Binom_", corr_bin, "_",n_sim,"_20190504.RData"), verbose = TRUE) 
+load(paste0("data/Ev_Binom_", corr_bin, "_", n_sim, "_20190504.RData"), verbose = TRUE)
 dat <- evidence_binom
 
 # plot power curves
 power_plotter <- function(dat) {
-  dat <- dat[th_emp=="emp",]
+  dat <- dat[th_emp == "emp", ]
   power_plot <- ggplot(data = dat, aes(
-    x = p1,y=power,col=id,group=interaction(p0,th_emp,id),linetype=th_emp)) +
-    geom_line(alpha=0.5) + 
+    x = p1, y = power, col = id, group = interaction(p0, th_emp, id), linetype = th_emp
+  )) +
+    geom_line(alpha = 0.5) +
     scale_color_manual(
       name = "Test:",
-      labels = c("Zn" = bquote(Z[n] > z[(1-alpha)]), "Vn"= bquote(V[n] > z[(1-alpha)]), 
-                 "binom" = "binomial"),
+      labels = c(
+        "Zn" = bquote(Z[n] > z[(1 - alpha)]), "Vn" = bquote(V[n] > z[(1 - alpha)]),
+        "binom" = "binomial"
+      ),
       values = c("Zn" = "blue", "Vn" = "red", "binom" = "black")
     ) +
     geom_point(
@@ -376,56 +379,56 @@ power_plotter <- function(dat) {
     ) +
     scale_linetype_manual(
       name = "emp/th:",
-      values = c("th" = "dashed", "emp" = "solid"), 
+      values = c("th" = "dashed", "emp" = "solid"),
       drop = F,
       guide = F
     ) +
     scale_shape_manual(
       name = bquote(H[0] * ":"),
-      labels = c("0.1"= bquote(p == 0.1), "0.5" =bquote(p == 0.5), "0.9"= bquote(p == 0.9)),
+      labels = c("0.1" = bquote(p == 0.1), "0.5" = bquote(p == 0.5), "0.9" = bquote(p == 0.9)),
       values = c("0.1" = 3, "0.5" = 1, "0.9" = 4)
     ) +
-    labs(x = bquote(p[1]), y = bquote("1-"*beta)) +
+    labs(x = bquote(p[1]), y = bquote("1-" * beta)) +
     theme(
       text = element_text(size = font_size, family = font_family),
       plot.title = element_text(size = font_size)
-    ) + 
+    ) +
     geom_segment(aes(x = 0, y = 0.05, xend = 1, yend = 0.05),
-                       col = "black", size = 0.3, linetype = "dotted"
+      col = "black", size = 0.3, linetype = "dotted"
     ) +
     geom_segment(aes(x = 0.1, y = 0, xend = 0.1, yend = 1),
-                 col = "black", size = 0.3, linetype = "dotted"
+      col = "black", size = 0.3, linetype = "dotted"
     ) +
     geom_segment(aes(x = 0.9, y = 0, xend = 0.9, yend = 1),
-                 col = "black", size = 0.3, linetype = "dotted"
+      col = "black", size = 0.3, linetype = "dotted"
     ) +
     geom_segment(aes(x = 0.5, y = 0, xend = 0.5, yend = 1),
-                 col = "black", size = 0.3, linetype = "dotted"
-    ) 
+      col = "black", size = 0.3, linetype = "dotted"
+    )
   return(power_plot)
 }
 
 # p0 <- power_plotter(dat[n_study==5,])
-p1 <- power_plotter(dat[n_study==5,])
-p2 <- power_plotter(dat[n_study==10,])
-p3 <- power_plotter(dat[n_study==20,])
-#p4 <- power_plotter(dat[n_study==100,])
+p1 <- power_plotter(dat[n_study == 5, ])
+p2 <- power_plotter(dat[n_study == 10, ])
+p3 <- power_plotter(dat[n_study == 20, ])
+# p4 <- power_plotter(dat[n_study==100,])
 
 fig4 <- ggarrange(
   # p0 + ggtitle(bquote("n" == 5)),
-  # p0 + coord_cartesian(ylim=c(0,0.1)), 
-  p1 + ggtitle(bquote("n" == 5)), 
-  p1 + coord_cartesian(ylim=c(0,0.1)), 
-  p2 + ggtitle(bquote("n" == 10)), 
-  p2 +coord_cartesian(ylim=c(0,0.1)),
-  p3 + ggtitle(bquote("n" == 20)), 
-  p3 + coord_cartesian(ylim=c(0,0.1)),
-  # p4 + ggtitle(bquote("n" == 100)), 
-  # p4 + coord_cartesian(ylim=c(0,0.1)), 
+  # p0 + coord_cartesian(ylim=c(0,0.1)),
+  p1 + ggtitle(bquote("n" == 5)),
+  p1 + coord_cartesian(ylim = c(0, 0.1)),
+  p2 + ggtitle(bquote("n" == 10)),
+  p2 + coord_cartesian(ylim = c(0, 0.1)),
+  p3 + ggtitle(bquote("n" == 20)),
+  p3 + coord_cartesian(ylim = c(0, 0.1)),
+  # p4 + ggtitle(bquote("n" == 100)),
+  # p4 + coord_cartesian(ylim=c(0,0.1)),
   ncol = 2, nrow = 3,
   align = "hv", legend = "top", common.legend = T,
-  labels = c("A", "", "B","", "C","")
-  )
+  labels = c("A", "", "B", "", "C", "")
+)
 
 ggsave(
   filename = paste0(out_path, figname, ".pdf"), plot = fig4,
@@ -440,27 +443,30 @@ ggsave(
 figname <- paste0("ch2_fig5_CI_binom")
 
 # load data
-load(paste0("data/Ev_Binom_MLE_",n_sim,"_20190504.RData"), verbose = TRUE)
+load(paste0("data/Ev_Binom_MLE_", n_sim, "_20190504.RData"), verbose = TRUE)
 ev_bin_mle <- evidence_binom
 
-load(paste0("data/Ev_Binom_Ans_",n_sim,"_20190504.RData"), verbose = TRUE)
+load(paste0("data/Ev_Binom_Ans_", n_sim, "_20190504.RData"), verbose = TRUE)
 ev_bin_ans <- evidence_binom
 
 # plot üpwer curves
 CI_plotter <- function(dat) {
   dat <- dat[id == "Zn" | id == "Vn"]
   CI_plot <- ggplot(data = dat, aes(
-    x = p1,y=CI,col=id,group=interaction(p0,id,th_emp,n_study))) +
-    geom_line(alpha=1) +
+    x = p1, y = CI, col = id, group = interaction(p0, id, th_emp, n_study)
+  )) +
+    geom_line(alpha = 1) +
     scale_color_manual(
       name = "CI:",
-      labels = c("Zn" = bquote(Z[n]~"\U00B1"*z[(1-alpha/2)]), 
-                 "Vn"= bquote(V[n]~"\U00B1"*z[(1-alpha/2)])),
+      labels = c(
+        "Zn" = bquote(Z[n] ~ "\U00B1" * z[(1 - alpha / 2)]),
+        "Vn" = bquote(V[n] ~ "\U00B1" * z[(1 - alpha / 2)])
+      ),
       values = c("Zn" = "blue", "Vn" = "red")
     ) +
     scale_shape_manual(
       name = bquote(H[0] * ":"),
-      labels = c("0.1"= bquote(p == 0.1), "0.5" =bquote(p == 0.5), "0.9"= bquote(p == 0.9)),
+      labels = c("0.1" = bquote(p == 0.1), "0.5" = bquote(p == 0.5), "0.9" = bquote(p == 0.9)),
       values = c("0.1" = 3, "0.5" = 1, "0.9" = 4)
     ) +
     # scale_linetype_manual(
@@ -476,30 +482,30 @@ CI_plotter <- function(dat) {
     theme(
       text = element_text(size = font_size, family = font_family),
       plot.title = element_text(size = font_size)
-    ) + 
+    ) +
     geom_segment(aes(x = 0, y = .95, xend = 1, yend = 0.95),
-                 col = "black", size = 0.3, linetype = "dotted"
-    ) + coord_cartesian(ylim=c(0,1))
+      col = "black", size = 0.3, linetype = "dotted"
+    ) + coord_cartesian(ylim = c(0, 1))
   return(CI_plot)
 }
 
-p1 <- CI_plotter(ev_bin_mle[n_study==5 & th_emp=="emp" & p0==0.5,]) + 
-      ggtitle(bquote("n" == 5))
-p2 <- CI_plotter(ev_bin_ans[n_study==5 & th_emp=="emp" & p0==0.5,])
-p3 <- CI_plotter(ev_bin_mle[n_study==10 & th_emp=="emp" & p0==0.5,]) + 
-      ggtitle(bquote("n" == 10))
-p4 <- CI_plotter(ev_bin_ans[n_study==10 & th_emp=="emp" & p0==0.5,])
-p5 <- CI_plotter(ev_bin_mle[n_study==30 & th_emp=="emp" & p0==0.5,]) + 
-      ggtitle(bquote("n" == 30))
-p6 <- CI_plotter(ev_bin_ans[n_study==30 & th_emp=="emp" & p0==0.5,])
-p7 <- CI_plotter(ev_bin_mle[n_study==50 & th_emp=="emp" & p0==0.5,]) + 
-      ggtitle(bquote("n" == 50))
-p8 <- CI_plotter(ev_bin_ans[n_study==50 & th_emp=="emp" & p0==0.5,])
+p1 <- CI_plotter(ev_bin_mle[n_study == 5 & th_emp == "emp" & p0 == 0.5, ]) +
+  ggtitle(bquote("n" == 5))
+p2 <- CI_plotter(ev_bin_ans[n_study == 5 & th_emp == "emp" & p0 == 0.5, ])
+p3 <- CI_plotter(ev_bin_mle[n_study == 10 & th_emp == "emp" & p0 == 0.5, ]) +
+  ggtitle(bquote("n" == 10))
+p4 <- CI_plotter(ev_bin_ans[n_study == 10 & th_emp == "emp" & p0 == 0.5, ])
+p5 <- CI_plotter(ev_bin_mle[n_study == 30 & th_emp == "emp" & p0 == 0.5, ]) +
+  ggtitle(bquote("n" == 30))
+p6 <- CI_plotter(ev_bin_ans[n_study == 30 & th_emp == "emp" & p0 == 0.5, ])
+p7 <- CI_plotter(ev_bin_mle[n_study == 50 & th_emp == "emp" & p0 == 0.5, ]) +
+  ggtitle(bquote("n" == 50))
+p8 <- CI_plotter(ev_bin_ans[n_study == 50 & th_emp == "emp" & p0 == 0.5, ])
 
-fig5 <- ggarrange(p1,p2,p3,p4,p5,p6,p7,p8,
+fig5 <- ggarrange(p1, p2, p3, p4, p5, p6, p7, p8,
   ncol = 2, nrow = 4,
   align = "hv", legend = "top", common.legend = T,
-  labels = c("A", "", "B","", "C","","D","")
+  labels = c("A", "", "B", "", "C", "", "D", "")
 )
 
 ggsave(
@@ -515,7 +521,7 @@ figname <- paste0("ch2_fig6_normal_fit_student_", corr_student)
 
 # load data
 load(paste0(in_path, "student_quantiles_", corr_student, "_5000_20190505.RData"),
-     verbose = TRUE
+  verbose = TRUE
 )
 
 # variables are
@@ -549,11 +555,12 @@ cdf_plotter <- function(dat) {
     ) +
     scale_linetype_manual(
       name = bquote(H[1] ~ ":"),
-      labels = c("-2" = 
-        bquote(mu == -2), "0"=bquote(mu == 0),
-        "2"=bquote(mu == 2)
+      labels = c(
+        "-2" =
+          bquote(mu == -2), "0" = bquote(mu == 0),
+        "2" = bquote(mu == 2)
       ),
-      values = c("-2"="solid", "0"="dashed", "2"="dotdash")
+      values = c("-2" = "solid", "0" = "dashed", "2" = "dotdash")
     ) +
     ylim(0, 1) + ggtitle(bquote("n" == .(dat$n_study[1]))) +
     labs(x = "x", y = "F(x)") + coord_cartesian(xlim = c(q_min, q_max)) +
@@ -567,24 +574,25 @@ qq_plotter <- function(dat) {
   q_min <- min(dat[id == "th", ]$quantile)
   q_max <- max(dat[id == "th", ]$quantile)
   th_quantiles <- qnorm(seq(0.01, 0.99,
-                            along.with = dat[id == "th" & mu1 == -2, quantile]
+    along.with = dat[id == "th" & mu1 == -2, quantile]
   ), 0, 1)
   dat$q_theoretical <- rep(th_quantiles, dim(unique(dat[, .(id, mu1)]))[1])
   q_plot <- ggplot(data = dat, aes(
     x = q_theoretical, y = quantile, col = id,
     group = interaction(mu1, id), linetype = factor(mu1)
   )) +
-    geom_line() + 
+    geom_line() +
     scale_color_manual(
       values = c("th" = "black", "Tn" = "blue", "Vn" = "red")
-      ) +
+    ) +
     scale_linetype_manual(
       name = bquote(H[1] ~ ":"),
-      labels = c("-2" = 
-                   bquote(mu == -2), "0"=bquote(mu == 0),
-                 "2"=bquote(mu == 2)
+      labels = c(
+        "-2" =
+          bquote(mu == -2), "0" = bquote(mu == 0),
+        "2" = bquote(mu == 2)
       ),
-      values = c("-2"="solid", "0"="dashed", "2"="dotdash")
+      values = c("-2" = "solid", "0" = "dashed", "2" = "dotdash")
     ) +
     labs(x = bquote(Phi^{
       -1
@@ -608,9 +616,9 @@ p6 <- qq_plotter(student_quantiles[n_study == 20, ])
 # p7 <- cdf_plotter(quantiles[quantiles$n_study==30,])
 # p8 <- qq_plotter(quantiles[quantiles$n_study==30,])
 fig6 <- ggarrange(p1, p2, p3, p4, p5, p6,
-                  ncol = 2, nrow = 3,
-                  align = "hv", legend = "top", common.legend = T,
-                  labels = c("A", "", "B", "", "C", "")
+  ncol = 2, nrow = 3,
+  align = "hv", legend = "top", common.legend = T,
+  labels = c("A", "", "B", "", "C", "")
 )
 ggsave(
   filename = paste0(out_path, figname, ".pdf"), plot = fig6,
@@ -624,7 +632,7 @@ ggsave(
 figname <- paste0("ch2_fig7_evidence_student_", corr_student)
 
 # load data
-load(paste0("data/Ev_Student_", corr_student, "_",n_sim,"_20190504.RData"), verbose = TRUE)
+load(paste0("data/Ev_Student_", corr_student, "_", n_sim, "_20190504.RData"), verbose = TRUE)
 dat <- evidence_student
 
 # plot fit of empirical distribution of Zn and Vn with theoretical dist
@@ -636,16 +644,16 @@ fit_plotter <- function(dat) {
     x = mu1, y = evd_mean / sqrt(n_study),
     col = id, group = interaction(factor(mu0), th_emp, id),
     linetype = th_emp
-   )) +
-     geom_line() +
+  )) +
+    geom_line() +
     geom_point(
-      data = dat[mu1 %in% seq(-2, 2, 0.4) & th_emp =="emp", ],
+      data = dat[mu1 %in% seq(-2, 2, 0.4) & th_emp == "emp", ],
       aes(shape = factor(mu0)), alpha = 0.5, size = 1
     ) +
     scale_color_manual(
       name = "Statistic:",
-      labels = c("Vn"= bquote(V[n]),"Zn" = bquote(T[n])),
-      values = c("Vn" = "red","Zn"="blue")
+      labels = c("Vn" = bquote(V[n]), "Zn" = bquote(T[n])),
+      values = c("Vn" = "red", "Zn" = "blue")
     ) +
     scale_linetype_manual(
       name = "emp/th:",
@@ -654,7 +662,7 @@ fit_plotter <- function(dat) {
     coord_cartesian(ylim = c(y_min, y_max)) +
     scale_shape_manual(
       name = bquote(H[0] * ":"),
-      labels = c("-2"= bquote(mu == -2), "0" =bquote(mu == 0), "2"= bquote(mu == 2)),
+      labels = c("-2" = bquote(mu == -2), "0" = bquote(mu == 0), "2" = bquote(mu == 2)),
       values = c("-2" = 3, "0" = 1, "2" = 4)
     ) +
     labs(x = bquote(mu[1]), y = bquote(tau * "/" * sqrt(n))) +
@@ -668,52 +676,52 @@ fit_plotter <- function(dat) {
 
 # plot empirical variance around Zn and Vn
 sd_plotter <- function(dat) {
-  dat <- dat[(id %in% c("Zn", "Vn")) & mu0==0,]
+  dat <- dat[(id %in% c("Zn", "Vn")) & mu0 == 0, ]
   y_min <- min(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
   y_max <- max(dat[th_emp == "th", ]$evd_mean / sqrt(dat$n_study[1]), na.rm = T)
   # dat_th <- dat[th_emp == "th" & id=="Zn" & mu0 == 0, ]
   # dat_emp <- dat[(id %in% c("Tn", "Vn")) & mu0==0 & th_emp == "emp", ]
   sd_plot <- ggplot(
-    data = dat[th_emp == "emp",],
+    data = dat[th_emp == "emp", ],
     aes(
       x = mu1, y = evd_mean / sqrt(n_study),
       col = id, group = interaction(factor(mu0), th_emp, id),
       linetype = th_emp
     )
   ) + geom_line() + geom_ribbon(aes(
-        ymin = (evd_mean - evd_sd) / sqrt(n_study),
-        ymax = (evd_mean + evd_sd) / sqrt(n_study), fill = id
-      ),
-      alpha = 0.5, linetype = "blank"
-    ) +
+    ymin = (evd_mean - evd_sd) / sqrt(n_study),
+    ymax = (evd_mean + evd_sd) / sqrt(n_study), fill = id
+  ),
+  alpha = 0.5, linetype = "blank"
+  ) +
     geom_ribbon(
       data = dat[th_emp == "th", ],
       aes(
         ymin = (evd_mean - evd_sd) / sqrt(n_study),
         ymax = (evd_mean + evd_sd) / sqrt(n_study)
       ),
-      alpha = 1, fill=NA
+      alpha = 1, fill = NA
     ) +
     geom_point(
       data = dat[mu1 %in% seq(-2, 2, 0.4) & th_emp == "emp", ],
       aes(shape = factor(mu0)), alpha = 0.5, size = 1
-    )  +
+    ) +
     scale_color_manual(
       name = "Statistic:",
-      labels = c("Zn" = bquote(T[n]), "Vn"= bquote(V[n])),
+      labels = c("Zn" = bquote(T[n]), "Vn" = bquote(V[n])),
       values = c("Zn" = "blue", "Vn" = "red"),
       guide = F
     ) +
     scale_fill_manual(
       name = "Statistic:",
-      labels = c("Zn" = bquote(T[n]), "Vn"= bquote(V[n])),
+      labels = c("Zn" = bquote(T[n]), "Vn" = bquote(V[n])),
       values = c("Zn" = "blue", "Vn" = "red")
     ) +
     scale_shape_manual(
       name = bquote(H[0] * ":"),
-      labels = c("-2"= bquote(mu == -2), "0" = bquote(mu == 0), "2"= bquote(mu == 2)),
+      labels = c("-2" = bquote(mu == -2), "0" = bquote(mu == 0), "2" = bquote(mu == 2)),
       values = c("-2" = 3, "0" = 1, "2" = 4)
-    ) + 
+    ) +
     coord_cartesian(ylim = c(y_min, y_max)) +
     labs(x = bquote(mu[1]), y = bquote(tau * "/" * sqrt(n))) +
     theme(text = element_text(size = font_size, family = font_family))
@@ -728,9 +736,9 @@ p5 <- fit_plotter(dat[dat$n_study == 20, ])
 p6 <- sd_plotter(dat[dat$n_study == 20, ])
 
 fig7 <- ggarrange(p1, p2, p3, p4, p5, p6,
-                  ncol = 2, nrow = 3,
-                  align = "hv", legend = "top", common.legend = T,
-                  labels = c("A", "", "B", "", "C", "")
+  ncol = 2, nrow = 3,
+  align = "hv", legend = "top", common.legend = T,
+  labels = c("A", "", "B", "", "C", "")
 )
 ggsave(
   filename = paste0(out_path, figname, ".pdf"), plot = fig7,
@@ -743,21 +751,24 @@ ggsave(
 figname <- paste0("ch2_fig8_power_student_", corr_student)
 
 # load data
-load(paste0("data/Ev_Student_", corr_student, "_",n_sim,"_20190504.RData"), verbose = TRUE) 
+load(paste0("data/Ev_Student_", corr_student, "_", n_sim, "_20190504.RData"), verbose = TRUE)
 dat <- evidence_student
 
 # plot power curves
 power_plotter <- function(dat) {
   # dat_emp <- dat[th_emp == "emp" & (id %in% c("Vn", "Tn")), ]
   # dat_th <- dat[th_emp == "th" & id=="Zn", ]
-  dat <- dat[th_emp == "emp",]
+  dat <- dat[th_emp == "emp", ]
   power_plot <- ggplot(data = dat, aes(
-    x = mu1,y=power,col=id,group=interaction(mu0,th_emp,id),linetype=th_emp)) +
-    geom_line(alpha=0.5) + 
+    x = mu1, y = power, col = id, group = interaction(mu0, th_emp, id), linetype = th_emp
+  )) +
+    geom_line(alpha = 0.5) +
     scale_color_manual(
       name = "Test:",
-      labels = c("Zn" = bquote(T[n] > z[(1-alpha)]), "Vn"= bquote(V[n]> z[(1-alpha)]),
-                 "Tn" = bquote(T[n] > t[(n-1*","*1-alpha)])),
+      labels = c(
+        "Zn" = bquote(T[n] > z[(1 - alpha)]), "Vn" = bquote(V[n] > z[(1 - alpha)]),
+        "Tn" = bquote(T[n] > t[(n - 1 * "," * 1 - alpha)])
+      ),
       values = c("Zn" = "blue", "Vn" = "red", "Tn" = "black")
     ) +
     geom_point(
@@ -766,55 +777,55 @@ power_plotter <- function(dat) {
     ) +
     scale_linetype_manual(
       name = "emp/th:",
-      values = c("th" = "dashed", "emp" = "solid"), 
+      values = c("th" = "dashed", "emp" = "solid"),
       drop = F,
       guide = F
     ) +
     scale_shape_manual(
       name = bquote(H[0] * ":"),
-      labels = c("-2"= bquote(mu == -2), "0" =bquote(mu == 0), "2"= bquote(mu == 2)),
+      labels = c("-2" = bquote(mu == -2), "0" = bquote(mu == 0), "2" = bquote(mu == 2)),
       values = c("-2" = 3, "0" = 1, "2" = 4)
     ) +
-    labs(x = bquote(mu[1]), y = bquote("1-"*beta)) +
+    labs(x = bquote(mu[1]), y = bquote("1-" * beta)) +
     theme(
       text = element_text(size = font_size, family = font_family),
       plot.title = element_text(size = font_size)
-    ) + 
+    ) +
     geom_segment(aes(x = -2, y = 0.05, xend = 2, yend = 0.05),
-                 col = "black", size = 0.3, linetype = "dotted"
+      col = "black", size = 0.3, linetype = "dotted"
     ) +
     geom_segment(aes(x = -2, y = 0, xend = -2, yend = 1),
-                 col = "black", size = 0.3, linetype = "dotted"
+      col = "black", size = 0.3, linetype = "dotted"
     ) +
     geom_segment(aes(x = 0, y = 0, xend = 0, yend = 1),
-                 col = "black", size = 0.3, linetype = "dotted"
+      col = "black", size = 0.3, linetype = "dotted"
     ) +
     geom_segment(aes(x = 2, y = 0, xend = 2, yend = 1),
-                 col = "black", size = 0.3, linetype = "dotted"
-    ) 
+      col = "black", size = 0.3, linetype = "dotted"
+    )
   return(power_plot)
 }
 
 # p0 <- power_plotter(dat[n_study==5 & th_emp=="emp",])
-p1 <- power_plotter(dat[n_study==5,])
-p2 <- power_plotter(dat[n_study==10 & th_emp == "emp",])
-p3 <- power_plotter(dat[n_study==20 & th_emp == "emp",])
-#p4 <- power_plotter(dat[n_study==100 & th_emp == "emp",])
+p1 <- power_plotter(dat[n_study == 5, ])
+p2 <- power_plotter(dat[n_study == 10 & th_emp == "emp", ])
+p3 <- power_plotter(dat[n_study == 20 & th_emp == "emp", ])
+# p4 <- power_plotter(dat[n_study==100 & th_emp == "emp",])
 
 fig8 <- ggarrange(
   # p0 + ggtitle(bquote("n" == 5)),
-  # p0 + coord_cartesian(ylim=c(0,0.1)), 
-  p1 + ggtitle(bquote("n" == 5)), 
-  p1 + coord_cartesian(ylim=c(0,0.1)), 
-  p2 + ggtitle(bquote("n" == 10)), 
-  p2 +coord_cartesian(ylim=c(0,0.1)),
-  p3 + ggtitle(bquote("n" == 20)), 
-  p3 + coord_cartesian(ylim=c(0,0.1)),
-  # p4 + ggtitle(bquote("n" == 100)), 
-  # p4 + coord_cartesian(ylim=c(0,0.1)), 
+  # p0 + coord_cartesian(ylim=c(0,0.1)),
+  p1 + ggtitle(bquote("n" == 5)),
+  p1 + coord_cartesian(ylim = c(0, 0.1)),
+  p2 + ggtitle(bquote("n" == 10)),
+  p2 + coord_cartesian(ylim = c(0, 0.1)),
+  p3 + ggtitle(bquote("n" == 20)),
+  p3 + coord_cartesian(ylim = c(0, 0.1)),
+  # p4 + ggtitle(bquote("n" == 100)),
+  # p4 + coord_cartesian(ylim=c(0,0.1)),
   ncol = 2, nrow = 3,
   align = "hv", legend = "top", common.legend = T,
-  labels = c("A", "", "B","", "C","")
+  labels = c("A", "", "B", "", "C", "")
 )
 
 ggsave(
@@ -830,28 +841,31 @@ ggsave(
 figname <- paste0("ch2_fig9_CI_student")
 
 # load data
-load(paste0("data/Ev_Student_MLE_",n_sim,"_20190504.RData"), verbose = TRUE)
+load(paste0("data/Ev_Student_MLE_", n_sim, "_20190504.RData"), verbose = TRUE)
 ev_stud_mle <- evidence_student
 
-load(paste0("data/Ev_Student_Corr_",n_sim,"_20190504.RData"), verbose = TRUE)
+load(paste0("data/Ev_Student_Corr_", n_sim, "_20190504.RData"), verbose = TRUE)
 ev_stud_corr <- evidence_student
 
 # plot üpwer curves
 CI_plotter <- function(dat) {
-  dat <- dat[th_emp == "emp" & (id %in% c("Vn","Zn")),]
+  dat <- dat[th_emp == "emp" & (id %in% c("Vn", "Zn")), ]
   CI_plot <- ggplot(data = dat, aes(
-    x = mu1,y=CI,col=id,group=interaction(mu0,id,th_emp,n_study))) +
-    geom_line(alpha=1) +
+    x = mu1, y = CI, col = id, group = interaction(mu0, id, th_emp, n_study)
+  )) +
+    geom_line(alpha = 1) +
     scale_color_manual(
       name = "CI:",
-      labels = c("Zn" = bquote(T[n]~"\U00B1"*z[(1-alpha/2)]), 
-                 "Vn"= bquote(V[n]~"\U00B1"*z[(1-alpha/2)]), 
-                 "Tn" = T[n]~"\U00B1"*t[(n-1*","*1-alpha/2)]),
-      values = c("Zn" = "blue", "Vn" = "red","Tn" = "black")
+      labels = c(
+        "Zn" = bquote(T[n] ~ "\U00B1" * z[(1 - alpha / 2)]),
+        "Vn" = bquote(V[n] ~ "\U00B1" * z[(1 - alpha / 2)]),
+        "Tn" = T[n] ~ "\U00B1" * t[(n - 1 * "," * 1 - alpha / 2)]
+      ),
+      values = c("Zn" = "blue", "Vn" = "red", "Tn" = "black")
     ) +
     scale_shape_manual(
       name = bquote(H[0] * ":"),
-      labels = c("-2"= bquote(mu == -2), "0" =bquote(mu == 0), "2"= bquote(mu == 2)),
+      labels = c("-2" = bquote(mu == -2), "0" = bquote(mu == 0), "2" = bquote(mu == 2)),
       values = c("-2" = 3, "0" = 1, "2" = 4)
     ) +
     # scale_linetype_manual(
@@ -867,34 +881,33 @@ CI_plotter <- function(dat) {
     theme(
       text = element_text(size = font_size, family = font_family),
       plot.title = element_text(size = font_size)
-    ) + 
+    ) +
     geom_segment(aes(x = -2, y = .95, xend = 2, yend = 0.95),
-                 col = "black", size = 0.3, linetype = "dotted"
-    ) + coord_cartesian(ylim=c(0.75,1))
+      col = "black", size = 0.3, linetype = "dotted"
+    ) + coord_cartesian(ylim = c(0.75, 1))
   return(CI_plot)
 }
 
-p1 <- CI_plotter(ev_stud_mle[n_study==5 & mu0==0,]) + 
+p1 <- CI_plotter(ev_stud_mle[n_study == 5 & mu0 == 0, ]) +
   ggtitle(bquote("n" == 5))
-p2 <- CI_plotter(ev_stud_corr[n_study==5& mu0==0,])
-p3 <- CI_plotter(ev_stud_mle[n_study==10 & mu0==0,]) + 
+p2 <- CI_plotter(ev_stud_corr[n_study == 5 & mu0 == 0, ])
+p3 <- CI_plotter(ev_stud_mle[n_study == 10 & mu0 == 0, ]) +
   ggtitle(bquote("n" == 10))
-p4 <- CI_plotter(ev_stud_corr[n_study==10 & mu0==0,])
-p5 <- CI_plotter(ev_stud_mle[n_study==30 & mu0==0,]) + 
+p4 <- CI_plotter(ev_stud_corr[n_study == 10 & mu0 == 0, ])
+p5 <- CI_plotter(ev_stud_mle[n_study == 30 & mu0 == 0, ]) +
   ggtitle(bquote("n" == 30))
-p6 <- CI_plotter(ev_stud_corr[n_study==30 & mu0==0,])
-p7 <- CI_plotter(ev_stud_mle[n_study==50 & mu0==0,]) + 
+p6 <- CI_plotter(ev_stud_corr[n_study == 30 & mu0 == 0, ])
+p7 <- CI_plotter(ev_stud_mle[n_study == 50 & mu0 == 0, ]) +
   ggtitle(bquote("n" == 50))
-p8 <- CI_plotter(ev_stud_corr[n_study==100 & mu0==0,])
+p8 <- CI_plotter(ev_stud_corr[n_study == 100 & mu0 == 0, ])
 
-fig9 <- ggarrange(p1,p2,p3,p4,p5,p6,p7,p8,
-                  ncol = 2, nrow = 4,
-                  align = "hv", legend = "top", common.legend = T,
-                  labels = c("A", "", "B","", "C","","D","")
+fig9 <- ggarrange(p1, p2, p3, p4, p5, p6, p7, p8,
+  ncol = 2, nrow = 4,
+  align = "hv", legend = "top", common.legend = T,
+  labels = c("A", "", "B", "", "C", "", "D", "")
 )
 
 ggsave(
   filename = paste0(out_path, figname, ".pdf"), plot = fig9,
   width = A4[1], height = 0.85 * A4[2], device = cairo_pdf
 )
-
