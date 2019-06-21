@@ -9,6 +9,9 @@ require("gridExtra")
 # require("cowplot") #needed for blankplots, currently not used
 require("RColorBrewer")
 
+# for optimisations
+require("NMOF") #gridSearch
+
 ### functions needed for simulation of evidence in multiple scripts ----
 # vst for binomial variable
 vst_binom <- function(p0, p1, n) {
@@ -593,12 +596,12 @@ trim_and_fill <- function(dat, pub_prob) {
       break
     }
   }
-
+  T_trimmed <- head(T_sorted$x, -k0)
   T_filled <- c(T_centered, -tail(T_centered[T_centered > 0], k0))
   to_add <- dat[Tn %in% tail(T_sorted$x, k0), ] # add k0 studies with highest positive rank
-  to_add$mu1_hat <- -to_add$mu1_hat # invert sign of mu_hat
+  to_add$Tn <- mean(T_trimmed)-to_add$Tn # invert Tn around mean T_trimmed
+  to_add$mu1_hat <- to_add$Tn/sqrt(to_add$n_study)*to_add$sgm_hat #transform values back into effect sizes (needs to be adapated for Vn)
   dat_filled <- rbind(dat, to_add)
-
   return(dat_filled)
 }
 

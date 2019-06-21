@@ -124,12 +124,18 @@ fig1 <- ggarrange(p1, p2, p3, p4, p5, p6,
 
 ggsave(
   filename = paste0(out_path, figname, ".pdf"), plot = fig1,
-  width = A4[1], height = 0.85 * A4[2], device = cairo_pdf
+  width = A4[1], height = 0.8 * A4[2], device = cairo_pdf
 )
 
 ### Table 3.1: Filedrawer calculation for data shown above -----------------------------------------
 ### (tab:file_drawer)
 tablename <- "ch3_tab1_filedrawer"
+  
+weighted_mean_var <- function(dat) {
+  weights <- dat$n_study / dat$sgm_hat^2
+  agg_mean <- sum(dat$mu1_hat * weights) / sum(weights)
+  return(agg_mean)
+}
 
 dat_nams <- c("dat_0","dat_0.3","dat_0_sig","dat_0.3_sig","dat_0_mix","dat_0.3_mix")
 dats <- list(dat_0,dat_0.3,dat_0_sig,dat_0.3_sig,dat_0_mix,dat_0.3_mix)
@@ -170,12 +176,6 @@ for (i in 1:length(dats)){
 
 ### Table 3.3: Rank correlation for funnel plot described above -----------------------------------------
 ### (tab:rank_correlation)
-
-weighted_mean_var <- function(dat) {
-  weights <- dat$n_study / dat$sgm_hat^2
-  agg_mean <- sum(dat$mu1_hat * weights) / sum(weights)
-  return(agg_mean)
-}
 
 rank_corr_stat <- function(dat) {
   k <- dim(dat)[1]
@@ -247,8 +247,6 @@ for (i in 1:length(dats)){
   cat("\n")
 }
 
-
-
 ### Table 3.6: The p-curve -----------------------------------------
 ### (tab:p_curve)
 p_curve <- function(dat,under_null =T) {
@@ -280,3 +278,119 @@ for (i in 1:length(dats)){
   cat("\n")
 }
 
+
+
+### Table 3.7: The reweighted mean -----------------------------------------
+### (tab:hansen_hurvitz)
+
+reweight_mean_var <- function(dat, probs) {
+  weights <- dat$n_study / dat$sgm_hat^2
+  mu_hats <- dat$mu1_hat * weights
+  n <- length(mu_hats)
+  
+  if (missing(probs)) {
+    probs <- 0.1 + 0.9 * dat$H1
+  } 
+  if (n != length(probs)) {
+    stop("Vector of probabilities must be the same length as number of study 
+         results to be reweighted.")
+  }
+  
+  weigh_mean <- sum(mu_hats / probs) / sum(weights / probs)
+  return(weigh_mean)
+}
+
+calc_reweighted_mean <- function(dat){
+  probs <- calculate_pub_prob(dat,0.1)
+  rew_mean <- reweight_mean_var(dat,probs)
+  print(paste0("Reweighted mean: ", rew_mean))
+  return(rew_mean)
+}
+
+for (i in 1:length(dats)){
+  print(dat_nams[i])
+  calc_reweighted_mean(dats[[i]])
+  cat("\n")
+}
+
+
+### Table 3.8: The trim and fill method -----------------------------------------
+### (tab:trim_and_fill)
+
+trim_and_fill_results <- function(dat){
+  print("Trim and fill original:")
+  mu_corr_tf_orig <- weighted_mean_var(trim_and_fill(dat))
+  print(paste0("mu corrected - T&F original: ", mu_corr_tf_orig))
+  print("Trim and fill including publication probability")
+  mu_corr_tf_adapt <- weighted_mean_var(trim_and_fill(dat,0.1))
+  print(paste0("mu corrected - T&F original: ", mu_corr_tf_adapt))
+}
+
+for (i in 1:length(dats)){
+  print(dat_nams[i])
+  trim_and_fill_results(dats[[i]])
+  cat("\n")
+}
+
+
+### Table 3.9: The p-curve for correction--------------------------------------
+### (tab:p_curve_correction)
+
+p_curve_correction <- function(dat){
+  mus <- seq(-0.5,2,by=0.01)
+  dat <- dat[H1==1,]
+  nrows <- dim(dat)[1]
+  ncols <- length(mus)
+  p_val_df <- data.table(matrix(NA,nrow=nrows,ncol=ncols))
+  std_errs <- dat$sgm_th/sqrt(dat$n_study)
+  crit_vals_norm <- qnorm(0.95,0,std_errs)
+  KSD_stats <- rep(NA,ncols)
+  for (i in 1:ncols){
+    mu <- mus[i]/std_errs
+    p_vals <- 1-pnorm(dat$mu1_hat,mu,std_errs)
+    betas <- pnorm(crit_vals_norm,mu,std_errs)
+    pp_vals <- (p_vals -betas)/(1-betas)
+    p_val_df[,i] <- pp_vals
+    KSD=ks.test(pp_vals,punif)$statistic
+    KSD_stats[i] <- KSD
+  }
+  idx_min <- match(min(KSD_stats),KSD_stats)
+  effect_size <- mus[idx_min]
+  print(paste0("Effect size corrected: ",effect_size))
+}
+
+for (i in 1:length(dats)){
+  print(dat_nams[i])
+  p_curve_correction(dats[[i]])
+  cat("\n")
+}
+
+### Table 3.10: Maximising the truncated likelihood--------------------------------------
+### (tab:p_curve_correction)
+
+max_trunc_mle <- function(dat){
+  pis <- seq(0, 1, by = 0.01)
+  theta_0 <- mean(dat$Tn)/dat$sgm_th[1]
+  thetas <- seq(theta_0-1, theta_0+0.5, by = 0.01) # theta = mu / sgm_th
+  
+  start.time <- Sys.time()
+  min_levels <- trunc_mle(dat, thetas)
+  print(Sys.time() - start.time)
+  
+  mu_mle_corr <- min_levels[1]
+  print(paste0("mu_mle_corr: ",mu_mle_corr))
+  p_mle <- min_levels[2]
+  print(paste0("p_mle: ", p_mle))
+}
+
+for (i in 1:length(dats)){
+  print(dat_nams[i])
+  max_trunc_mle(dats[[i]])
+  cat("\n")
+}
+
+# calculate mle with known p
+theta_0 <- mean(clt_mix$Tn)/clt_mix$sgm_th[1]
+thetas <- seq(theta_0-2, theta_0, by = 0.001) # theta = mu / sgm_th
+mu_mle_corr <- trunc_mle(clt_mix, thetas, p = 0.1)
+mu_mle_corr
