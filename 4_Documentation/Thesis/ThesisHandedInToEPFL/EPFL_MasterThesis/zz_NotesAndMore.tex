@@ -1,0 +1,146 @@
+%% example text content
+%% scrartcl and scrreprt starts with section, subsection, subsubsection, ...
+%% scrbook starts with part (optional), chapter, section, ...
+\chapter{Simultaneous Statistical Inference}
+
+$me = \beta_0 + \beta_1 x_\text{stats} + \beta_2 x_\text{bio} + \beta_3 x_\text{philo} + \epsilon$
+
+\section{Bender 2008 - Attention should be given to multiplicity issues in systematic reviews}
+experimental error rate: $EER = 1-(1-\alpha)^k$, where $k$ is the number of tests\\
+maximum experimental error rate (MEER) is the probability of falsely rejecting at least one true individual null hypothesis\\
+if different hypotheses, corrections for multiple testing might be unnecessary\\
+sources of multiplicity: 
+\begin{itemize}
+    \item multiple outcomes: state which outcomes are of interest, differentiate between primary and secondary outcomes, only the latter of which shall be meta-analysed.
+    \item multiple groups: describe in detail the main hypothesis and limit groups and comparisons to the essential ones
+    \item multiple time points: present summary effect over all time points or choose an appropriate time point. Do not test each time-point.
+    
+    \item multiple effect measures: choose effect measure when the systematic review is being planned - based on its mathematical appropriateness for the type of data to be analysed. Be cautious of dichotomisations.
+    \item subgroup analysis: pre-specify subgroup analyses; restrict them to a small set of outcomes; use an appropriate heterogeneity or interaction test. 
+    \item multiple looks at accumulating data: Adjust significance threshold accordingly; 
+\end{itemize}
+
+
+\section{Efron - Simultaneous Inference}
+omnibus combination might distor individual inference in both directions - highly significant cases might be hidden while insignificant ones are enhanced.\\
+Bayesian false discovery rate: $\text{Fdr}(z)\equiv \text{Prob\{null|}z_i<z\}=p_0 F_0(z)/F(z)$\\
+Benjamini-Hochberg use empirical c.d.f. $\Bar{F}(z)=\#\{z_i \leq z\}/N$ to estimate $F(z)$
+
+\section{Kulinskaya et al. 2008}
+
+\begin{itemize}
+    \item $n$ observations $Y_1,\cdots Y_n$ from normal model $\mathcal{N}(\mu,\sigma^2)$, both parameters unknown
+    \item goal: find measure of evidence $\mu = \mu_0$ in favour of $\mu > \mu_0$
+    \item effect: $\theta = \mu-\mu_0$; standardised effect: $\delta = \theta/\sigma$
+\end{itemize}
+
+Under the null, $S_n \sim t_(n-1)$\\
+
+Definition 20.1: $Z\sim \mathcal{N}(0,1)$ and $W\sim \mathcal{X}_\nu^2$, then $X = \frac{Z+\lambda}{\sqrt{W/\nu}}$ has a non-central Student's $t_\nu(\lambda)$ distribution.\\
+
+Under the alternative, we need to rewrite the $t$-statistic: $S_n = \frac{\sqrt{n}(\bar{Y}_n-\mu)+\sqrt{n}(\mu-\mu_0)}{s_n}$ which has a non-central $t$-distribution with parameters $\nu = n-1$ and $\lambda = \sqrt{n}\delta$. This follows by $Z = \sqrt{n}(\bar{Y}_n-\mu)/\sigma$ and $W=(n-1)*s_n^2/\sigma^2\sim \mathcal{X}_{\nu}^2$\\
+
+page 162:\\
+if normal approximation holds: $T\sim \mathcal{N}(\sqrt{n}(\sqrt{2}sinh^{-1}(\delta/\sqrt{2})),1)$; but: Laubscher (1960) showed that problems arise for small $n$ and large values of noncentrality parameter.\\
+
+page 163:\\
+The Key Inferential Function for Student's model\\
+E[$T$] is approximately equal to 
+\begin{align*}
+    E[T] &= \sqrt{2n}\text{sinh}^{-1}(\sqrt{n}\delta/sqrt{2n})\\
+    &= \sqrt{n}(\sqrt{2}\text{sinh}^{-1}(\delta/\sqrt{2})) = \sqrt{n}\mathcal{K}
+\end{align*}
+
+hence, Key Inferential Function is: $\mathcal{K}(\delta)=\sqrt{2}\text{sinh}^-1(\delta(\sqrt{2})=\sqrt{2}\text{ln}(\delta/\sqrt{2}+\sqrt{1+\delta^2/2}$\\
+
+expected evidence for $\mu > 0$ when $\sigma$ is known: $\sqrt{n}\delta$; when it's unknown: $\sqrt{n}\mathcal{K}(\delta)$\\
+
+page 165 (read again): how much extra work is required to obtain the same level of evidence when $\sigma$ is unknown compared to when it's known. (simulate)\\
+
+page 166: corrected evidence\\
+matching $p$-value: $p_\text{study} = F_S(-\sqrt{n}(\bar{Y}_n-\mu)/s_n)=F(-S_n)$, $F_S$ is c.d.f of $t$-distribution with $\nu = n-1$\\
+transformed evidenc: $T_n = h_n(S_n) = \sqrt{2n}\text{sinh}^{-1}(S_n/\sqrt{n})$\\
+$p_{\text{evidence}}=\Phi(-T_n)$; but: $p_{\text{evidence}}$ and $p_{\text{study}}$ are only approximately equal > correction needed for exact equality: $\tilde{h}_n(x)=(1+c_n)h_n(x)$, with $c_n = -0.7/(n-1)$ of order $O(1/n)$\\
+page 167:\\
+read again translation into evidence $p$-value of 5\%\\
+corrected $vst$; $T_{\text{corrected}}=(1-\frac{0.7}{n-1})\sqrt{2n}\text{sinh}^{-1}(S_n/\sqrt{2n})$; corrected evidence has bigger associated $p$-value\\
+Cornish-Fisher expansion: match quantile of arbitrary distribution to those of a normal distribution\\
+
+page 167/168: bias of Key Inferential Function\\
+read again!\\
+$\hat{\mathcal{K}}_{\text{unbiased}}=\mathcal{K}(\hat{\delta}_n[1-1/(2n)])=\sqrt{2}\text{sinh}^{-1}(\hat{\delta}_n(2n-1)/(2n))$\\
+$T_{\text{unbiased}}=\sqrt{2n}\text{sinh}^{-1}((2n-1)S_n/(2n\sqrt{2n}))$; better: use finite sample correction, because variance is better stabilised\\
+
+page 169ff: CI for standardised effect\\
+
+page 171ff: comparing evidence in $t$ and $Z$ tests\\
+three cases of possible convergence: 
+\begin{align*}
+    if\: \lambda(\nu) \rightarrow \lambda, \quad &then X \rightarrow \mathcal{N}(\lambda,1)\\
+    if\: \lambda(\nu) = \sqrt{\nu}\lambda, \quad &then X-\sqrt{\nu}\lambda \rightarrow \mathcal{N}(0,1+\delta^2/2)\\
+    if\: \lambda(\nu) = \nu^k \delta for k > 1/2, \quad &then (X-\lambda(\nu))/\nu^{k-1/2} \rightarrow \mathcal{N}(0,\delta^2/2)\\
+\end{align*}
+
+Proof (read again): rewrite $X = \frac{Z}{\sqrt{W/\nu}}+\frac{\lambda(\nu)}{\sqrt{W/\nu}}$
+
+\subsection{Additional stuff to add}
+Berry-Esseen-Theorem \href{https://de.wikipedia.org/wiki/Satz_von_Berry-Esseen}{Wiki}\par
+Important: gives bound for both independent and identical variables, as well as for independent, but *not* identically distributed variables! > can come in handy, when I try to simulate different studies with different Student's t distributions\par
+\href{https://en.wikipedia.org/wiki/U-statistic}{U-Statistic}\par
+Kolmogorov-Smirnov-Test to check deviation from the normal \href{https://en.wikipedia.org/wiki/Kolmogorov\%E2\%80\%93Smirnov_test#Kolmogorov\%E2\%80\%93Smirnov_statistic}{Wiki}\par
+\href {https://en.wikipedia.org/wiki/Anderson\%E2\%80\%93Darling_test}{Anderson-Darling Test}
+
+
+%toadd; totransfer to different file
+\section{Andrews and Kasy - 3Identification of and correction for publication bias}
+Andrews and Kasy identify different reasons for publication bias:
+\begin{itemize}
+    \item Selection for statistically significant effects;
+    \item selection for confirmation of prior beliefs;
+    \item selection for novelty.
+\end{itemize}
+Methods to correct for publication bias when selectivity is known:
+\begin{itemize}
+    \item median unbiased estimators
+    \item confidence sets with correct coverage
+    \item allow for nuisance parameters and multiple dimension of selection
+    \item Bayesian inference accounting for selection
+\end{itemize}
+To identify publication probability, they propose two approaches: 
+\begin{itemize}
+    \item replication experiments;
+    \item meta-studies
+\end{itemize}
+Under the independence assumption, higher-variance estimates of the parameter distributions would be noised-up version of lower-variance estimate distribution, absent selectivity.\par
+They claim that they published the first nonparametric identification results for the conditional publication probability as a function of the empirical results of a study.\par (%toadd: note: page 4 contains references to a lot of additional literature)
+Other approaches mentioned: 
+\begin{itemize}
+    \item meta-regression
+    \item distribution of p-values and z-statistics
+    \item 
+\end{itemize}
+Identification of the publication probability $\Pr(\cdot)$ is done by comparing the distribution of estimates with different associated standard errors across studies.
+
+questions: how to explain correction in Andrews and Kasy
+
+\section{Maximum likelihood estimation and EM algorithm of copas-like selection model for publication bias correction}
+Buerkner and Doebler (2014) showed that at least 30 studies are required to have reasonable power to detect the publication bias.
+
+\section{Dickersin 1990}
+Mahoney study showed that reviewers assessed studies with positive results more favourable, also with regard to its methodology and design, than studies with negative results - even if the methods and introduction sections were exactly the same.\par
+
+Hetherton et al. made survey about unpublished studies and showed that it is very difficutl to assess the size of publication bias by attemptint to identify unpublished trials retrospectively.\par
+
+Dickersin 1987 showed that publication bias does not exclusively result from editor or referee decisions, but often boils down to the authors not handing in the manuscript because of lack of interest or because the findings are not significant
+
+Diskersin 1990 reported in 1990 that the ratio of published to unpublished stueis ranges fro 128:1 to 1:1, with the majority of the ratios falling between 10:1 and 1:1.
+
+Hemminki 1980 showed that scientific quality of published studies is not significantly larger than scientific quality of unpublished studies of drug licensing publications. Hence, study quality does not seem to be major factor in publication decision.\par
+
+Berlin and Begg: large trails might be published regardless of outcome, while small trials are only published with large effects
+
+Dickersin 1990 already called for prospective trail regirstraion in 1990 - before the digital age. Where are we now?
+
+
+
+\section{effect size correction based on ??}

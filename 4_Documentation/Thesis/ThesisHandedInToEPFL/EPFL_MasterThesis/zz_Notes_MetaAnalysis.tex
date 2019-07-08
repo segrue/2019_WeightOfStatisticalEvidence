@@ -1,0 +1,516 @@
+
+
+%% example text content
+%% scrartcl and scrreprt starts with section, subsection, subsubsection, ...
+%% scrbook starts with part (optional), chapter, section, ...
+    \chapter{MetaAnalysis}
+
+The era of the individual scientific genius--if it has ever existed--is over. Nowadays, it has become impossible for a single scientist to completely understand and assess the vast body of new scientific output being published each year. The question arises then, how we can nevertheless benefit from aggregated scientific information without having to evaluate everything by ourselves. 
+
+Topics to be looked at for master thesis:
+\begin{itemize}
+    \item Causal inference from meta-analyses
+    \item Correcting for Publication bias
+    \item Correcting for multiple effect measures / aggregating multiple effect measures
+    \item 
+\end{itemize}
+
+\section{What can readers expect}
+
+Questions: 
+\begin{itemize}
+    \item where does Key inferential function on page 7 come from?
+    \item why does standard error of effect satisfy $\frac{\sigma_1^2}{n_1}+\frac{\sigma_2^2}{n_2}$ on page 12
+\end{itemize}
+
+page 13: Traditional ways of measuring evidence, in particular with probabilities, are neither intuitive nor useful when it comes to making comparisons between experimental results, or when combining them
+
+\section{Independent measurements with known precision}
+
+page 16\\
+effect: $\mu - \mu_0$\\
+standardized effect: $\delta = (\mu-\mu_0)/\sigma_0$\\
+evidence: $T = \sqrt{n}(\Bar{x}_n-\mu_0)/\sigma_0=\sqrt{n}\hat{\delta}$; $SE(T)$ = 1; $E[T]=\tau = \sqrt{n}\delta$; $T \sim \mathcal{N}(\sqrt{n}\delta,1)$\\
+
+page 17:\\
+if p-value has just achieved boundary result of 0.05, the expected p-value in an independent replication of the experiment is 0.12.\\
+relative error: $SE[T]/E[T]=1/\tau$\\
+relationship to Pearson-Testing: $\tau = \sqrt{n}\delta_1 = z_{1-\alpha}+z_{1-\beta}$ (question: why????)\\
+confidence intervals: for $\tau$ it is $[T-c,T+c]; c = z_{1-\alpha/2}$; for $\mu-\mu_0$ it is $[\frac{\sigma_0(T-c)}{\sqrt{n}},\frac{sigma_0(T+c)}{\sqrt{n}}$
+
+page 18:\\
+record both one-side and two-sided evidence so that conflicting findings are not hidden and can be accounted for\\
+question: where does formula for $T^{\pm}$ come from?
+
+\section{Independent measurements with unknown precision}
+page 23:\\
+standardised effect: $\delta = (\mu - \mu_0)/\sigma$\\
+expected evidence $\tau = \sqrt{n}\mathcal{K}(\delta)$\\
+$\mathcal{K}=\sqrt{2}\text{ln}(\frac{\delta}{\sqrt{2}}+\sqrt{1+\frac{\delta^2}{2}})=\sqrt{2}\text{sinh}^{-1}(\delta/\sqrt{2})$\\
+
+page 24:\\
+Student $t$-statistic: $t_{n-1}=\sqrt{n}\hat{\delta} = \sqrt{n}(\Bar{x}_n-\mu_0)/s_n;\quad s^2_n = \sum_i(x_i-\Bar{x}_n)^2/(n-1)$\\
+
+page 25:\\
+power of Student-$t$-test: 
+\begin{align*}
+    1-\beta(\delta_1)&= P_{\delta_1}(T \geq z_{1-\alpha})\\ 
+    &= \Phi(\tau-z_{1-\alpha}) \\
+    &= \Phi(\sqrt{n}\mathcal{K}(\delta_1)-z_{1-\alpha}) 
+\end{align*}
+question: why does the equation above hold?
+
+\section{Comparing treatment to control}
+page 31:\\
+Cohen's d / standardised effect / effect size: $d_{\text{Cohen}}=\theta/\sigma$\\
+
+page 33/34:\\
+Welch's statistic: $t_{\text{Welch}}=\sqrt{N}(\Bar{Y}_{n_2}-\Bar{X}_{X_1})/\hat{\sigma}$\\
+under the null $\delta =0$, Welch's statistic has Student $t$-distribution with $\hat{\nu}$ degrees of freedom\\
+Welch df: $\nu = (A+B)^2/\{A^2/(n_1-1)+B^2/(n_2-1)\}; \quad A=\sigma_1^2/n_1, B=\sigma_2^2/n_2$
+
+page 34:\\
+if ratio of variance is known, balanced sampling is not best; better to allocate sample sizes according to differences in variances
+
+\section{Comparing $K$ treatments}
+reread! especially part about F-statistic
+
+\section{Evaluating risks}
+page 48:\\
+test statistic for p: $S = \sum_{j=1}^n I_j$\\
+$\Tilde{p}=(S+3/8)/(n+3/4);\quad T=2\sqrt{n}\{\text{arcsin}(\sqrt{\Tilde{p}}-\text{arcsin}(\sqrt{p_0})\}$\\
+T is approximately normal for $np(1-p)\geq 5$\\
+Key Inferential Function: $\mathcal{K}(p)=2\{\text{arcsin}(\sqrt{p})-\text{arcscin}(\sqrt{p_0})\}$
+
+\section{Comparing risks}
+
+\section{Publication Bias}
+\label{intro_publicationbias}
+
+Questions: 
+\begin{itemize}
+    \item Explanation for formula on page 107. \\ $T_i = \sqrt{N_i}\: \text{arcsin}(R_i/\sqrt{4\cdot p_i(1-p_i)})$
+    \item where does Key inferential function on page 7 come from?
+    \itme 
+\end{itemize}
+
+\section{Evidence for heterogeneity of effects and transformed effects}
+page 78:\\
+Cochran's $Q$: $Q = \sum\limits_{k} \hat{w}_k(\hat{\mu}_k-\hat{\Bar{\mu}}_{\hat{w}})^2$\\
+for fixed number of studies K and simultaneous growing sample sizes $n_k \rightarrow \infty$, distribution of $Q \sim \mathcal{X}_{K-1}^2(\lambda)$ with non-centrality parameter $\lambda = \sum w_k(\mu_k-\Bar{\mu}_w)^2$
+to test for homogeneity of transformed effects: $Q^* = \sum\limits_k n_k(\hat{\kappa}_k - \hat{\kappa})^2$\\
+under the null hypothesis, both $Q, Q^*$ have the same distribution under both fixed and random effects models. However, the alternative distributions change under the fixed and random effects models.
+
+\section{Combining evidence: fixed standardized effects model}
+page 85:\\
+to check for heterogeneity, perform Cochran Q-test for homogeneity of raw effects and if not significant, combine the effects from the respective studies using weighted mean with estimated inverse variance weights\\
+
+\section{Combining Evidence: random standardized effects model}
+read again
+
+\section{Meta-regression}
+effect sizes estimated in each study are modeled as functions of one or more characteristics of these studies (see Thompson and Higgins 2002)\\
+when covariates only account for part of the variation, use mixed models to correct for this (see Sutton et al. 2000)\\
+
+\subsection{standardised difference of the mean}
+$\hat{d}_{\text{Cohen}} = (\bar{x}_2-\bar{x}_1)/s_{\text{pooled}}$\\
+standardised effect size: $\delta = (q(1-q))^{-1/2}(\mu_2-\mu_1)/\sigma$, with $q = n_2/(n_1+n_2)$; two-sample $t$-test statistic is $t_\text{pooled}= \sqrt{N}\hat{\delta}$ with $\nu = N-2$ degrees of freedom\\
+$vst$ is Azorin's (1953) transformation with $\mathcal{K}(\delta) = \sqrt{2}\text{sinh}^{-1}(\delta/\sqrt{2}) = \sqrt{2}\text{ln}(\delta/\sqrt{2}+\sqrt{1+\delta^2/2})$\\
+
+page 98 ff: read again
+
+\section{Accounting for publication bias}
+
+\section{Calibrating evidence in a test}
+page 115:\\
+
+desirable properties of one-sided evidence:
+\begin{itemize}
+    \item $E_1$, the one-sided evidence $T$ is monotonically increasing function of $S$;
+    \item $E_2$, the distribution of $T$ is normal for all values of the unknown parameters;
+    \item $E_3$, the variance Var[$T$]=1 for all values of the unknown parameters;
+    \item $E_4$, the expected evidence $\tau = \tau(\theta) = E_{\theta}[T]$ is monotonically increasing in $\theta$ from $\tau(0)=0$.
+\end{itemize}
+
+\section{The basics of variance stabilising transformations}
+page 125:\\
+standardise $\Bar{X}_n$ yields $Z$-statistic: $Z_n = \sqrt{n}(\Bar{X}_n-\mu)/\sigma$\\
+Three effects:
+\begin{itemize}
+    \item E[$Z_n$]=0 for all $\mu,\sigma$
+    \item Var[$Z_n$]=1
+    \item $Z_n \sim \mathcal{N}(0,1)$, approximately
+\end{itemize}
+$\sigma^2$ is usually not known, hence replace by $s_n$\\
+
+page 126:\\
+Let $X$ be a random variable and $Y=h(X)$. Then (question: why?): 
+\begin{align*}
+    E[Y] &= h(E[X])+\frac{h''(E[X])}{2} Var[X] + R_1
+    Var[Y] &= \{h'(E[X])\}^2 Var[X] + R_2
+\end{align*}
+
+$h=h_n$ is chosen s.t. $Var[h_n(S_n)]=1$\\
+
+page 127:\\
+simple method for finding $h$: Write first $Var[X]=g(E[X])$, then define $h$ as any $h(x)=\int^x [g(t)]^{-1/2} dt$. Then, $\{h'(E[X])\}^2 = \{g(x)\}^-1=\{Var[X]\}^-1$. Hence, we can expect $Var[Y]=1$
+
+page 127/128 (Key Inferential function):\\
+parameter of interest: $\theta$\\
+measure of evidence: $T_n = h_n(S_n)-\sqrt{n}\mathcal{K}(\theta_0)$, where $T_n \sim \mathcal{N}(\tau,1)$, approximately and only for moderately large sample sizes.\\
+Key Inferential Function for a statistical model: $\tau = E[T_n]=\sqrt{n}\mathcal{K}(\theta)$\\
+
+solution to many problems (question: why?):
+\begin{itemize}
+    \item $K_1$, choosing sample size $n$. Test $\theta=\theta_0$ against $\theta > \theta_0$ based on $n$ observations, the expected evidence is $\sqrt{n}\mathcal{K}(\theta)$ for each $\theta$. To attain desired expected evidence $\tau_1$ against alternative $\theta_1$, choose $\n_1$ to be smallest integer greater than or equal to $\{\tau_1/\mathcal{K}(\theta_1)\}^2$
+    \item $K_2$, power calculations. In Neyman-Pearson framework, power function of level $\alpha$ test based on $T_n$ satisfies:
+    \begin{align*}
+        \Pi(\theta) &= P_{\theta}(T_n \geq z_{1-\alpha})\\
+                    &= \Phi(\tau-z_{1-\alpha})\\
+                    &= \Phi(\sqrt{n}\mathcal{K}(\theta)-z_{1-\alpha})
+    \end{align*}
+    \item $K_3$, Finding confidence intervals for $\theta$. 
+    $$[\mathcal{K}^{-1}(\frac{\{T_n-z_{1-\alpha/2}\}}{\sqrt{n}},\mathcal{K}^{-1}(\frac{\{T_n+z_{1-\alpha/2}\}}{\sqrt{n}}$$
+\end{itemize}
+
+page 128:\\
+if initial model is reparameterised ($\eta = m(\theta)$), where $n$ is strictly increasing, then the Key Inferential Function remains the same.\\
+if underlying test statistics have a skewed distribution under null and alternative, it may not be possible to find $vst$ satisfying $\tau = \sqrt{n}\mathcal{K}(\theta)$\\
+advantage of $vsts$-based methodology: easy of comparison of different studies, because all use the same calibration scale\\
+
+page 129:\\
+count data: concentration $\mu$ of cells growing in a culture; count number of cells in each of $n$ randomly chosen squares of unit area. Poisson distribution $Po(\mu)$ results if cells are randomly distributed: $P(X_i = x) = e^{-\mu}\frac{\mu^x}{x!}$, for x=0,1,2,...; E[$X$]=Var[$X$] = $\mu$; SE[$\Bar{X}_n$]=$\sqrt{Var[\Bar{X}}=\sqrt{\frac{\mu}{n}}\approx \sqrt{\frac{\Bar{X}_n}{n}}$\\
+$p$-value: $p_{\text{asym}} = P(\Bar{X}_n\geq \Bar{x}_n = P\{\sqrt{\frac{n}{\mu_0}}(\Bar{X}_n-\mu_0)\geq \sqrt{\frac{n}{\mu_0}}(\Bar{x}_n-\mu_0)\} \approx \Phi(-z_0)$; where $z_0 = \sqrt{n}(\bar{x}_n-\mu_0)/\sqrt{\mu_0}$
+
+$vst$ for the poisson model: Var[$\Bar{X}$]=$g$(E[$\Bar{X}$] for $g(t)=t/n$; hence: $h(x)=\sqrt{n}\int^x t^{-1/2} dt = \sqrt{4nx}$, hence $Y = \sqrt{4n\Bar{X}_n}$; rule of thumb: $n\mu \geq 5$ has to hold.\\
+
+page 130:\\
+evidence: $T=h(\Bar{X})-h(\mu_0)$; $T$ would have approximate mean $\tau = E[T]=2\sqrt{n}\{\sqrt{\mu}-\sqrt{\mu_0}\}$ and Var[$T$]=1.\\
+Key Inference Function for this model is: $\mathcal{K}(\mu)=2\{\sqrt{\mu}-\sqrt{\mu_0}\}$\\
+
+page 131: a better $vst$ for the poisson model\\
+Anscombe (1948) found transformation that reduces both bias and stabilises the variance over a large range of values $\mu$: $\sqrt{4n(\Bar{X}_n + 3/8n)}$\\
+choose sample size: if $\mu_1 = c\mu_0$, where $c > 1$, take $n = \tau^2/4\mu_0(\sqrt{c}-1)^2$\\
+confidence intervals: for effect $\theta = \mu - \mu_0$; $\sqrt{4n\Bar{X}_n} \sim \mathcal{N}(\sqrt{4n\mu},1)$ for $n\mu$ sufficiently large. Confidence interval for $\sqrt{4n\mu}$: $[\sqrt{4n\Bar{X}_n}-z_{1-\alpha/2},\sqrt{4n\Bar{X}_n}+z_{1-\alpha/2}]$; the confidence interval for $\mu$ is $[\{\sqrt{\Bar{X}_n}-\frac{z_{1-\alpha/2}}{\sqrt{4n}}\}^2,\{\sqrt{\Bar{X}_n}+\frac{z_{1-\alpha/2}}{\sqrt{4n}}\}^2]$
+
+page 135:\\
+two-sided evidence: $T^{\pm}$ gives measure of evidence. sign of $T^{\pm}$ gives indiciation on which hypothesis is supported: if negative, the null, if positive, the alternative; magnitude $|T^{\pm}|$ gives the degree of evidence.\\
+
+page 138:\\
+for basic normal model with unknown mean and standard deviation 1, we can define a test based on the equivalence between the test based on $|T]$ and that based on $T^2$, which has non-central chi-squared distribution.
+
+\section{One-sample binomial tests}
+\begin{itemize}
+    \item starting point: $X\sim B(n,p)$;
+    \item goal: test $p=p_0$ vs. $p>p_0$; find confidence intervals for $p$ and for the effect $p-p_0$;
+    \item usual test statistic is $\hat{p}=X/n$ with mean E[$\hat{p}$] = $p$ and Var[$\hat{p}$]=$p(1-p)/n$, which varies with $p$, so transformation is needed.
+\end{itemize}
+
+how to transform variance?\\
+Var[$X$] = $g$(E[$X$], where $g(t)=t(1-t)/n$, so a $vst$ is $h(x)=\sqrt{n}\int^x \{t(1-t)\}^{-1/2}dt=2\sqrt{n}arcsin(\sqrt{x})+c$; Anscombe showed that $\tilde{p}=(X+3/8)/(n+3/4)$ comes closer to a normal distribution with unit variance and mean $2\sqrt{n}arcsin(\sqrt{p})$\\
+take $c=-2\sqrt{n}arcsin(\sqrt{p_0})$, then $T=h(\tilde{p})=2\sqrt{n}\{arcsin/\sqrt{\tilde{p}}-arcsin(\arcsin(\sqrt{p_0})\}$\\
+Key Inferential Function for binomial model wehn testing $p=p_0$ against $p>p_0$ for $p\geq p_0$ is given by: $\mathcal{K}(p)=2\{arcsin(\sqrt{p})-arcsin(\sqrt{p_0})\}$\\
+
+approximate normality of $T$ holds for $np(1-p)\geq 5$\\
+
+page 140: confidence intervals for $p$:\\
+CI for mean evidence $\tau(p)$ is $T \pm z_{0.975}$; CI for $p$ is $\tau^{-1}(T \pm z_{0,975})$, or: $$[\{sin(arcsin(\sqrt{\tilde{p}})-\frac{z_{0.975}}{2\sqrt{n}})\}^2, \{sin(arcsin(\sqrt{\tilde{p}})+\frac{z_{0.975}}{2\sqrt{n}})\}^2]$$
+
+these intervals are far more reliable than $\hat{p}\pm z_{0.975} \sqrt{\hat{p}(1-\hat{p})/n}$, with $\hat{o}=X/n$\\
+
+page 143 ff: relative risk and odds ratio\\
+relative risk $RR = p_1/p_2$; odds ratio $OR = \{p_1/(1-p_1)\}/\{p_2/(1-p_2)\}$; risk difference $\Delta = p_1-p_2$\\
+for small risks, log-transformation of $RR$ and $OR$ has approximately normal distribution.\\
+
+let $\theta$ = ln($p_0/p$), then $\hat{\theta}$ = ln($p_0$) $-$ ln($\hat{p}$), with $\hat{p}=X/n$; $\hat{\theta}$ has for increasing $n$ an approximate normal distribution $\mathcal{N}(\theta, (1-p)/np)$; CI: $\hat{\theta}\pm z_{1-\alpha/2}\{(1-\hat{p})/(n\hat{p})\}^{1/2}$; coverage can be improved by continuity correction $\hat{p}=(X+0.5)/(n+0.5)$ or by $\tilde{p} = (X+0.375)/(n+0.75)$; CI for RR is $[e^L,e^U]$, where $L$ and $U$ are lower and upper boundaries of CI of $\theta =$ ln($RR$)\\
+
+standardised transformed test statistics > read again!
+
+page 144: one-sample odds ratio\\
+read again!\\
+evidence in $\hat{p}$ remains the same regardless whether one thinks in terms of simple difference $p_0-p$, the relative risk or the odds ratio\\
+
+page 145: CI for small risks $p$\\
+CI vary greatly when $p$ is near 0 or 1.\\
+solution 1: find CI for $\theta =$ ln($p$) using normal approximation $\mathcal{N}($ln($p$), $(1-p)/np)$ to distribution of ln($\tilde{p}$)\\
+solution 2: use arcsine-based confidence intervals defined above\\
+both methods require increasing sample sizes as $p$ approaches 0 in order for the empirical coverages to approach the nominal $95 \%$ coverages.\\
+solution 3: POisson approximation of the Binomial. Use Poisson($\mu$) with $\mu = np$; based on result that as $n \rightarrow \inf$ and $p \rightarrow 0$ with $\mu=np$ fixed, random variable $X \sim B(n,p)$ converges in distribution to variable $Y\sim$ Poisson($\mu$). And for Poisson distributed variables, classical square root transformation is an effective $vst$\\
+CI for $\mu$ look like $\{Y \mp z_{0.975}/2\}^2$; to obtain interval for $p$, divide both endpoints by $n$.\\
+CI will have reliable coverage when $7/n < p < 0.47/n^{0.31}$\\
+for small $p$ Poisson approximation is not recommended, because it often yields CI that are too conservative.
+
+\section{Two-sample binomial tests}
+page 149 ff.:\\
+compare to probabilities $p_1$ and $p_2$; introduce parameter $p=qp_1 + (1-q)p_2$, s.t. $p1 = p+(1-q)\Delta$ and $p2 = p-q\Delta$\\
+MLE: $\hat{p}_1=X/n_1$, $\hat{p}_2=Y/n_2$, $\hat{\Delta}=\hat{p}_1-\hat{p}_2$, $\hat{p}=q\hat{p}_1+(1-q)\hat{p}_2$; Var[$\hat{\Delta}$] = $(\xi - \delta^2)/N$, where $\xi = \{p(1-p)\}/\{q(1-q)\}$\\
+
+read again!\\
+
+one can write Var[$\hat{\Delta}$]=$g$(E[$\hat{\Delta}$], with $g(t) = a-bt^2$, where $a = \xi/N$ and $b = 1/N$; then $h(x) = \int^x|g(t)|^{-1/2}dt = b^{-1/2}\text{arcsin}(x\xi^{-1/2})$\\
+measure of evidence $T = \sqrt{N}\text{arcsin}(\tilde{\Delta}\tilde{\xi}^{-1/2}$, where $\tilde{p}_1 = (X+0.5)/(n_1+1)$ and $\tilde{p}_2 = (Y+0.5)/(n_2+1)$\\
+Key Inferential Function for testing $\Delta = 0$ versus $\Delta > 0$ in the two-sample binomial model: $\mathcal{K}(\rho)=\text{arcsin}(\rho)$, where $\rho = \delta/\sqrt{1+\delta^2}$ and $\delta = \Delta/\sqrt{N \text{Var}[\hat{\Delta}]} = \Delta/\sqrt{\xi-\Delta^2}$ (standardised effect)\\
+
+page 151:\\
+disadvantage of using unbalanced sampling: actual and expected evidence is lower than it would be with balanced sampling.\\
+
+read again for CI and relative risk and odds ratio\\
+
+\section{Defining evidence in $t$-statistics}
+\begin{itemize}
+    \item $n$ observations $Y_1,\cdots Y_n$ from normal model $\mathcal{N}(\mu,\sigma^2)$, both parameters unknown
+    \item goal: find measure of evidence $\mu = \mu_0$ in favour of $\mu > \mu_0$
+    \item effect: $\theta = \mu-\mu_0$; standardised effect: $\delta = \theta/\sigma$
+\end{itemize}
+
+If $\sigma=\sigma_0$ is known, evidence in $\Bar{Y}_n$ for $\mu > \mu_0$ is $T_0 = \sqrt{n}(\Bar{Y}_n - \mu_0)/\sigma_0 \sim \mathcal{N}(\tau,1)$ with expected evidence $\tau = \sqrt{n}\delta/\sigma_0$\\
+Key inferential function is equal to standardised effect $\delta=\theta/\sigma_0$\\
+
+if $\sigma$ is unknown, we can estimate $\sigma$ by $s_n = 1/(n-1) \sum_{i=1}^n (x_i-\bar{x})^2$, yielding the $t$-statistic: $S_n = \sqrt{n}(\bar{Y}_n-\mu_0)/s_n$\\
+
+Under the null, $S_n \sim t_(n-1)$\\
+
+Definition 20.1: $Z\sim \mathcal{N}(0,1)$ and $W\sim \mathcal{X}_\nu^2$, then $X = \frac{Z+\lambda}{\sqrt{W/\nu}}$ has a non-central Student's $t_\nu(\lambda)$ distribution.\\
+
+Under the alternative, we need to rewrite the $t$-statistic: $S_n = \frac{\sqrt{n}(\bar{Y}_n-\mu)+\sqrt{n}(\mu-\mu_0)}{s_n}$ which has a non-central $t$-distribution with parameters $\nu = n-1$ and $\lambda = \sqrt{n}\delta$. This follows by $Z = \sqrt{n}(\bar{Y}_n-\mu)/\sigma$ and $W=(n-1)*s_n^2/\sigma^2\sim \mathcal{X}_{\nu}^2$\\
+
+page 161:\\
+evidence in $t$-statistic for testing $\mu = \mu_0$ versus $\mu > \mu_0$ is (question: why?) $T = \sqrt{2n}sinh^{-1}(\frac{S_n}{\sqrt{2n}})=\sqrt{2n}sinh^{-1}(\frac{(\bar{Y_n}-\mu_0)/s_n}{\sqrt{2}})$\\
+finite sample corrected evidence $T_{\text{corrected}}=(\frac{n-1.7}{n-1})\sqrt{2n}sinh^{-1}(S_n/\sqrt{2n})$ improves corrected evidence in tails\\
+
+page 162:\\
+if normal approximation holds: $T\sim \mathcal{N}(\sqrt{n}(\sqrt{2}sinh^{-1}(\delta/\sqrt{2})),1)$; but: Laubscher (1960) showed that problems arise for small $n$ and large values of noncentrality parameter.\\
+
+page 163:\\
+The Key Inferential Function for Student's model\\
+E[$T$] is approximately equal to 
+\begin{align*}
+    E[T] &= \sqrt{2n}\text{sinh}^{-1}(\sqrt{n}\delta/sqrt{2n})\\
+    &= \sqrt{n}(\sqrt{2}\text{sinh}^{-1}(\delta/\sqrt{2})) = \sqrt{n}\mathcal{K}
+\end{align*}
+
+hence, Key Inferential Function is: $\mathcal{K}(\delta)=\sqrt{2}\text{sinh}^-1(\delta(\sqrt{2})=\sqrt{2}\text{ln}(\delta/\sqrt{2}+\sqrt{1+\delta^2/2}$\\
+
+expected evidence for $\mu > 0$ when $\sigma$ is known: $\sqrt{n}\delta$; when it's unknown: $\sqrt{n}\mathcal{K}(\delta)$\\
+
+page 165 (read again): how much extra work is required to obtain the same level of evidence when $\sigma$ is unknown compared to when it's known. (simulate)\\
+
+page 166: corrected evidence\\
+matching $p$-value: $p_\text{study} = F_S(-\sqrt{n}(\bar{Y}_n-\mu)/s_n)=F(-S_n)$, $F_S$ is c.d.f of $t$-distribution with $\nu = n-1$\\
+transformed evidenc: $T_n = h_n(S_n) = \sqrt{2n}\text{sinh}^{-1}(S_n/\sqrt{n})$\\
+$p_{\text{evidence}}=\Phi(-T_n)$; but: $p_{\text{evidence}}$ and $p_{\text{study}}$ are only approximately equal > correction needed for exact equality: $\tilde{h}_n(x)=(1+c_n)h_n(x)$, with $c_n = -0.7/(n-1)$ of order $O(1/n)$\\
+page 167:\\
+read again translation into evidence $p$-value of 5\%\\
+corrected $vst$; $T_{\text{corrected}}=(1-\frac{0.7}{n-1})\sqrt{2n}\text{sinh}^{-1}(S_n/\sqrt{2n})$; corrected evidence has bigger associated $p$-value\\
+Cornish-Fisher expansion: match quantile of arbitrary distribution to those of a normal distribution\\
+
+page 167/168: bias of Key Inferential Function\\
+read again!\\
+$\hat{\mathcal{K}}_{\text{unbiased}}=\mathcal{K}(\hat{\delta}_n[1-1/(2n)])=\sqrt{2}\text{sinh}^{-1}(\hat{\delta}_n(2n-1)/(2n))$\\
+$T_{\text{unbiased}}=\sqrt{2n}\text{sinh}^{-1}((2n-1)S_n/(2n\sqrt{2n}))$; better: use finite sample correction, because variance is better stabilised\\
+
+page 169ff: CI for standardised effect\\
+
+page 171ff: comparing evidence in $t$ and $z$ tests\\
+three cases of possible convergence: 
+\begin{align*}
+    if\: \lambda(\nu) \rightarrow \lambda, \quad &then X \rightarrow \mathcal{N}(\lambda,1)\\
+    if\: \lambda(\nu) = \sqrt{\nu}\lambda, \quad &then X-\sqrt{\nu}\lambda \rightarrow \mathcal{N}(0,1+\delta^2/2)\\
+    if\: \lambda(\nu) = \nu^k \delta for k > 1/2, \quad &then (X-\lambda(\nu))/\nu^{k-1/2} \rightarrow \mathcal{N}(0,\delta^2/2)\\
+\end{align*}
+
+Proof (read again): rewrite $X = \frac{Z}{\sqrt{W/\nu}}+\frac{\lambda(\nu)}{\sqrt{W/\nu}}$
+
+\section{Two-sample comparisons}
+read again
+
+\section{Evidence in the chi-squared statistic}
+read again
+
+\section{Evidence in $F$-tests}
+read again
+
+\section{Evidence in Cochran's $Q$ for heterogeneity of effects}
+read again
+
+\section{Combining evidence from $K$ studies}
+prerequisites:
+\begin{itemize}
+    \item $T \sim \mathcal{N}(\tau,1)$ by $vst$ $T = h(S)$; often: $T \sim  \mathcal{N}(\sqrt{n}\kappa,1)$, where $\kappa = \mathcal{K}(\delta)$
+    \item $K$ independent studies with data which can be interpreted using the same model; parameter of interest (effect) can change from study to study, i.e. $\mu_k$ denotes effect for $k$th study.
+    \item perform Cochran's $Q$ to $\hat{\kappa}_k = \mathcal{K}(\delta)$ to obtain evidence about heterogeneity of $\kappa_k$'s; if little evidence for heterogeneity, one can combine evidence
+\end{itemize}
+
+If $T_{Q^*}$ show heterogeneity, three ways to proceed:
+\begin{itemize}
+    \item estimate fixed and representative standardised effect $\delta$ for $K$ studies
+    \item if $K$ studies are a random sample from a larger population of studies, try to draw inference about a representative $\delta$ for this larger population
+    \item use a covariate to explain difference in $\delta_k$ and employ meta-regression
+\end{itemize}
+
+\subsection{Fixed standardised effects}
+\subsubsection{fixed and equal standardised effects}
+combined evidence for $\delta > 0$ in $K$ studies: $T_{1:K}=\frac{\sqrt{n_1}T_1+\cdots+\sqrt{n_k}T_k}{\sqrt{n_1+\cdots+n_K}}$\\
+choosing $v_k$ proportional to $\sqrt{n_k}$ satisfies Var[$\sum_k v_k T_k$] = $\sum v_k^2 = 1$ and maximises E[$\sum_k v_k T_k$] = $\sum_k v_k \tau_k \overset{.}{=} (\sum_k v_k \sqrt{n_k})\kappa$\\
+
+now, E[$T_{1:K}$] $\overset{.}{=} \sqrt{N}\kappa$, hence CI for $\kappa$ is $(T_{1:K} \pm z_{1-\alpha/2})/\sqrt{N}$; CI for $\delta = \mathcal{K}^{-1}(\kappa)$ is obtained by applying $\mathcal{K}^{-1}$ to the endpoints.\\
+
+also: $T_k = \sqrt{n_k}\mathcal{K}(\hat{\delta}_k) = \sqrt{n_k}\hat{\kappa}_k$, then: $T_{1:K}/\sqrt{N}=\sum_k n_k \hat{\kappa}_k/N = \hat{\kappa} = \mathcal{N}(\kappa,1/N)$
+
+\subsubsection{fixed, but unequal standardised effects}
+
+$\delta_k$'s are not assumed equal; representative $\delta$ for $K$ studies is needed.\\
+representative $\kappa = \sum\limits_k n_k \kappa_k /N$; here also $\hat{\kappa}\sim \mathcal{N}(\kappa,1/n)$\\
+confidence interval: $\hat{\kappa} \pm z_{1-\alpha/2}/\sqrt{N}$\\
+here, $\delta$ is the standardised effect that transforms into the weighted average of the $\kappa_k$'s
+
+\subsubsection{nuisance parameters}
+new: Key Inferential Function depends on standardised effect and nuisance parameter: $\mathcal{K}(\delta,\xi)$; example: two-sample $t$-test: Key depends on standardised difference of means $\delta$ and $\xi^{-1} = \nu/N$ (ratio of Welch's degrees of freedom and total sample size\\
+if $\mathcal{K}(\delta,\xi)$ is monotonic in $\xi$, you can use weighted average of $\xi_k$'s, with weights proportional to sample sizes\\
+
+let $\kappa_k = \mathcal{K}(\delta_k,\xi_k)$ for all $k$ and $\hat{\kappa}_k = T_k / \sqrt{n_k} \sim \mathcal{N}(\kappa_k, 1/n_k)$, then: $\kappa = \sum\limits_k n_k \kappa_k / N = \mathcal{K}(\delta, \xi)$
+
+\subsection{random transformed effects}
+given $\delta \rightarrow \mathcal{K}(\delta)$ monotonically increasing and continuous, $\kappa_k = \mathcal{K}(\delta_k)$, where $\kappa_k$ are assumed to be samples from $\mathcal{N}(\kappa, \gamma^2)$, with both parameters unknown\\
+assume that $\hat{delta}_k$ exists fro which $\hat{\kappa}_k = \mathcal{K}(\hat{\delta}_k) \sim \mathcal{N}(\kappa_k,1/n_k)$\\
+E[$\hat{\kappa}_k$] = $\kappa$; Var[$\hat{\kappa}_k$] = $1/n_k + \gamma^2$\\
+
+\subsection{Confidence intervals for $\kappa$ and $\delta$}
+$K$ small: $\bar{\kappa}\mp c \frac{s_\kappa}{\sqrt{K}}$, with $c=t_{K-1,1-\alpha/2}$, $\bar{\kappa}=(\sum_k\hat{\kappa}_k)/K$, and $s_k^2 = \sum_k (\hat{\kappa}_k-\bar{\kappa})^2(K-1)$\\
+$K$ large: $\hat{\kappa}_\upsilon \mp z_{1-\alpha}\hat{\sigma}_\upsilon$, with $\hat{\sigma}_{\upsilon}^2 = \frac{1}{(\sum_j \upsilon_j)^2}[\sum\limits_k \upsilon_k^2 \{\frac{1}{n_k}+\gamma^2\}]$
+
+\section{Correcting for publication bias}
+assume two summaries are available for each study: observed effect and measure of precision.\\
+can create funnel plot to measure publication bias, but: only works in certain scenarios and unless we know more about how many unpublished studies have been performed, we cannot compute a reliable correction.\\
+
+\subsection{The truncated normal distribution}
+summarise study outcomes as evidence $T \sim \mathcal{N}(\sqrt{n}\kappa,1)$\\
+random variable $X$ has truncated normal distribution with truncation point $\beta(X\sim \mathcal{TN}(\mu,\sigma^2,\beta))$ if it has density $f(x| \mu, \sigma, \beta) = \frac{\phi((x-\mu)/\sigma)/\sigma}{1-\Phi((\beta-\mu)/\sigma)}$ for $x \geq \beta$; for $x < \beta$, the density is zero. Note: this is essentially nothing else than: $P(A|B) = P(A\cap B) / P(B)$, where $P(B)$ is the probability of $x$ being in the tail of the Normal distribution whose lower boundary is set by $\beta$ and $P/A\cap B)$ is the density of $X=x$ and $X\geq \beta$. (also, see \href{http://dongguo.me/me/blog/2013/12/02/gaussian-and-truncated-gaussian/}{here}.
+
+E[$X$] = $\mu + \frac{\sigma\phi((\beta-\mu)/\sigma)}{1-\Phi((\beta-\mu)/\sigma)}$, see reference above and \href{https://stats.stackexchange.com/questions/356023/expectation-of-truncated-normal?rq=1}{here} for explanation of derivation\\
+published evidence of a study: $T_i \sim \mathcal{TN}(\sqrt{n_i}\kappa,1,1.1645)$\\
+likelihood for $\kappa$: $L_{\text{truncated}}(\kappa) = \prod\limits_{i=1}^m f(t_i|\kappa \sqrt{n_i},1,1.645)$.\\
+estimate of $\kappa$: $\hat{\kappa} = \sum\limits_{i=1}^m \sqrt{n_i}t_i/\sum\limits_{i=1}^m n_i$ (ignores bias in the first step)\\
+
+then, apply the following algorithm:
+\begin{enumerate}
+    \item Put $k=0$ and $\hat{\kappa} = \sum\limits_{i=1}^{m}\sqrt{n_i}t_i / \sum\limits_{i=1}^m n_i$
+    \item compute corrections: $b_i = \frac{\phi(1.645-\hat{\kappa}_k\sqrt{n_i})}{1-\Phi(1.645-\hat{\kappa}\sqrt{n_i}}$ for $i=1,\cdots,m$
+    \item update the estimate by putting $k=k+1$ and $\hat{\kappa}_k = \sum\limits_{i=1}^m \sqrt{n_i}(t_i-b_i) / \sum\limits_{i=1}^m n_i$
+\end{enumerate}
+
+$T_{\text{combined}}= \sum\limits_{i=1}^m \sqrt{n_i} \hat{\kappa}_\text{truncated}/\sqrt{m}$; $p_\text{combined} = 1-\Phi(T_\text{combined})$
+
+\subsection{Bias correction based on censoring}
+estimation via truncated normal is problematic, because it provides the same correction regardless of whether there are unpublished studies or not. in the truncated normal model, each study has its natural proportion of accompanying unpublished studies (in other words: it assumes that researchers performing the studies will continue repeating them until one reaches as significant result)\\
+
+more realistic assumption: origin of bias is not truncation, but censoring: evidence of non-significant studies is suppressed. Given more information about the unpublished studies (total number $l$ and sample sizes $n_1^*, \cdots n_l^*$), we can write likelihood:
+$$L_\text{censored}(\kappa) = \prod\limits_{i=1}^m \phi(t_i-\sqrt{n_i}\kappa) \prod\limits_{j=1}^l \Phi(1.645-\kappa\sqrt{n_j^*})$$\\
+
+MLE satisfies: $\sum\limits_{i=1}^m \sqrt{n_i}(t_i - \sqrt{n_i}\hat{\kappa}_\text{censored}) - \sum\limits_{j=1}^l \sqrt{n_j^*} \frac{\phi(1.645-\sqrt{n_j^*}\hat{\kappa}_\text{censored}}{\Phi(1.645-\sqrt{n_j^*}\hat{\kappa}_\text{censored}} = 0$\\
+
+problem: we know neither $l$ nor $n_j^*$; for $n_j^*$ we can use average published study size: $n_j^* = \sum\limits_{i=1}^m n_i/m = \bar{n}$ for all $j$. For $l$, compute several values and leave final decision to reader\\
+
+to solve likelihood equation, use Newton-Raphson iteration:
+\begin{enumerate}
+    \item Put $k=0$ and $\hat{\kappa}_k = \sum\limits_{i=1}^m \sqrt{n_i}t_i/\sum\limits{i=1}^m n_i$; for unpublished studies, use $n_j^* = \bar{n}$
+    \item Compute for $j=1,\cdots,l$, i.e. the latent studies, $u_j = 1.645-\sqrt{n_j^*}\hat{\kappa}_k$; compute log-likelihood derivative: $l' = \sum\limits_{i=1}^m \sqrt{n_i}(t_i - \sqrt{n_i}\hat{\kappa}_\text{censored}) - \sum\limits_{j=1}^l \sqrt{n_j^*} \frac{\phi(1.645-\sqrt{n_j^*}\hat{\kappa}_\text{censored}}{\Phi(1.645-\sqrt{n_j^*}\hat{\kappa}_\text{censored}}$ and second derivative $f'' = -\sum\limits_{i_1}^m n_i - \sum\limits_{j=1}^l N_j^* (\phi(u_j)/\Phi(u_j))(u_j + \phi(u_j)/\Phi(u_j))$
+    \item update estimate by putting $k=k+1$ and $\hat{kappa}_k = \hat{kappa}_{k-1}-l'/l''$
+    \item stop calculations when estimate does not change anymore and put $\hat{\mu}_\text{censored}$ equal to final value
+\end{enumerate}
+
+idea: couldn't we estimate to different $\hat{\kappa}$ for the published and unpublished data?\\
+
+further reading: Chapter 15 \href{http://www.cochrane_net.org/openlearning}{here} and Givens et al. (1997).
+
+\section{Large-sample properties of variance stabilising transformations}
+see Holland (1973) for description of asympotic univariate variance stabilising transformations $vst$'s\\
+assume $X_n$ real-valued and random with distribution dependent upon a real $\theta \in D$ and $\sqrt{n}(X_n - \theta) \rightarrow \mathcal{N}(0,\sigma^2(\theta))$\\
+
+an asymptotic $vst$ is a one-to-one, continuously differentiable mapping $f: D \rightarrow \mathbb{R}^1$, so that $\sqrt{n}(X_n - \theta) \rightarrow \mathcal{N}(0,1)$; problem: we don't want to want till $n \rightarrow \inf$\\
+
+extend definition of $f(\cdot)$: assume $f$ exists and has a differential at each $\theta \in D$, i.e. if $|x_n - \theta| = O(n^{-1/2})$, then $f(x_n) = f(\theta) + (x_n - \theta)f'(\theta)+o(n^{-1/2}$, hence we have: $\sqrt{n}(f(X_n) - f(\theta)) \rightarrow \mathcal{N}(0,\sigma^2(\theta)(f'(\theta))^2)$ (see \href{https://stats.stackexchange.com/questions/5782/variance-of-a-function-of-one-random-variable}{here} for explanation why this is the case.\\
+
+page 241/242: read again about asymptotic convergence\\
+
+page 243:\\
+Pitman efficacy of a test describes behaviour of the asymptotic power; it is not affected by the $vst$
+read again\\
+
+\subsection{Power and efficiency}
+power of asymptotically normal $\alpha$-level test based on $Y_n$ is approximately equal to $1-\Phi(\z_{1-\alpha}-\sqrt{n}\delta)$m, where $\delta = (\theta-\theta_0)/\sigma(\theta)=(\theta-\theta_0) f'(\theta)$\\
+
+sample size of a test with power $1-\beta$ can be calculated from $\sqrt{n_Y} = \delta^{-1}(z_{1-\alpha}+z_{1-\beta}$\\
+
+after the $vst$: power is $1-\Phi(z_{1-\alpha}-\sqrt{n}(f(\theta)-f(\theta_0))$; sample size is: $\sqrt{n_T} = (f(\theta)-f(\theta_0))^1(z_{1-\alpha}+z_{1-\beta})$\\
+read again
+
+\section{Weed - Meta-Analysis and Causal Inference}
+to read: Hill 1965 - The environment and disease: association or causation?\\
+
+to read: Greenland (1998) - Meta-Analysis In. Rothman, Greenland. Modern epidemiology\\
+
+goals of meta-analysis:
+\begin{enumerate}
+    \item summarize results (synthetic goals)
+    \item identify differences among study-specific estimates of effect (analytic goal)
+\end{enumerate}
+
+relevant causal criteria:
+\begin{itemize}
+    \item strength
+    \item consistency (can be assessed by meta-analyses)
+    \item dose-response
+    \item biological plausibility
+    \item specificity
+    \item temporality
+    \item experimental evidence
+    \item coherence
+    \item analogy 
+\end{itemize}
+only consistency can be assessed by meta-analysis.\\
+
+issues to consider for causal inference from meta-analyses:
+\begin{itemize}
+    \item heterogeneity and assessment of consistency: existence of significant heterogeneity calls for subgroup analysis
+    \item correcting for bias of healthy worker effect (HWE): HWE is given if mortality rates of working population is lower than the general population (or other comparison group)
+    \item high exposure sub-group only meta-analysis and assessment of dose-response: dose-response curve should be analysed - to do so, studies with different doses must b available. Epidemiological analysis requires stratifying studies by exposure levels, especially if causal inference is the goal.
+\end{itemize}
+
+meta-analysis provides a way to average a group of numbers. Difficult to assess causality from this. Also, it provides assessment of consistency of these numbers as well as assessment of publication bias.
+
+Hill's criteria for causality:
+\begin{itemize}
+    \item specificity
+    \item experimentation
+    \item coherence
+    \item temporality
+    \item analogy
+\end{itemize}
+
+This is my text with an example Figure~\ref{fig:example} and example
+citation~\cite{StrunkWhite} or \textcite{Bringhurst1993}. And there is another
+\enquote{citation} which is located at the bottom\footcite{tagstore}.
+
+\myfig{TU_Graz_Logo}%% filename in figures folder
+  {width=0.1\textwidth,height=0.1\textheight}%% maximum width/height, aspect ratio will be kept
+  {Example figure.}%% caption
+  {}%% optional (short) caption for table of figures
+  {fig:example}%% label
+
+Now you are able to write your own document. Always keep in mind: it's
+the \emph{content} that matters, not the form. But good typography is
+able to deliver the content much better than information set with bad
+typography. This template allows you to focus on writing good content
+while the form is done by the template definitions.
+
+
+%% vim:foldmethod=expr
+%% vim:fde=getline(v\:lnum)=~'^%%%%\ .\\+'?'>1'\:'='
+%%% Local Variables: 
+%%% mode: latex
+%%% mode: auto-fill
+%%% mode: flyspell
+%%% eval: (ispell-change-dictionary "en_US")
+%%% TeX-master: "main"
+%%% End: 

@@ -1,11 +1,11 @@
 ### import packages ------------------------------------------------------------
 # for plotting
 require("ggplot2") # http://www.sthda.com/english/wiki/ggplot2-essentials
-# http://r-statistics.co/ggplot2-Tutorial-With-R.html
-# require("gridExtra")
-# require("grid")
 require("ggpubr")
 require("extrafont") # https://cran.r-project.org/web/packages/extrafont/README.html
+# I used the Fira Sans font for the graphics - you probably need to install it if you're using Linux
+# font_import(c("~/.local/share/fonts","/home/drosoneuro/.fonts")) # only run the first time / when new fonts were installed
+# loadfonts() # only run the first time / when new fonts were installed
 
 # for data handling
 require("data.table")
@@ -16,11 +16,11 @@ source("./functions/helper_functions.R")
 
 ### define input paths (for data) and outpout paths (for figures)---------------
 in_path <- "data/"
-out_path <- "figs/poster/"
+out_path <- "figs/presentation/"
 
 ### properties that should be the same across all figures ---------------
 font_size <- 16
-font_family <- "Arial"
+font_family <- "Fira Sans"
 A4 <- c(8.27, 11.69) # width and height of A4 page in inches
 A5 <- c(5.8, 8.3) # width and height of an A5 page
 corr_student <- "MLE" # either "MLE" for no correction or "Corr" for finite sample correction
@@ -32,11 +32,13 @@ mu0s <- 0
 mu1s <- seq(-2, 2, by = 0.1)
 sgm0 <- sgm1 <- 2
 alphas <- c(0.05)
+
+
 ### Figure 1A: Plot CI of Zn, Vn & Student T ----------------------------------
 ### (fig:CI_student)
 
 # define figure name
-figname <- paste0("poster_fig1A_CI_student")
+figname <- paste0("presentation_fig1A_CI_student")
 
 # load data
 load(paste0("data/Ev_Student_MLE_", n_sim, "_20190504.RData"), verbose = TRUE)
@@ -101,8 +103,7 @@ p2 <- CI_plotter(ev_stud_corr[n_study == 5 & mu0 == 0, ])
 
 fig1A <- ggarrange(p1, p2,
                   ncol = 2, nrow = 1,
-                  align = "hv", legend = "top", common.legend = T,
-                  labels = c("A", "")
+                  align = "hv", legend = "top", common.legend = T
 )
 
 ggsave(
@@ -224,8 +225,7 @@ p2 <- qq_plotter(student_quantiles[n_study == 5, ])
 # p8 <- qq_plotter(quantiles[quantiles$n_study==30,])
 fig1B <- ggarrange(p1, p2,
                   ncol = 2, nrow = 1,
-                  align = "hv", legend = "top", common.legend = T,
-                  labels = c("B", "")
+                  align = "hv", legend = "top", common.legend = T
 )
 ggsave(
   filename = paste0(out_path, figname, ".pdf"), plot = fig1B,
@@ -362,12 +362,11 @@ ggsave(
 
 
 ### Figure 2: Funnel plots explained -----------------------------------------
+n_sim <- 1000
 data_name <- paste0("DF_Ev_Mean_", corr_student, "_", n_sim, "_20190514.RData") # name to load and save data etc.
 data_path <- paste0(in_path, data_name)
-n_sim <- 1000
 load(data_path, verbose = TRUE) # load data set containing simulated values
 dat_orig <- evidence_df
-
 
 n_study_min <- 5
 n_study_max <- 100
@@ -377,7 +376,7 @@ rng <- range(c(n_study_min, n_study_max))
 ctgs <- unique(dat_orig$n_study)[unique(dat_orig$n_study) %between% rng]
 sampling_seed <- 20190612
 
-figname <- "poster_fig2_funnel_plot"
+figname <- "presentation_funnel_plot"
 
 funnel_plotter <- function(dat, xlim = 2, ylim = 8, ctgs) {
   # define colour code & legend that is consistent over all plots with "ctgs" (regardless of whether they appear in plot or not)
@@ -439,14 +438,33 @@ p4 <- funnel_plotter(dat_0.3_sig, xlim =2, ylim = 8, ctgs = ctgs) + ggtitle(bquo
 p5 <- funnel_plotter(dat_0_mix, xlim =2, ylim = 8, ctgs = ctgs) + ggtitle(bquote(mu[1]==0))
 p6 <- funnel_plotter(dat_0.3_mix, xlim =2, ylim = 8, ctgs = ctgs) + ggtitle(bquote(mu[1]==0.3))
 
-fig1 <- ggarrange(p1, p2, p3, p4, p5, p6,
-                  ncol = 2, nrow = 3,
-                  align = "hv", legend = "top", common.legend = T,
-                  labels = c("A", "", "B", "", "C")
+fig2A <- ggarrange(p1, p2,
+                  ncol = 2, nrow = 1,
+                  align = "hv", legend = "top", common.legend = T
+)
+
+fig2B <- ggarrange(p3, p4,
+                   ncol = 2, nrow = 1,
+                   align = "hv", legend = "top", common.legend = T
+)
+
+fig2C <- ggarrange(p5, p6,
+                   ncol = 2, nrow = 1,
+                   align = "hv", legend = "top", common.legend = T
 )
 
 ggsave(
-  filename = paste0(out_path, figname, ".pdf"), plot = fig1,
-  width = A4[1], height = 0.8 * A4[2], device = cairo_pdf
+  filename = paste0(out_path, figname, "_2A.pdf"), plot = fig2A,
+  width = A4[1], height = 0.4 * A4[2], device = cairo_pdf
+)
+
+ggsave(
+  filename = paste0(out_path, figname, "_2B.pdf"), plot = fig2B,
+  width = A4[1], height = 0.4 * A4[2], device = cairo_pdf
+)
+
+ggsave(
+  filename = paste0(out_path, figname, "_2C.pdf"), plot = fig2C,
+  width = A4[1], height = 0.4 * A4[2], device = cairo_pdf
 )
 

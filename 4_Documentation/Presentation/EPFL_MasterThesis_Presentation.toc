@@ -1,7 +1,0 @@
-\beamer@endinputifotherversion {3.36pt}
-\select@language {english}
-\beamer@sectionintoc {1}{Introduction and Goals}{3}{0}{1}
-\beamer@sectionintoc {2}{The Twitter Data Set}{40}{0}{2}
-\beamer@sectionintoc {3}{Competing for Gold}{55}{0}{3}
-\beamer@sectionintoc {4}{Exercises in Reproducibility}{70}{0}{4}
-\beamer@sectionintoc {5}{Discussion}{91}{0}{5}

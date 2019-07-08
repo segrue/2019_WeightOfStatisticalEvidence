@@ -1,0 +1,426 @@
+\chapter{Analysing and Testing Evidence}
+\label{cha:analysing_testing_evidence}
+\epigraph{\centering \textit{`Use the CRS database to size the market.' -- `That data is wrong.'}\par
+\textit{`Then use the SIBS database.' -- `That data is also wrong.'}\par
+\textit{`Can you average them?' -- `Sure. I can multiply them too.'}}{--- Dilbert by Scott Adams \href{https://dilbert.com/strip/2008-05-07}{May 07, 2008}}
+
+Good statistics is like strong coffee: bitter at times but always sobering. And there are few things more sobering than taking a cherished hypothesis and putting it to the test---especially, if the test turns out to be negative. If used correctly, rigorous statistics is the ultimate tool for the `skillful interrogation of Nature', as \citet[p.~140]{fisherbox_fisher_1978} puts it: It helps to uncover relationships and connections which do not immediately catch the eye and prevents over-excited researchers from clinging to spurious findings.\par
+Clever designs and nimble mathematical manipulations can make complex problems much more accessible and prevent common pitfalls. The next few sections are dedicated to a short overview of the basics of some of the many methods used for analysing and testing statistical evidence stemming from scientific data.
+
+\section{Hypothesis testing}
+Researchers often have to address questions such as the following:
+\begin{align*}
+    \text{Is treatment A superior to treatment B?} 
+\end{align*}
+In order to address this question, one usually formulates two distinct hypotheses:
+\begin{align*}
+    H_0 &: \text{Treatment A is not superior to treatment B}.\\
+    H_1 &: \text{Treatment A is superior to treatment B}.
+\end{align*}
+To translate these hypotheses into a mathematically feasible language, one needs to operationalise them by establishing the criteria for `superiority' of a treatment. This can be done by defining primary (and potentially secondary) outcomes that measure the treatment effect of treatments A and B. What these primary outcomes are should be decided based on the specific question at hand and the expert knowledge of the involved researchers.\par
+In other words, one must define a parameter $\theta$ with which one can quantify `superiority' and that allows us to reformulate the hypothesis as follows:
+\begin{align*}
+    H_0 &: \theta_A \leq \theta_B\\
+    H_1 &: \theta_A > \theta_B
+\end{align*}
+%toadd: maybe add a chapter about Neyman-Pearson?
+For illustrative purposes, let us assume that we are dealing with two different cancer treatments. One primary outcome could be the proportion of patients still alive after a given time period. This example is assessed in Section \ref{sec:binomial_var}. Another primary outcome could be the average survival time of the patients after receiving the treatment. This example is further commented on in Section \ref{sec:mean}.\par
+
+\subsection{Types of hypotheses and hypothesis tests}
+\label{subsec:hypothesis_types}
+Before I can address the question of how to test these hypotheses, I first need to make a small detour to delve deeper into the specific properties a hypothesis can have. Above---and for the remainder of this Master thesis---I let the hypotheses in question be `composite'. However, hypotheses can also be `simple', with the distinction lying in the number of possible values for $\theta$ that a hypothesis specifies.\par
+A hypothesis is called simple if it uniquely identifies the parameter $\theta$ (or the probability distribution specified by $\theta$). Conversely, if a hypothesis states more than one possible parameter value, it is called composite because it is composed of multiple simple hypotheses.\par
+For illustration, let us consider a set of hypotheses that is different from the one stated above:
+\begin{align*}
+    H_0 &: \theta = \theta_0 = 0 \\
+    H_1 &: \theta > \theta_0 = 0
+\end{align*}
+In this case, the null hypothesis $H_0$ is simple: For it to be true, $\theta$ can only correspond to a single value. Conversely, the alternative hypothesis $H_1$ is composite because it specifies more than one value for $\theta$: $H_1$ is true for any ${\theta > 0}$, regardless of whether this corresponds to ${\theta = 10^{-3}}$ or ${\theta = 10^3}$.\par
+Now, in order to test the hypotheses, be they simple or composite, there are, in principle, three options:
+\begin{itemize}
+    \item Perform a one-sided test for superiority: Is $\theta$ larger than $\theta_0$?
+    \item Perform a one-sided test for inferiority: Is $\theta$ smaller than $\theta_0$?
+    \item Perform a two-sided test: Is $\theta$ either smaller or larger than $\theta_0$?
+\end{itemize}
+%toadd: chapter about difference between Fisher and Neyman-Pearson framework > uniformly most powerful test concepts, problems for one and two-sided hypotheses
+These tests can be performed for three different scenarios: for two simple, a simple and a composite or two composite hypotheses. For the remainder of this Master thesis, I will let both $H_0$ and $H_1$ be composite hypotheses and explain all methods using the example of a one-sided test for superiority.\par
+
+\subsection{Test statistics and decision functions}
+\label{subsec:decision_function}
+To test a specific set of hypotheses, one needs to construct a test statistic $S_n(\cdot)$, that is, a function that takes as input random variable $X_1 \dots X_n$ and provides as output another random variable whose realisation serves to distinguish between $H_0$ and $H_1$ given a decision function $\delta(\cdot)$. Note that the test statistic can but does not have to be an estimator of $\theta$. For example, the exact binomial test described in Section~\ref{subsec:exact binomial test} is based on a test statistic that is at the same time an estimator of $\theta$. In many cases, however, a test statistic consists of a transformation of the estimator, see for example the $Z$-statistic in Section~\ref{subsec:z-score} or the Student's $t$-statistic in Section~\ref{subsec:student's t-statistic}.\par
+To perform a one-sided test for superiority on the set of hypotheses described at the beginning of this chapter, I define the following decision function:
+\begin{align*}
+    \delta(S_n(X_1,\dots,X_n)) = \begin{cases} 1, & \text{if } S_n(X_1,\dots,X_n) > q; \\ 
+    0, & \mbox{otherwise.}\end{cases}
+\end{align*}
+If the output of $\delta(S_n)$ is $1$, $H_0$ is rejected, if it is $0$, the test fails to reject $H_0$. The exact value of the decision threshold $q$ depends on the test statistic in question as well as on the pre-defined Type I error rate $\alpha$---that is, the false rejection rate of $H_0$---that one is willing to accept on average (see Figure~\ref{fig:error_types} for a visualisation).\par
+The goal is then to find the smallest value of $q$ for which the significance level is equal to $\alpha$, that is, 
+\begin{alignat*}{3}
+    &\phantom{\Longleftrightarrow\quad}\Pr(\delta=1\mid H_0) &= \Pr(S_n(X_1,\dots,X_n) > q\mid H_0) &= \alpha \\
+    &\Longleftrightarrow\quad & 1-F_{S_n\mid H_0}(q) &=\alpha \\
+    &\Longleftrightarrow\quad & F^{-1}_{S_n\mid H_0}(1-\alpha) &= q
+\end{alignat*}
+where ${F_{S_n\mid H_0}(\cdot)}$ and ${F^{-1}_{S_n\mid H_0}(\cdot)}$ are the cumulative distribution function and the quantile function, respectively, of $S_n$ under the null hypothesis and ${\Pr(\delta=1\mid H_0)}$ is the probability of the decision function $\delta(\cdot)$ returning $1$ under the null hypothesis. Both $q$ and $\alpha$ are often referred to as the `significance threshold' because they set the threshold for a test statistic or its corresponding cumulative tail probability, respectively, to pass.\par %toadd: maybe add reference to concrete example 
+
+\subsection{The power of a statistical test}
+\label{subsec:power}
+If a specific significance threshold $\alpha$ is defined, we can calculate the Type II error rate ${\beta = \Pr(\delta = 0\mid H_1)}$ of a test, that is, the probability of not rejecting the null hypothesis in the presence of a real effect (see Figure~\ref{fig:error_types}):
+\begin{align*}
+    \beta = \Pr(\delta = 0\mid H_1) = \Pr(S_n(X_1,\dots,X_n\mid H_1) < q) = F_{S_n\mid H_1}(q).
+\end{align*}
+Here, ${F_{S_n\mid H_1}(\cdot)}$ denotes the cumulative distribution function of $S_n$ under the alternative hypothesis. From this, we can calculate the power of a hypothesis test, which is given by ${1 - \beta = 1-F_{S_n\mid H_1}(q)}$. Hence, the power of a test is simply the cumulative probability of a test statistic $S_n$ being larger than its significance threshold, $q_\alpha$ assuming the alternative hypothesis $H_1$ is true.
+
+\myfig{ch2_fig1_error_types}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {(A) The probability density functions of two normal distributions with variance $1$ and mean $\mu$ according to the null ($H_0: \mu = 0$) and alternative hypothesis (${H_1: \mu = 2}$), respectively. The critical value $z_{1-\alpha}$ denotes the $(1-\alpha)$-quantile of the standard normal distribution, above which the null hypothesis is rejected. (B) The cumulative density functions of the same two normal distributions are displayed in panel (A). Under $H_0$, the curve crosses the critical value $z_{1-\alpha}$ where ${\Phi(x - \mu_0) = 1-\alpha}$. Under $H_1$, the curve crosses the threshold at ${\Phi(x - \mu_1) = \beta}$.}%% caption %toadd: exact description of figure
+  {Type I and Type II errors} %% optional (short) caption for table of figures
+  {fig:error_types} %% label
+
+\subsection{The \texorpdfstring{$p$}{p}-value}
+\label{subsec:p-value}
+For a given observation $x$, the $p$-value is defined as the probability of observing a value that is at least as extreme as $x$ given that the null hypothesis $H_0$ is true. The `extremity' of $x$ is usually assessed by calculating the cumulative probability of randomly drawing values from the null distribution that are at least as far away from the distribution mean as $x$. For one-sided directional hypotheses, the $p$-value is thus defined as
+\begin{align*}
+    p = \begin{cases} \Pr(X < x \mid H_0), & \text{if testing for inferiority;} \\
+    \Pr(X > x \mid H_0), & \text{if testing for superiority.}\end{cases}
+\end{align*}
+For two-sided non-directional hypotheses---and if the null distribution is symmetric---the $p$-value can simply be calculated by setting ${x = |x|}$ and then doubling the one-sided $p$-value for a superiority test, that is, ${p = 2\cdot \Pr(X > |x| \mid H_0)}$.\par 
+If the null distribution is not symmetric, however, the calculation of the two-sided $p$-value does not immediately follow from its definition. One solution is to double the minimum of the $p$-values of both one-sided hypotheses, that is, $$p = 2\cdot\text{ min}(\Pr(X > x \mid H_0), \Pr(X < x \mid H_0)).$$ Another is to `mirror' $x$ around a central tendency $ct$ of the distribution (for example the mean or the median) and then sum up the $p$-values of both one-sided hypotheses:
+\begin{align*}
+    p = \Pr(X < ct-|x| \mid H_0) + \Pr(X > ct+|x| \mid H_0).
+\end{align*}
+Given a continuous probability distribution under a simple null hypothesis, the $p$-value is uniformly distributed between $0$ and $1$. This can be shown by simulations or by the following proof\footnote{Note that $p$-values are in fact realisations of a random variable \citep{murdoch_values_2008}. Thus, I will use the uppercase letter $P$ in the following paragraphs to distinguish the random variable from its realisation, even though lowercase letters are usually used for both.}.\par
+To show that $P$ is uniformly distributed, I will use the probability integral transform, which states that for a continuous cumulative distribution function $F_X(x)$, the random variable $Y = F_X(X)$ is uniformly distributed as $Y \sim \text{Unif}(0,1)$, that is, ${\Pr(Y < y) = y}$ for ${y \in [0, 1]}$ (see for example \citet[p.~ 54f.]{casella_statistical_2002}).\par
+Let ${P = \Pr(X > S_n \mid H_0) = 1-F_{H_0}(S_n)}$ where $F_{H_0}(\cdot)$ denotes the cumulative distribution function of ${S_n \sim \mathcal{N}(0,\sigma^2)}$. Hence, we can write
+\begin{align*}
+    \Pr(P \leq p) &= \Pr(1-F_{H_0}(S_n) \leq p) = \Pr(F_{H_0}(S_n) \geq 1-p)\\ &=
+    \Pr(F_{H_0}^{-1}(F_{H_0}(S_n)) \geq F_{H_0}^{-1}(1-p)) = \Pr(S_n \geq F_{H_0}^{-1}(1-p)) \\
+    &= 1-F_{H_0}(F_{H_0}^{-1}(1-p)) = 1-(1-p) \\ 
+    &= p
+\end{align*}
+which concludes the proof.\par
+For a composite null hypothesis, e. g. $H_0: \mu < \mu_0 = 0$, uniformity of $P$ only holds with regard to the least favourable value of $\mu$ under the null, that is, $\mu = \mu_0 = 0$. For any $\mu < \mu_0$, the distribution of $P$ is left skewed. Similarly, the distribution of $P$ under a (simple or composite) alternative hypothesis is not uniform either, but right-skewed (see for example \citet{murdoch_values_2008}).
+
+\section{What properties should an evidence measure have?}
+\label{sec:evidence_properties}
+As mentioned in the previous section, the test statistic $S_n$ depends on the set of hypotheses to be tested and the distributional nature of the data. A test statistic that might be suited for binomially distributed data might lead to false inference if the data are normally distributed. In addition, the values of different test statistics are usually not directly comparable.\par
+To alleviate this, we can transform test statistics $S_n$ into an evidence measure $V_n  = h_n(S_n)$ which is also a statistic but for which comparisons are easier to make. \citet[p.~115]{kulinskaya_meta_2008} stated that four desirable properties a one-sided evidence measure $V_n$ should have:
+\begin{description}[leftmargin=!,labelwidth=\widthof{\bfseries $\boldsymbol{E_4}$}]
+    \item [$\boldsymbol{E_1}$] The one-sided evidence $V_n$ is a monotonically increasing function of the test statistic $S_n$, that is, $h_n(S_{n_1}) \geq h_n(S_{n_2})$ if $n_1 \geq n_2$.
+    This ensures that optimal values of $S_n$ are retained by the transformation to $V_n$ and facilitates interpretation.\\
+    \item [$\boldsymbol{E_2}$] The distribution of $V_n$ is normal for all values of the unknown parameters. The normal distribution has a variety of desirable statistical properties which facilitate mathematical manipulation and interpretation.\\
+    \item [$\boldsymbol{E_3}$] The variance equals one (Var[$V_n$] = $1$) for all values of the unknown parameters. Stabilising the variance to $1$ allows for direct comparison of different evidence measures.\\
+    \item [$\boldsymbol{E_4}$] The expected evidence $\tau = \tau(\theta) = \E_{\theta}[V_n]$ is monotonically increasing in $\theta$ from $\tau(0)=0$, that is, larger parameter values $\theta$ indicate larger expectations of the evidence measure $V_n$ and vice versa.
+\end{description}
+%toadd: why are these properties desirable?
+For some combinations of distributions and statistics, such as the $Z$-score based on normally distributed variables (Section~\ref{sec:mean}), all properties $E_1$ to $E_4$ are exactly fulfilled. For others, such as the $Z$-score based on binomially distribute variables (Section~\ref{subsec:z-score}), the properties are only fulfilled asymptotically. Hence, for most combinations of distributions and statistics we need to find a transformation $V_n = h_n(S_n)$, so that $V_n$ fulfils properties $E_1$ to $E_4$ stated above. To fulfil $E_1$, any monotonically increasing function will do. To ensure that $E_2$, $E_3$, and $E_4$ are met, however, slightly more effort is needed.
+
+\subsection{\texorpdfstring{$E_2$}{E2}: Making sure everything is normal}
+\label{subsec:normal_transformation}
+%toadd: reference to Kulinskaya 126/127 an papers cited there
+To meet criterion $E_2$, one usually needs to resort to a distribution-dependent transformation that turns $S_n$ into a normally distributed variable. If $S_n$ follows a lognormal distribution---the simplest case---taking the natural logarithm $\ln(S_n)$ yields a normally distributed variable.\par
+If $S_n$ follows a different continuous distribution, an approximate solution can be found by using the transformation $h_n = \phi^{-1}(F_{S_n}(\cdot))$, with $\phi^{-1}$ denoting the quantile function of the standard normal distribution and $F_{S_n}$ denoting the cumulative distribution function of $S_n$. Since $\phi^{-1}$ does not have a closed form description, solutions have to be approximated using numerical methods.\par
+Yet another possibility to ensure $E_2$ is to exploit the central limit theorem. For example, if $S_n\sim \text{Bin}(n,p)$, then $S_n \overset{n\rightarrow\infty}{\sim}\mathcal{N}(np,np(1-p))$ (deMoivre-Laplace theorem; see Section~\ref{subsec:z-score} for more details on the usefulness of the central limit theorem in this context).\par
+
+\subsection{\texorpdfstring{$E_3$}{E3}: The variance stabilising transformation}
+\label{subsec:vst}
+To ensure that property $E_3$ is given, we need to make sure that $h_n$ is variance stabilising, so that $\Var[h_n(S_n)]=1$. If the variance of $S_n$ can be expressed in terms of its expectation passed to a known function $g_n$, that is, ${\Var[S_n] = g_n(\E[S_n])}$, then $h_n$ is defined---up to an additive constant---by
+$$h_n(s_n) = \int^{s_n}[g_n(t)]^{-1/2}dt$$
+if the indefinite integral exists \citep[p.~126--127]{kulinskaya_meta_2008}. Hence,
+\begin{align}
+    \{h_n'(\E[S_n])\}^2 = \{g_n(\E[S_n])\}^{-1} = \{\Var[S_n]\}^{-1} \label{eq:vst_1}
+\end{align}
+For $\Var[S_n]$ to be small enough, we can use a first order Taylor approximation around $\E[S_n]$ to approximate ${\Var[h_n(S_n)] = \Var[V_n]}$. This is done as follows:
+\begin{align*}
+    V_n &= h_n(\E[S_n]) + (S_n-\E[S_n])h_n'(\E[S_n])+R_1
+\end{align*}
+Calculating the variance on both sides of the equation yields
+\begin{align}
+    \Var[V_n] &= \Var[h_n(\E[S_n]) + (S_n-\E[S_n])h_n'(\E[S_n])+R_1] \nonumber \\
+    &= \Var[S_n h_n'(\E[S_n])+R_1]  \nonumber \\
+    &\simeq \Var[S_n]\{h_n'(\E[S_n])\}^2 \label{eq:vst_2}
+\end{align}
+Combining Eq.~\ref{eq:vst_1} with Eq.~\ref{eq:vst_2} yields $\Var[V_n] \simeq 1$. Even though finding a variance stabilising function $h_n$ might seem straightforward in theory, it is usually more tedious in practice, because it often depends on unknown parameters, as \citet[p.~127]{kulinskaya_meta_2008} point out.
+
+\subsection{\texorpdfstring{$E_4$}{E4}: Monotonically increasing expectation of evidence}
+\label{subsec:monotone_expect_ev}
+$E_4$ requires that $\tau(\theta) = \E_{\theta}[V_n]$ is monotonically increasing in $\theta$, starting from $\tau(0) = 0$. In order to find the expectation of $V_n$, we can again resort to a Taylor approximation around $\E[S_n]$, but this time expanding the series up to the second order:
+\begin{align*}
+    V_n = h_n(\E[S_n]) &+ (S_n-\E[S_n])h_n'(\E[S_n])\\ 
+    &+ (S_n-\E[S_n])^2\frac{h_n''(\E[S_n])}{2}+R_2\\
+\end{align*}
+Taking the expected values on both sides yields
+\begin{align*}
+    \E[V_n] &= h_n(\E[S_n])+\Var(S_n)\frac{h_n''(\E[S_n])}{2} + R2 \\
+    &\simeq h_n(\E[S_n])+\Var(S_n)\frac{h_n''(\E[S_n])}{2}.
+\end{align*}
+
+In order to make sure that $\tau(0) = 0$, we can subtract ${h_n(\E[S_n \mid H_0]) = h_n(\theta_0)}$ from $V_n$.
+
+\subsection{The key inferential function}
+\label{subsec:kif} %toadd: Check whether kif in passage bleow is correct (especially K(theta-theta_0)
+If an evidence statistics $V_n$ fulfils all criteria $E_1$ to $E_4$, it is often possible to rewrite ${\tau(\theta) = \E_{\theta}[V_n-h_n(\theta_0)]}$ as ${\tau(\theta) = \sqrt{n}K_{\theta_0}(\theta)}$, with $K_{\theta_0}$---the so-called `key inferential function' of $\theta$ with respect to a constant $\theta_0$--- independent of the sample size $n$. As outlined in \citet[p.~127--128]{kulinskaya_meta_2008}, $K$ is a useful tool to solve some routine problems which arise in statistical testing, such as:
+\begin{description}[leftmargin=!,labelwidth=\widthof{\bfseries $E_4$}]
+\item [Sample size calculation:] Recall the hypotheses stated in Section~\ref{subsec:hypothesis_types} in which we wanted to test ${H_0: \theta = \theta_0}$ against ${H_1: \theta > \theta_0}$. To obtain a desired expected evidence $\tau_1$ in favour of a specific $\theta_1$, we need to find 
+\begin{align*}
+n_1 \geq \blb\frac{\tau_1}{K_{\theta_0}(\theta_1)}\brb^2. \label{eq:sample_size_calculation}
+\end{align*}
+\item [Power calculation:] The power of a test with significance threshold $\alpha$ and $z_{(1-\alpha)}$ denoting the $(1-\alpha)$-quantile of the standard normal distribution is given by
+\begin{align}
+    1-\beta &= \Pr(V_n \geq z_{(1-\alpha)}\mid H_1)\\
+            &= \Phi(\tau_1 - z_{(1-\alpha)})\\
+            &= \Phi(\sqrt{n}\{K_{\theta_0}(\theta_1)\}-z_{(1-\alpha)}). \label{eq:power_calculation}
+\end{align}
+\item [Confidence intervals:] Confidence intervals can easily be found by using the inverse of the key inferential function $K^{-1}$:
+\begin{align}
+    \left[K_{\theta_0}^{-1}\blb\frac{V_n-z_{(1-\alpha/2)}}{\sqrt{n}}\brb,K_{\theta_0}^{-1}\blb\frac{V_n-z_{(1-\alpha/2)}}{\sqrt{n}}\brb\right].\label{eq:confidence_interval_calculation}
+\end{align}
+\end{description}
+
+\section{Statistical evidence in binomial variables}
+\label{sec:binomial_var}
+Recall the set of hypotheses stated at the beginning of this chapter. Let A and B be two different cancer treatment whose efficacy we want to assess, and let us assume that the primary outcome of interest is the survival rate of the patients; that is, we want to know the proportion of patients $p$ who are still alive twelve months after undergoing one of the two treatments.\par
+We can describe the survival of an individual patient after twelve months as a Bernoulli distributed random variable ${L \sim \text{Ber}(p)}$ where $p$ is the survival probability and ${L \in \{0,1\}}$. The null and alternative hypothesis can then be formulated as
+\begin{align*}
+    H_0 &: p_A \leq p_B \\
+    H_1 &: p_A > p_B
+\end{align*}
+where $p_A$ and $p_B$ are the surviving probabilities of participants receiving treatment A and B, respectively. For the sake of the argument, let us assume that treatment B is already well established and leads to a well-known survival probability $p_B$ twelve months after the treatment. Hence, we only need to estimate $p_A$ to perform our hypothesis test. We can do so by randomly assigning treatment A to $n$ participants and to then count the number of participants $m$ who are still alive twelve months later\footnote{Please note that this example serves illustrative purposes only. It is in no way representative of the way clinical trials are conducted in reality. Both fortunately and unfortunately, real-life clinical trials are more complex endeavours.}. Then, we can use this estimate to perform an exact binomial test.
+
+\subsection{The exact binomial test}
+\label{subsec:exact binomial test}
+Since the sum of independently and identically distributed $\text{Ber}(p)$-random variables is a binomial random variable $M = \sum_{i=1}^n L_i \sim \text{Bin}(n,p)$, we know that $m$ is a realisation of the binomial random variable ${M \sim \text{Bin}(n,p_A)}$. Hence, the ratio ${\hat{p}_A=m/n}$ serves as an estimate of the twelve-month survival probability of the participants who received treatment A.\par
+To assess whether the ratio of surviving participants is greater in the group that received treatment A than in the group that received treatment B, we need a test for statistic $S_n$. In our simplified case, this is simply the total number of surviving participants, hence $S_n(L_1 \dots L_n) = M = \sum_{i=1}^n L_i$.\par
+We can now use this statistic together with the following decision function $\delta(\cdot)$ to perform a significance test:
+\begin{align*}
+    \delta(S_n(L_1,\dots,L_n)) = \begin{cases} 1, & \text{if } S_n(L_1,\dots,L_n) > q_{(B,1-\alpha)}; \\ 0, & \mbox{otherwise.}\end{cases}
+\end{align*}
+Here, $q_{(B,1-\alpha)}$ denotes the ($1-\alpha$)-quantile of the ${\text{Bin}(n,p_B)}$-distribution. Hence, if the number of surviving participants who received treatment A is larger than the number of surviving participants that would be expected in at least $(1-\alpha)\%$ of the cases in which $n$ patients received treatment B, we would reject $H_0$. This is the so-called exact binomial test. %toadd: add simulations of this test given the example above.
+
+\subsection{Evidence of one-sample binomial tests}
+\label{subsec:ev binomial}
+%toadd: show that change from 0.5 to 0.55 is significant, but change from 0.7 to 0.75 is not > makes it necessary to stabilise variance in order to improve comparability.
+%toadd: add simulations showing this
+Testing hypotheses using the exact binomial test has multiple drawbacks, for example: 
+\begin{enumerate}
+    \item The variance of a random variable following the binomial distribution is dependent on the expected value $p$, which makes the comparison of the results of different test statistics $S_n$ non-trivial. 
+    \item The variance of the random variable tends to zero at the extremes of $p$. 
+    \item The calculation of the critical values as well as other properties of the test, such as the power, is computationally very costly when compared to other test statistics. 
+    \item For each $n$ a different critical value needs to be calculated, even if $H_0$ remains the same.
+    \item For large $n$, calculating the cumulative probabilities of a binomial test statistic becomes computationally very taxing.
+\end{enumerate}
+%tochange/toadd: give explanation why tending to zero is bad (secondly)
+
+Recalling the desirable properties for an evidence measure stated in Section~\ref{sec:evidence_properties}, it is clear the test statistic of the binomial test clearly violates properties $E_2$ and $E_3$, since it follows a binomial distribution and has a non-constant variance for all $S_n$, respectively. In order to make the test statistic fulfil all four properties, we need to transform it. When the sample size $n$ is large enough, we can use the well-known $Z$-score or standard score to do so. 
+
+\subsection{The \texorpdfstring{$Z$}{Z}-score}
+\label{subsec:z-score}
+The $Z$-score is defined as follows:
+$$Z = \frac{X-\mu}{\sigma}$$
+If X is a normally distributed random variable with expectation $\mu$ and variance $\sigma^2$, (i. e., $X \sim \mathcal{N}(\mu,\sigma^2)$), the $Z$-score is a random variable following a standard normal distribution ($Z \sim \mathcal{N}(0,1)$), thus fulfilling properties $E_1$ to $E_4$.\par
+In order to test a hypothesis, we can simply fix our $\alpha$-level and compare the $Z$-score with the critical values defined as $\Phi^{-1}(1-\alpha)$, where $\Phi^{-1}(\cdot)$ is the quantile function of the standard normal distribution.\par %tochange: currently, the description stated here only holds for hypothesis of the sort: H_0: p1<=p0 H1: p1>p0; need to reformulate to incorporate other cases as well! 
+%tochange also: check whether only variance or also mean has to be known
+If the sample size $n$ is large enough and by virtue of the central limit theorem (CLT), we can use the $Z$-score to transform the binomial test statistic into a test statistic that fulfils properties $E_1$ to $E_4$. The Lindeberg-Lévy CLT states that if $X_1, \dots X_n$ are identically and independently distributed random variables with E[$X_i$] = $\mu$ and Var[$X_i$] = $\sigma^2 < \infty$, then $\sqrt{n}(\Bar{X}_n-\mu)$ converges in distribution to $\mathcal{N}(0,\sigma^2)$. Hence, 
+$$Z_n = \frac{\sqrt{n}(\Bar{X}_n-\mu)}{\sigma} \xrightarrow{d} \mathcal{N}(0,1).$$
+In our example from above, we have $\mu = p_B$, $\sigma^2 = \hat{p}_A(1-\hat{p}_A)$ under the null hypothesis, and ${\Bar{X}_n = \Bar{L}_n = \sum_{i=1}^n L_i/n = M/n = \hat{p}_A}$. Hence $$Z_n = \frac{\sqrt{n}(\hat{p}_A-p_B)}{\sqrt{\hat{p}_A(1-\hat{p}_A)}} \xrightarrow[H_0]{d} \mathcal{N}(0,1).$$
+If the null hypothesis does not hold, we have
+\begin{align}
+    Z_n = \frac{\sqrt{n}(\hat{p}_A-p_B)}{\sqrt{\hat{p}_A(1-\hat{p}_A)}} \xrightarrow[H_1]{d} \mathcal{N}(\sqrt{n}\frac{\hat{p}_A-p_B}{\sqrt{\hat{p}_A(1-\hat{p}_A)}},1). \label{eq:Zn_binom}
+\end{align}
+%toadd: reference to kulinskaya p. 125; toadd: reference to clt; 
+However, if $n$ is not large enough or if $p_A$ lies too close to either zero or one, a wide range of problems arises: 
+\begin{itemize}
+    \item The probability distribution of $Z_n$ becomes leptokurtic with positive skew (${p_A}$ too close to $0$) or negative skew (${p_A}$ too close to $1$ (see Figure~\ref{fig:normal_fit_binomial_MLE} and Figure~\ref{fig:normal_fit_binomial_Ans}).
+    \item The empirical mean of $Z_n$ diverges starkly from its theoretical expectation (see Figure~\ref{fig:evidence_binom_MLE} and Figure~\ref{fig:evidence_binom_Ans}).
+    \item The empirical variance of $Z_n$ is not stabilised anymore and diverges from $1$ (see Figure~\ref{fig:evidence_binom_MLE} and Figure~\ref{fig:evidence_binom_Ans}).
+    \item The Type I error grows beyond the pre-defined $\alpha$-threshold and thus is not controlled anymore (see Figure~\ref{fig:power_binom_MLE} and Figure~\ref{fig:power_binom_Ans}).
+    \item The empirical coverage probabilities of the (1-$\alpha$)-confidence intervals lies below the nominal probabilities and deteriorates to $0$ for $p_A$ going to zero or one (see Figure~\ref{fig:CI_binom}). 
+\end{itemize}
+%These problems generally occur when ${np_A(1-p_A) < 5}$ \citep[p.~140]{kulinskaya_meta_2008}.
+In these cases, the normal distribution cannot serve as a good approximation of the variable $M/n$, so it is more prudent to use the key inferential function of the binomial model to transform the binomial test statistic.
+%toadd: explanation of figure about power and Type I error
+
+\myfig{ch2_fig2_normal_fit_binomial_MLE}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {The standard normal cdf $\Phi$ (black) approximated by $Z_n$ (blue, Eq.~\ref{eq:Zn_binom}) and $V_n$ (red, Eq.~\ref{eq:Vn_binom}) based on binomial variables. The comparison is made for $n=5$ (A), $n=10$ (B), and $n=20$ (C) as well as for three different sets of hypotheses: $H_1: p=0.1$ (solid line), $H_1: p=0.5$ (dashed line), and $H_1: p=0.9$ (dot-dashed line) with $H_0: p=0$ in all three cases. The left column shows cumulative distribution functions, the right column shows quantile-quantile-plots. The approximation is worse for smaller $n$ and for $p_1$ close to either one or zero but $V_n$ outperforms $Z_n$ in all cases. The empirical probability distributions are based on a Gaussian kernel density estimate of $V_n$ and $T_n$ based on 5000 individual draws from a $\text{Bin}(n,p)$-distribution.}%% caption
+  {Normal approximation of $Z_n$ and $V_n$ for the binomial model---without continuity correction.}%% optional (short) caption for table of figures
+  {fig:normal_fit_binomial_MLE}%% label
+
+\myfig{ch2_fig2_normal_fit_binomial_Ans}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {The same description as for Figure~\ref{fig:normal_fit_binomial_MLE} applies. However, normal approximations $Z_n$ and $V_n$ shown here are based on binomial variables and including Anscombe continuity corrections as described in Eq.~\ref{eq:anscombe_correction}.}%% caption %toadd: exact description of figure
+  {Normal approximation of $Z_n$ and $V_n$ for the binomial model---with continuity correction.}%% optional (short) caption for table of figures
+  {fig:normal_fit_binomial_Ans}%% label
+
+\myfig{ch2_fig3_evidence_binom_MLE}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {(Left) Empirical means of $Z_n$ (solid blue, Eq.~\ref{eq:Zn_binom}) and $V_n$ (solid red, Eq.~\ref{eq:Vn_binom}) based on binomial variables compared to theoretical expectations (dashed blue and dashed red, respectively). The comparison is made for $n=5$ (A), $n=10$ (B), and $n=20$ (C) as well as for three different sets of hypotheses: ${H_0: p=0.1}$ (plus), ${H_0: p=0.5}$ (circle), and ${H_0: p=0.9}$ (cross) with ${H_1: p \in [0.01,0.99]}$ in all three cases. (Right) Empirical standard deviations shown for $Z_n$ and $V_n$ for ${H_0: p=0.5}$. The dashed curves indicate the theoretically expected standard deviations. All empirical values are based on $100'000$ independent draws from a binomial distribution. Empirical and theoretical evidence value were weighted by study size for comparison.}%% caption
+  {Theoretical and empirical evidence of $Z_n$ and $V_n$ based on binomial variables---without continuity correction.}%% optional (short) caption for table of figures
+  {fig:evidence_binom_MLE}%% label
+
+\myfig{ch2_fig3_evidence_binom_Ans}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {The same description as for Figure~\ref{fig:evidence_binom_MLE}. However, normal approximations $Z_n$ and $V_n$ shown here are based on binomial variables and including Anscombe continuity corrections as described in Eq.~\ref{eq:anscombe_correction}. The correction clearly improves the approximation of the empirical expectations to their theoretical counterpart and improves the variance stabilisation for both $Z_n$ and $V_n$.}%% caption %toadd: exact description of figure
+  {Theoretical and empirical evidence of $Z_n$ and $V_n$ based on binomial variables---with continuity correction.}%% optional (short) caption for table of figures
+  {fig:evidence_binom_Ans}%% label
+
+\myfig{ch2_fig4_power_binom_MLE}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {(Left) Empirical power curves for ${Z_n > z_{0.95}}$ (blue, Eq.~\ref{eq:Zn_binom}) and ${V_n > z_{0.95}}$ (red, Eq.~\ref{eq:Vn_binom}) based on binomial variables compared to the exact binomial test (black). The comparison is made for $n=5$ (A), $n=10$ (B), and $n=20$ (C) as well as for three different sets of hypotheses: ${H_0: p=0.1}$ (plus), ${H_0: p=0.5}$ (circle), and ${H_0: p=0.9}$ (cross) with ${H_1: p \in [0.01,0.99]}$ in all three cases. In most cases, the blue and red power curves coincide. The dotted line on the horizontal axis denotes $1-\beta = 0.05$. The dotted lines on the vertical axis denote $p_1 = p_0$. (Right) Same curves as in the left column but zoomed in around $1-\beta \in [0,0.1]$. All empirical values are based on $100'000$ independent draws from a binomial distribution.}%% caption
+  {Power curves for one-sided superiority tests based on binomial variables---without continuity correction.}%% optional (short) caption for table of figures
+  {fig:power_binom_MLE}%% label
+  
+\myfig{ch2_fig4_power_binom_Ans}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {The same description as for Figure~\ref{fig:power_binom_MLE} applies. However, the power curves shown here are based on Anscombe-corrected $Z_n$ and $V_n$ values as described in Eq.~\ref{eq:anscombe_correction}. The correction does in general not improve the power or the control of the Type I error and even increases the Type I error for $V_n$ when $n$ and $p_1$ are small.}%% caption
+  {Power curves for one-sided superiority tests based on binomial variables---with continuity correction.}%% optional (short) caption for table of figures
+  {fig:power_binom_Ans}%% label  
+
+\myfig{ch2_fig5_CI_binom}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {(Left) Empirical coverage probabilities for nominal $95\%$ confidence intervals around $Z_n$ (blue, Eq.~\ref{eq:Zn_binom}) and $V_n$ (red, Eq.~\ref{eq:Vn_binom}) based on binomial variables. The comparison is made for $n=5$ (A), $n=10$ (B), $n=30$ (C), and $n=50$ (D) and for ${H_0: p=0.5}$ (circle) with ${H_1: p \in [0.01,0.99]}$. The dotted black line on the horizontal axis denotes a nominal coverage probability of $95\%$. (Right) Same comparisons shown as in the left column but for Anscombe-corrected $Z_n$ and $V_n$ as described in Eq.~\ref{eq:anscombe_correction}. All values are based on $100'000$ independent draws from a binomial distribution.}%% caption
+  {Empirical coverage probabilities of $95\%$ confidence intervals around $Z_n$ and $V_n$.}%% optional (short) caption for table of figures
+  {fig:CI_binom}%% label
+
+\subsection{The key inferential function for the binomial model}
+\label{subsec:kif binom}
+%toadd: reference Kulinskaya et al. 2008, 140
+For the set of hypotheses $H_0: p_A \leq p_B$ and $H_1: p_A > p_B$ with $p_B$ assumed to be known, the key inferential function for the binomial model is given by
+$$K_{p_B}(p_A) = 2\{\text{sin}^{-1}(\sqrt{p_A})-\text{sin}^{-1}(\sqrt{p_B})\}.$$
+The expectation of the transformed test statistic is then $\E[V_n] = \sqrt{n}K_{p_B}(p_A)$ (see \citet[p.~139--140]{kulinskaya_meta_2008} for derivation) and the variance stabilised test statistic $V_n$ is given by
+\begin{align}
+    V_n = 2\sqrt{n}\{\text{sin}^{-1}(\sqrt{\hat{p}_A})-\text{sin}^{-1}(\sqrt{p_B})\}. \label{eq:Vn_binom}.
+\end{align}
+Simulations have shown that the empirical mean and variance of $V_n$ are much closer to their theoretical counterparts than it is the case for $Z_n$ (see Figure~\ref{fig:evidence_binom_MLE}). In addition, confidence intervals for $V_n$ are much closer to their nominal levels than it is the case for $Z_n$ (see Figure~\ref{fig:CI_binom}). However, $V_n$ is in general not better at controlling the Type I error: As can be seen in Figure~\ref{fig:power_binom_MLE}, the power curves of $Z_n$ and $V_n$ coincide in most scenarios with $V_n$ outperforming $Z_n$ only for very small $n$ and $p_1$.\par
+For both $V_n$ and $Z_n$, the normal approximation can be improved by applying the Anscombe continuity correction \citep[p.~140--141]{kulinskaya_meta_2008}:
+\begin{align}
+    \tilde{p}_A = (M+3/8)/(n+3/4) \label{eq:anscombe_correction}   
+\end{align}
+This can also be seen visually by comparing Figure~\ref{fig:normal_fit_binomial_MLE} (no continuity correction) to Figure~\ref{fig:normal_fit_binomial_Ans} (Anscombe correction) and---even more clearly---by comparing Figure~\ref{fig:evidence_binom_MLE} (no continuity correction) to Figure~\ref{fig:evidence_binom_Ans} (Anscombe correction).\par
+The Anscombe correction also improves the empirical coverage probability of nominal confidence intervals for both $Z_n$ and $V_n$ (see Figure~\ref{fig:CI_binom}), but does not help with controlling the Type I error (see Figure~\ref{fig:power_binom_Ans}). Notably, for very small $n$ and $p_1$, the Type I error is greater when using the Anscombe-corrected $V_n$ as test statistic.
+%toremove/Toadd: further improves approximate normality of $V_n$ which holds for all $n$ such that ${np(1-p)\geq 5}$. Conversely, my simulations have shown that approximate normality of $Z_n$ only holds for SIMULATIONTOADD.
+%toadd: criterion at which approximate normality holds; idea: could us the shapiro Wilk test to test for normalit at Alpha = 0.01.
+%toadd: also add range of variance stability for both z-score and vst
+%toadd: explanation of what I did in "TheoreticalSimulations.R", including RSS metric to test for normality
+\clearpage
+\section{Evidence for the difference in means}
+\label{sec:mean}
+Instead of choosing the proportion of surviving patients after a given time period as the primary outcome, another measure to assess the efficacy of a treatment could be the survival time in months after receiving the treatment.\par 
+To assess whether treatment A is in fact superior to treatment B, we would randomly and independently assign patients to one of the two treatments and measure their survival time. Let us furthermore assume that the survival times $Y_A$ and $Y_B$ of patients in treatment group A and B, respectively, are log-normally distributed\footnote{See for example \citet{royston_lognormal_2001} or \citet{chapman_innovative_2013} for cases in which this assumption can be justified}, that is, ${Y_A \sim \text{Lognormal}(\mu_A, \sigma_A^2)}$ and ${Y_B \sim \text{Lognormal}(\mu_B, \sigma_B^2)}$.\par
+
+By log transforming $Y_A$ and $Y_B$ we get two normally distributed variables ${X_A = \text{ln}(Y_A) \sim \mathcal{N}(\mu_A, \sigma_A^2)}$ and $X_B = \text{ln}(Y_B) \sim \mathcal{N}(\mu_B, \sigma_B^2)$. For testing, our hypotheses need to be reformulated as %toadd: correct notation
+\begin{align*}
+    H_0 &: \mu \leq \mu_0 \\
+    H_1 &: \mu > \mu_0
+\end{align*}
+with $\mu = \mu_A-\mu_B$ and $\mu_0 = 0$. To test these hypotheses, we define our test statistic as $$S_n = \Bar{X}_{n_A}-\Bar{X}_{n_B}.$$
+$\Bar{X}_{n_A}$ and $\Bar{X}_{n_B}$ represent the sampled arithmetic mean of the log transformed survival time of $n_A$ and $n_B$ patients receiving treatment A and B, respectively. Both means are normally distributed with ${\Bar{X}_{n_A}\sim \mathcal{N}(\mu_A,\sigma^2/n_A)}$ and ${\Bar{X}_{n_B}\sim \mathcal{N}(\mu_B,\sigma^2/n_B)}$. The difference of these two means is normally distributed as well, namely ${(\Bar{X}_A-\Bar{X}_B) \sim \mathcal{N}(\mu_A-\mu_B, \sigma_A^2/n_A+\sigma_B^2/n_B)}$. The corresponding decision function is then
+\begin{align*}
+    \delta(S_n(\Bar{X}_{n_A},\Bar{X}_{n_B})) = \begin{cases} 1, & \text{if } S_n(\Bar{X}_{n_A},\Bar{X}_{n_B}) > q_{H_0,1-\alpha}; \\ 0, & \mbox{otherwise;}\end{cases}
+\end{align*}
+with the threshold value $q_{(H_0,1-\alpha)}$ denoting the $(1-\alpha)$-quantile of a normal distribution with mean ${(\mu_A-\mu_B) = \mu_0 = 0}$ and variance ${\sigma_A^2/n_A+\sigma_B^2/n_B}$ under the null hypothesis.\par
+This statistic fulfills properties $E_1$, $E_2$, and $E_4$, but has Var[$S_n] \neq 1$. If we know the variance ${\sigma^2(1/n_A+1/n_B)}$, we can again use the $Z$-statistic
+$$Z_n = \frac{S_n-\mu_0}{\sigma_{(n_A+n_B)}} = \frac{(\Bar{X}_A-\Bar{X}_B)-\mu_0}{\sigma\sqrt{(1/n_A+1/n_B)}}\overset{H_0}{\sim} \mathcal{N}(0,1),$$ 
+described in Section \ref{subsec:z-score} to stabilise the variance of the test statistic, thereby fulfilling property $E_3$ as well.\par
+
+\subsection{Student's \texorpdfstring{$t$}{t}-statistic}
+\label{subsec:student's t-statistic}
+%toadd: explanatation & proof: https://math.stackexchange.com/questions/2189374/showing-that-s-n2-converges-to-sigma-2-in-probability
+If the population variance $\sigma^2$ is unknown it can be estimated by the empirical variance $${s_n^2 = 1/(n-1) \sum_{i=1}^n (x_i-\bar{x})^2}.$$ Plugging this into the $Z$-statistic yields the so-called Student's $t$-statistic:
+\begin{align}
+    T_n = \frac{\ssqrt{n}(\bar{X}_n-\mu_0)}{s_n}.\label{eq:Tn_stud}
+\end{align}
+In the specific case of the hypotheses stated at the beginning of this section, the $t$-statistic is given by
+$$T_n = \frac{\Bar{X}_{N}-\mu_0}{s_{N}(1/n_A+1/n_B)} \sim t(\nu = N-2)$$
+with
+$$N = n_A+n_b,\quad \Bar{X}_{N}=\Bar{X}_A-\Bar{X}_B,\quad s_{N} = \sqrt{\frac{(n_A-1)s_{n_A}^2+(n_B-1)s_{n_B}^2}{(n_A-1)+(n_B-1)}}.$$
+$s_{N}$ is called the pooled sample variance and serves to fix the variance of the test statistic to 1. Note that this assumes that the true variance $\sigma^2$ is the same across both populations. If this is not the case, it is better to use Welch's generalisation of the $t$-test \citep{welch_generalization_1947}. \par As in the examples outlined in Section~\ref{sec:binomial_var}, I am going to treat the distributional parameters of treatment B as known and thus will use the $t$-statistic described in Eq.~\ref{eq:Tn_stud} for the following calculations and simulations. 
+
+Since $s_n^2$ converges to $\sigma^2$ in probability, we can treat $\sigma \simeq s_n$ and $T_n \overset{H_0}{\simeq} Z_n$ and just use the $Z$-test. However, if $n$ is not large enough or if $\mu_1$ deviates too much from $\mu_0$ the normal approximation of $T_n$ does not hold anymore and problems similar to those described in Section~\ref{subsec:z-score} appear: 
+\begin{itemize}
+    \item The probability distribution of $T_n$ becomes leptokurtic with a positive skew (${\mu_1 > \mu_0}$) or negative skew (${\mu_1 < \mu_0}$ with symmetry only attained if ${\mu_1 = \mu_0}$ (see Figure~\ref{fig:normal_fit_student_MLE} and Figure~\ref{fig:normal_fit_student_Corr}).
+    \item The empirical mean of $T_n$ diverges from its theoretical expectation assuming normality (see Figure~\ref{fig:evidence_student_MLE} and Figure~\ref{fig:evidence_student_Corr}).
+    \item The empirical variance of $T_n$ is not stabilised anymore and diverges from $1$ (see Figure~\ref{fig:evidence_student_MLE} and Figure~\ref{fig:evidence_student_Corr}).
+    \item The Type I error grows beyond the pre-defined $\alpha$-threshold and thus is not controlled anymore (see Figure~\ref{fig:power_student_MLE} and Figure~\ref{fig:power_student_Corr}).
+    \item The empirical coverage probabilities of the (1-$\alpha$)-confidence intervals lies clearly below the nominal probabilities and deteriorates further with $\mu_1$ diverging from $\mu_0$ (see Figure~\ref{fig:CI_student}. 
+\end{itemize}
+For small sample sizes it is therefore inappropriate to treat $T_n$ as normally distributed to test for differences in means. Instead, we should apply the variance stabilised test statistic $V_n$ based on Student's $t$-distribution.\par 
+If $X$ is a random variable with normal distribution, $T_n$ is a random variable with a central Student's $t$-distribution and ${\nu = n-1}$ degrees of freedom denoted as $Tn \sim t(\nu)$ \citep{student_probable_1908}, hence the decision function of the so-called $t$-test is equal to
+\begin{align*}
+    \delta(T_n(X_1,\dots X_n) = \begin{cases} 1, & \text{if } T_n(X_1,\dots, X_n) > q_{(H_0,1-\alpha)}; \\ 0, & \mbox{otherwise;}\end{cases}
+\end{align*}
+with $q_{H_0,1-\alpha}$ equal to the $(1-\alpha)$-quantile of the $t(\nu)$-distribution.\par 
+In order to calculate the evidence for a set of hypotheses, we also need to know the distribution of $T_n$ under the alternative hypothesis $H_1: \mu > \mu_0$. To do so, we can rewrite $T_n$ as 
+$$T_n = \frac{\ssqrt{n}(\Bar{X}_n-\mu) + \ssqrt{n}(\mu-\mu_0)}{s_n}$$
+which follows a noncentral $t$-distribution with $\nu = n-1$ degrees of freedom and non-centrality parameter $\lambda = \sqrt{n}(\mu-\mu_0)/\sigma$, that is, ${T_n \sim t(\lambda,\nu)}$ \citep[p.~159--160]{kulinskaya_meta_2008}.\par %toadd: maybe also add proof why non-central t
+\subsection{The key inferential function for the \texorpdfstring{$t$}{t}-statistic}
+\label{subsec:kif_t-statistic}
+As before with the binomial test statistical, we can transform the $t$-statistic into an evidence measure $V_n$. To do so, we can apply the following transformation function (see \citet[p.~160--161]{kulinskaya_meta_2008} for derivation):
+$$h_n(T_n) = \ssqrt{2(n-1)} \text{sinh}^{-1}\blb T_n/\sqrt{2(n-1)}\brb \simeq \ssqrt{2n} \text{sinh}^{-1}\blb T_n/\sqrt{2n}\brb$$ %toadd: derivation of vst and key inferential function of student's t distribution. p160 & 161
+The evidence $V_n$ in a $t$-statistic for testing ${H_0: \mu \leq \mu_0}$ against ${H_1: \mu > \mu_0}$ is therefore given by
+\begin{align}
+    V_n = \ssqrt{2n}\text{sinh}^{-1}\blb\frac{T_n}{\sqrt{2n}}\brb=\ssqrt{2n}\text{sinh}^{-1}\blb\frac{(\bar{X}_n-\mu_0)/s_n}{\sqrt{2}}\brb \label{eq:Vn_stud}
+\end{align}
+%toadd: finite sample corrected evidence $T_{\text{corrected}}=(\frac{n-1.7}{n-1})\sqrt{2n}sinh^{-1}(S_n/\sqrt{2n})$ improves corrected evidence in tails\\
+%toadd: is evidence normally distributed? (Laubscher) and under which circumbstances
+and its expectation is
+$${\E[V_n] = \tau(\mu) = \ssqrt{n} \ssqrt{2} \text{sinh}^{-1}\blb\frac{\mu-\mu_0}{\sqrt{2}}\brb =  \ssqrt{n} K_{\mu_0}(\mu)}.$$
+Simulations confirm that the normal approximation and variance stabilisation are better for $V_n$ than for $T_n$, especially if $\mu_1 \neq \mu_0$ (see Figure~\ref{fig:normal_fit_student_MLE}). The same holds true for the correspondence of the empirical mean and variance to their theoretical counterparts (see Figure~\ref{fig:evidence_student_MLE}).\par 
+Whereas $V_n$ does not completely control Type I error rates when $n$ is low but is consistently better than $T_n$ when using standard normal quantiles as critical values. Similarly, the empirical coverage probability of the confidence intervals around $V_n$ lies below the nominal probability for small $n$ but consistently outperforms the empirical coverage probability of confidence intervals around $T_n$ when using using standard normal quantiles.\par
+
+The normal approximation and performance of both $V_n$ and $Z_n$ can be improved by applying the following finite sample correction \citep[p.~161]{kulinskaya_meta_2008}:
+\begin{align}
+    V_n^* = \blb\frac{n-1.7}{n-1}\brb \ssqrt{2n}\text{sinh}^{-1}\blb\frac{T_n}{\sqrt{2n}}\brb \label{eq:finite_sample_correction}
+\end{align} %toadd: Finite sample correctino for Z_n
+The improvement in normal approximation and variance stabilisation is best in the tails of the distribution and is also observable visually by comparing Figure~\ref{fig:normal_fit_student_MLE} (no correction applied) to Figure~\ref{fig:normal_fit_student_Corr} (including finite sample correction) as well as by comparing Figure~\ref{fig:evidence_student_MLE} (no correction applied) to Figure~\ref{fig:evidence_student_Corr} (including finite sample correction).\par
+The finite sample correction also helps to control the Type I error. The corrected $T_n$ meets the nominal $\alpha$-threshold almost, the corrected $V_n$ meets it completely, even for very small $n$ (see Figure~\ref{fig:power_student_Corr}). Finally, the correction does also markedly improve the empirical coverage probability of confidence intervals around $V_n$ and $T_n$ (see Figure~\ref{fig:CI_student}).
+%TOADD
+%TOADD:ed: We expect to observe more low significant p values (p < .01) than high significant p values (.04 < p < .05; Cumming, 2008; Hung,O’Neill, Bauer, & Kohne, 1997; Simonsohn et al., 2014; Wallis, 1942). F
+%toadd: proof that distribution is left skewed for values of mu < mu0
+%to add: simulation showing distribution of p-values
+
+%next steps:
+%apply example to z and t-test
+%finish theoretical description of z and t-test
+%start writing theoretical part about Evidence and vst
+
+\myfig{ch2_fig6_normal_fit_student_MLE}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {The standard normal cdf $\Phi$ (black) approximated by $T_n$ (blue, Eq.~\ref{eq:Tn_stud}) and $V_n$ (red, Eq.~\ref{eq:Vn_stud}) based on normally distributed variables with variance ${\sigma^2 = 4}$. The comparison is made for $n=5$ (A), $n=10$ (B), and $n=20$ (C) as well as for three different sets of hypotheses: ${H_1: \mu = -2}$ (solid line), ${H_1: \mu = 0}$ (dashed line), and ${H_1: \mu = 2}$ (dot-dashed line) with ${H_0: \mu=0}$ in all three cases. The left column shows cumulative distribution functions, the right column shows quantile-quantile-plots. The approximation is worse for smaller $n$ and for $mu_1$ farther away from $\mu_0$ but $V_n$ outperforms $Z_n$ in all cases. The empirical probability distributions are based on a Gaussian kernel density estimate of $V_n$ and $T_n$ based on 5000 individual draws from a $\mathcal{N}(\mu_1,4)$-distribution.}%% caption
+  {Normal approximation of $T_n$ and $V_n$ for the difference in normally distributed means---without finite sample correction.}%% optional (short) caption for table of figures
+  {fig:normal_fit_student_MLE}%% label
+
+\myfig{ch2_fig6_normal_fit_student_Corr}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {The same description as for Figure~\ref{fig:normal_fit_student_MLE} applies. However, $Z_n$ and $V_n$ shown here include the finite sample correction described in Eq.~\ref{eq:finite_sample_correction}.}%% caption %toadd: exact description of figure
+  {Normal approximation of $T_n$ and $V_n$ for the difference in normally distributed means---with finite sample correction.}%% optional (short) caption for table of figures
+  {fig:normal_fit_student_Corr}%% label
+
+\myfig{ch2_fig7_evidence_student_MLE}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {(Left) Empirical means of $T_n$ (solid blue, Eq.~\ref{eq:Tn_stud}) and $V_n$ (solid red, Eq.~\ref{eq:Vn_stud}) based on normally distributed variables with variance ${\sigma^2 = 4}$ compared to theoretical expectations (dashed blue and dashed red, respectively). The comparison is made for $n=5$ (A), $n=10$ (B), and $n=20$ (C) as well as for three different sets of hypotheses: ${H_0: \mu = -2}$ (plus), ${H_0: \mu=0}$ (circle), and ${H_0: \mu=2}$ (cross) with ${H_1: \mu \in [-2,2]}$ in all three cases. (Right) Empirical standard deviations shown for $T_n$ and $V_n$ for ${H_0: \mu=0}$. The dashed curves indicate the theoretically expected standard deviations. All empirical values are based on $100'000$ independent draws from a $\mathcal{N}(\mu_1,4)$-distribution. Empirical and theoretical evidence value were weighted by study size for comparison.}%% caption
+  {Theoretical and empirical evidence of $T_n$ and $V_n$ for the difference in normally distributed means---without finite sample correction.}%% optional (short) caption for table of figures
+  {fig:evidence_student_MLE}%% label
+
+\myfig{ch2_fig7_evidence_student_Corr}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {The same description as for Figure~\ref{fig:evidence_student_MLE}. However, $Z_n$ and $V_n$ shown here include the finite sample correction described in Eq.~\ref{eq:finite_sample_correction}. The correction clearly improves the approximation of the empirical expectations to their theoretical counterpart and improves the variance stabilisation for both $T_n$ and $V_n$, especially in the tails.}%% caption %toadd: exact description of figure
+  {Theoretical and empirical evidence of $T_n$ and $V_n$ for the difference in normally distributed means---with finite sample correction.}%% optional (short) caption for table of figures
+  {fig:evidence_student_Corr}%% label
+
+\myfig{ch2_fig8_power_student_MLE}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {(Left) Empirical power curves for ${T_n > z_{0.95}}$ (blue) and ${V_n > z_{0.95}}$ (red) compared to ${T_n > t_{(n-1,0.95)}}$ (black). The comparison is made for $n=5$ (A), $n=10$ (B), and $n=20$ (C) as well as for three different sets of hypotheses: $H_0: \mu=-2$ (plus), ${H_0: \mu=0}$ (circle), and ${H_0: \mu=2}$ (cross) with ${H_1: \mu \in [-2,2]}$ in all three cases. In most cases, the blue and red power curves coincide. The dotted line on the horizontal axis denotes ${1-\beta = 0.05}$. The dotted lines on the vertical axis denote $mu_1 = mu_0$. (Right) Same curves as in the left column but zoomed in around ${1-\beta \in [0,0.1]}$. $V_n$ and $T_n$ are calculated according to Eq.~\ref{eq:Vn_stud} and Eq.~\ref{eq:Tn_stud}, respectively, based on $100'000$ independent draws from a $\mathcal{N}(\mu_1,4)$-distribution.}%% caption
+  {Power curves for one-sided superiority tests based on difference in normally distributed means---without finite sample correction.}%% optional (short) caption for table of figures
+  {fig:power_student_MLE}%% label
+  
+\myfig{ch2_fig8_power_student_Corr}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {The same description as for Figure~\ref{fig:power_student_MLE} applies. However, the power curves shown here include the finite sample correction described in Eq.~\ref{eq:finite_sample_correction}. The correction clearly improves control of Type I error rates for both $T_n$ and $V_n$ with the latter meeting the nominal $\alpha$-threshold.}%% caption
+  {Power curves for one-sided superiority tests based on difference in normally distributed means---with finite sample correction.}%% optional (short) caption for table of figures
+  {fig:power_student_Corr}%% label  
+
+\myfig{ch2_fig9_CI_student}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {(Left) Empirical coverage probabilities for nominal $95\%$ confidence intervals around $T_n$ (blue) and around $V_n$ (red) using standard normal quantiles. The comparison is made for $n=5$ (A), $n=10$ (B), $n=30$ (C), and $n=50$ (D) and for ${H_0: \mu=0}$ (circle) with ${H_1: \mu \in [-2,2]}$. The dotted black line on the horizontal axis denotes a nominal coverage probability of $95\%$. (Right) Same comparisons shown as in the left column but with $T_n$ and $V_n$ including the finite sample correction described in Eq.~\ref{eq:finite_sample_correction}. $V_n$ and $T_n$ are calculated according to Eq.~\ref{eq:Vn_stud} and Eq.~\ref{eq:Tn_stud}, respectively, based on $100'000$ independent draws from a $\mathcal{N}(\mu_1,4)$-distribution.}%% caption
+  {Empirical coverage probabilities of $95\%$ confidence intervals around $T_n$ and $V_n$.}%% optional (short) caption for table of figures
+  {fig:CI_student}%% label

@@ -1,0 +1,528 @@
+\chapter{Detecting and Correcting Publication Bias}
+\label{cha:publication bias}
+\epigraph{\centering \textit{`The political principle that anything can be proved by statistics arises from the practice of presenting only a selected sub-set of the data available.'}}{--- Ronald A. Fisher,\\Statistical Methods and Scientific Induction, (1955, p.~75)}
+
+Aggregating evidence measures from different studies is quite simple---theoretically. Given access to the raw data of each study and assuming that each study was designed and conducted in the same manner, one can simply calculate summary and test statistics based on the total aggregate of the data. Of course, statistical practice is hardly ever so straightforward.\par
+
+Firstly, easy access to indicative summary statistics such as mean, standard deviation and sample size, let alone the raw data, is still very rare. Secondly, study designs and protocols often deviate heavily between different sites even if the intention is to measure the same primary outcome. Thirdly, even if access to raw data and consistent and rigorous study designs and protocols are given, attempts to find accurate global evidence measures might be hampered since the available body of literature can be biased in favour of certain study properties other than its methodological quality. \par
+
+This is not a particularly novel insight. \citet{sterling_publication_1959} already pointed out in 1959 that `when a fixed level of significance is used as critical criterion for selecting reports for dissemination in professional journals, it may result in embarrassing and unanticipated results'. One of these `embarrassing results' might be that the majority of journals are `filled with the 5\% of the studies that show Type I errors' while the other 95\% of studies with non-significant test results remain largely unpublished \citep{rosenthal_file_1979}.\par 
+
+To make things worse, selection for statistical significance is by far not the only reason for the occurrence of this so-called `publication bias'. Other properties that might influence the publication probability of a result include its novelty \citep{auspurg_what_2011}, its concordance with prior knowledge \citep{cooper_finding_1997}, its newsworthiness \citep{auspurg_what_2011}, its economic value \citep{chalmers_minimizing_1990} or its political content \citep{eitan_research_2018}. In addition, other outcomes of the same study \citep{dickersin_existence_1990}, such as the funding source of said study \citep{dickersin_existence_1990}, economic or ideological conflicts of interests \citep{chalmers_minimizing_1990, eitan_research_2018}, ignorance about previous studies \citep{chalmers_minimizing_1990} and even the motivation \citep{chalmers_minimizing_1990, cooper_finding_1997,auspurg_what_2011, franco_publication_2014} or reputation \citep{dickersin_existence_1990} of the study authors have been proposed as potential influences on the probability of publication.\par
+
+However, since \textit{post hoc} correction of publication bias is only possible if the probability of publishing a study is influenced by the statistical properties of the result, this chapter will exclusively focus on methods to detect and---at least theoretically---correct for publication bias arising from using a fixed level of significance as critical criterion for publication.
+
+\section{Significance: The fickle gatekeeper of scientific publishing}
+\label{sec:significance_fickle}
+Using a pre-defined threshold with which to compare the outcome of a statistical test has been commonplace since the early days of modern statistical inference \citep{cowles_origins_1982}. William Sealy Gosset wrote already in 1908 that a deviation of `three times the probable error in the normal curve [...] would be considered significant [for most purposes]' \citep[p.~13]{student_probable_1908}.\par
+
+Three times the probable error roughly corresponds to two standard deviations of a normal distribution or an $\alpha$-level of 0.05---a threshold that was repeatedly adopted by \citet{fisher_statistical_1925} in his seminal book `Statistical Methods for Research Workers' to assess whether a particular result warrants further investigation. Fisher called it `convenient to take this point as a limit in judging whether a deviation [from the null] is to be considered significant or not' (p.~45), but simply used this threshold simply as a rough filter and never as a definitive decision rule. `If one in twenty does not seem high enough odds, we may, if we prefer it, draw the line at one in fifty [...], or one in a hundred [...]. Personally, the writer prefers to set a low standard of significance at the 5 per cent point, and ignore entirely all results which fail to reach this level. A scientific fact should be regarded as experimentally established only if a properly designed experiment \textit{rarely fails} to give this level of significance. The very high odds sometimes claimed for experimental results should usually be discounted, for inaccurate methods of estimating error have far more influence than has the particular standard of significance chosen' \citep[p.~85--86]{fisher_arrangements_1926}.\par
+
+Similarly, the hypothesis testing approach developed by Jerzy Neyman and Egon Pearson hinged on fixing a `level of rejection' \citep{neyman_testing_1933} or `critical region' \citep{neyman_problem_1933}. They also made abundantly clear that the exact choice of these significance levels should be instructed by the researcher's assessment of how damaging the false rejection of the null hypothesis would be. `In making a decision upon which subsequent action will be based we are influenced by the consequences which follow from a wrong decision; some errors will matter more than others' \citep[p.~509]{neyman_testing_1933}.
+
+Nevertheless, most users of statistics quickly started to treat significance thresholds as rigid decision boundaries with which to distinguish `good' from `bad' results. `Significance' has in many ways become a synonym for `relevance', `importance', or even `scientific quality'. It was shown that even journal reviewers tend to assess the methodological quality of a study more favourably if it reports significant findings \citep{mahoney_publication_1977}, so it should not come as a surprise either that statistically significant studies are heavily over-represented in publications across a wide range of disciplines and generally have a higher probability of being submitted and considered for publication in the first place \citep{hedges_estimation_1984, begg_publication_1988, dickersin_existence_1990, easterbrook_publication_1991, cooper_finding_1997, gerber_testing_2001, dickersin_publication_2005, gerber_can_2006, ioannidis_exploratory_2007, gerber_publication_2008, weiss_identification_2011, fanelli_negative_2012, franco_publication_2014, kuhberger_publication_2014, flint_there_2015, berning_publication_2016}.\par
+%TOADD: Within the social sciences, Sterling (1959) was the first to conduct an audit of the four main psychology journals and found that in a single year, 97.3% of articles rejected the null hypothesis at the 5% significance level. In a recent audit of the same journals, Sterling et al. (1995) note that the situation had changed little since the 1950s, with 95.6% of articles rejecting the null. Surveys of psychologists have found that authors are reluctant to submit insignificant findings and journal editors are less likely to publish them (Greenwald 1975). Coursol and Wagner (1986) find that psychologists reported submitting 82.2% of studies that had significant findings but only 43.1% of studies with neutral or negative findings. In addition to this bias in 6 the submission stage, researchers reported that 65.9% of significant studies submitted for publication were ultimately accepted whereas only 21.5% of insignificant studies eventually appeared in print.
+These distorting effects on scientific research in general and scientific publishing in particular have sparked heated debates among statisticians about the role of significance for statistical inference, with some scholars calling for abandoning the  usage  of  statistical significance as decision criterion altogether \citep{mcshane_abandon_2019, amrhein_retire_2019} and others defending the merits of predefined decision rules such as significance tests \citep{ioannidis_importance_2019}.
+
+There is consensus, however, that an exaggerated fixation on statistically significant results or `significosis', as \citet{antonakis_doing_2017} dubbed it, can heavily bias meta-analyses of the published body of literature by inflating effect sizes and distorting the accuracy of estimates. The following sections are therefore dedicated to methods for the detection and correction of publication bias.
+
+\section{Detecting publication bias: How much significance is too much?}
+\label{sec:detect_publication_bias}
+Even though an increased amount of significant findings in the research literature should definitely give meta-analysts pause, it cannot be taken as proof for the existence of publication bias. After all, researchers usually do not embark haphazardly on scientific endeavours but rather base their studies on prior knowledge about which ideas are worth pursuing. Hence, in the ideal world of carefully designed and executed experiments, one would expect researchers to find real effects (as opposed to statistical blips) on a regular basis, therefore increasing the relative amount of statistically significant findings in the published literature. Hence, it is important to have methods with which to distinguish over-representation of significant findings in the literature due to publication bias from over-representation because of real effects.\par
+
+\subsection{The file drawer problem}
+\label{subsec:file drawer}
+%Add Hedges (which year) with regard to distribution of effect size under the null.
+\citet{rosenthal_file_1979} offered a crude, but straightforward way to calculate the number of studies that theoretically got stuck in the so-called `file drawer' in a worst-case scenario; that is, a scenario in which all published inferences about hypotheses consist exclusively of Type I errors.\par
+
+To estimate how many unpublished studies would be needed to bring the overall $p$-value of all studies combined (both published and unpublished) to a certain significance level, Rosenthal suggested combining all published results by using the standard normal deviates $z_j$ associated with the $p$-values of each result $j$ so that $$z_c = k\bar{z}_k/\sqrt{k} = \sqrt{k}\bar{z}_k.$$
+Here, $\bar{z}_k$ denotes the arithmetic mean of all standard normal deviates combined. Since ${Z_j \sim \mathcal{N}(0,1)}$, it holds that ${\frac{1}{k}\sum_{i=1}^k Z_j = \bar{Z}_k \sim \mathcal{N}(0,1/k)}$ and ${\sqrt{k}\bar{Z}_k \sim \mathcal{N}(0,1)}$, hence ${z_c}$ is the realisation of a standard normally distributed variable. By assuming that all $k$ studies are independent from each other, we can calculate the number of studies $o$ needed to achieve the desired significance threshold $\alpha$ with standard normal quantile $z_{(1-\alpha)}$ for a one-sided superiority test:
+\begin{align*}
+    \phantom{\Longleftrightarrow}\quad z_{(1-\alpha)} &= \frac{k\bar{z}_k + x\bar{z}_o}{\sqrt{k+o}}\\
+    \Longleftrightarrow\quad x &= \frac{(k\bar{z}_k + o\bar{z}_o)^2}{z_{(1-\alpha)}^2}-k.
+\end{align*}
+If one assumes---as Rosenthal did---that the omitted studies $o$ show a null effect on average ($\bar{z}_o = 0$), the expression can be simplified to
+\begin{align*}
+    o = \frac{(k\bar{z}_k)^2}{z_{(1-\alpha)}^2}-k.
+\end{align*}
+However, this heavily overestimates the number of potentially omitted studies because the mean of the standard normal distribution truncated to the right at ${z_{(1-\alpha)} < \infty}$ is negative. It is therefore better to calculate $o$ by using ${\bar{z}_o = \E[Z \mid Z < z_{(1-\alpha)}]}$ which leads to
+\begin{align*}
+    o^*= \frac{-2k \bar{z}_k \bar{z}_o + z_{(1-\alpha)}^2 - 
+    z_{(1-\alpha)}\sqrt{4\bar{k} \bar{z}_o^2 - 4k \bar{z}_k \bar{z}_o + z_{(1-\alpha)}^2})}{2\bar{z}_o^2}.
+\end{align*}
+In both cases, if the number of studies needed to bring the combined $p$-value to the significance threshold $\alpha$ is rather low (Rosenthal suggests ${5k + 10}$ as a tentative threshold), one should be wary of potential publication bias. If the number is very high, one can be more confident that there is indeed an effect, but even in this latter case one cannot rule out publication bias. Rosenthal's file drawer estimator and the correction outlined above only yield worst-case estimates for the number of omitted studies assuming the null effect is true. If there is a real effect, one needs to resort to other methods to gauge the number of potentially omitted studies.\par
+Table~\ref{tab:file_drawer} shows that the detection of publication bias not only fails if there is a real effect but also if the worst-case assumption holds, that is, if one assumes that all published studies consist exclusively of Type I errors. In the example simulations shown in Figure~\ref{fig:funnel_plot}, the file drawer method only detects publication bias if the true effect is zero and the body of published studies consists of all significant results plus $10\%$ of non-significant results.\par
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedright\let\\\tabularnewline}p{.1\textwidth}} 
+    \hline
+     & $k$\TBstrut & $\mu_1$ & $o$ & $o^*$ & bias detected?\\
+    \hline
+    full sample (no bias, A)\Tstrut & $200$ & $0$ & $-141$ & $-181$ & $o\phantom{^*}$: no $o^*$: no \\ 
+    & $200$\Bstrut & $0.3$ & $8123$ & $884$ & $o\phantom{^*}$: no $o^*$: no\\
+    \hline
+    significant studies (B)\Tstrut& $13$ & $0$ & $320$ & $109$ & $o\phantom{^*}$: no $o^*$: no \\
+    & $38$\Bstrut & $0.3$ & $2705$ & $457$ & $o\phantom{^*}$: no $o^*$: no \\
+    \hline
+    \Tstrut significant studies and $10\%$ of non-significant studies (C)& $32$ & $0$ & $99$ & $43$ & $o\phantom{^*}$: yes $o^*$: yes \\
+    & $55$\Bstrut & $0.3$ & $3086$ & $494$ & $o\phantom{^*}$: no $o^*$: no\\
+ \hline
+\end{tabular}
+    \caption[File drawer estimates to detect Publication bias.]{The number of potentially suppressed studies $o$ (uncorrected) and $o^*$ (corrected) calculated for the examples shown in Figure~\ref{fig:funnel_plot}. To test for the presence of publication bias, the number of studies in the file drawer was compared to the threshold value proposed by Rosenthal ($5k+10$).}
+    \label{tab:file_drawer}
+  \end{center}
+\end{table}
+In addition to the potential shortcomings explained above, it is important to point out that calculating the file drawer in the manner described above hinges on the assumption that the primary outcomes, the hypotheses as well as the testing procedure have been defined by the authors at the onset of the study. If they resorted to any form of `$p$-hacking' \citep{head_extent_2015} or `HARKing: Hypothesising After the Results are Known' \citep{kerr_harking_1998}, however, the expected Type I error would be much larger than indicated by the predefined significance threshold because it is rather easy to turn spurious results into significant findings by resorting to the strategies outlined above \citep{simmons_falsepositive_2011}.\par
+Hence, the number of theoretically omitted studies that is needed to turn published results non-significant would be considerably lower because the source of bias is not primarily the omission of studies who show non-significant findings but rather the violation of fundamental principles of significance testing. 
+%toadd: Maybe add a plot showing how Rosenthals estimatore overestimates the number of omitted studies
+%to add: Orwin, R. G. (1983). A fail-safe N for effect size in meta-analysis. Journal
+
+\subsection{How many significant studies should be expected?}
+One approach to circumvent the shortcomings of the file drawer estimation in the presence of $p$-hacking and HARKing was developed by \citet{ioannidis_exploratory_2007}. It hinges on the idea that---given a real effect $\theta_j$---the probability of detecting this effect using a significance test equals the power $1-\beta_j$ of said test. If we furthermore assume that the effect is the same for all studies assessing the same question, the expected number of significant results is given by $$E = \sum_{i=1}^k (1-\beta_j).$$This expected number can then be compared against the actually observed number of studies reporting significant results $O$ by means of the $\chi^2$ test statistic $$A = [(O-E)^2/E + (O-E)^2/(k-E)] \sim \chi_1^2$$ 
+and the corresponding decision function
+\begin{align*}
+    \delta(A) = \begin{cases} 1, & \text{if } A > q_{(\chi_1^2,1-\alpha)}; \\ 0, & \mbox{otherwise}.\end{cases}
+\end{align*}
+To calculate the power $\beta_j$ of each study, Ioannidis and Trikalinos suggested using the observed aggregate effect size $\hat{\theta}_k$, while admitting that this overestimates $E$, because `most biases that increase the proportion of `positive' results may also inflate the observed summary effect size' (p.~246). To alleviate this, they recommend considering a range of effect sizes derived from external evidence.\par
+Table~\ref{tab:expected_significance} shows the results of this test for the simulated examples shown in Figure~\ref{fig:funnel_plot}. All instances of publication bias are correctly detected.\par
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedright\let\\\tabularnewline}p{.1\textwidth}} 
+    \hline
+     & $k$\TBstrut & $\mu_1$ & $\bar{x}_N$ & $A$ & bias detected?\\ 
+    \hline
+    full sample (no bias, A)\Tstrut & $200$ & $0$ & $-0.02$  & $1.70$  & no \\ 
+    & $200$\Bstrut & $0.3$ & $0.27$  & $0.08$ & no\\
+    \hline
+    significant studies (B)\Tstrut& $13$ & $0$ & $0.69$ & $11.67$ & yes \\
+    & $38$\Bstrut & $0.3$ & $0.61$ & $19.94$ & yes \\
+    \hline
+    significant studies and $10\%$ of\Tstrut & $32$ & $0$ & $0.15$ & $28.64$ & yes \\
+    non-significant studies (C) & $55$\Bstrut & $0.3$ & $0.51$ & $8.21$ & yes\\
+ \hline
+\end{tabular}
+    \caption[$\chi^2$-test to test for concordance between the expected and observed number of significant studies.]{Results of the $\chi^2$-test to test for concordance between the expected and observed number of significant studies. The test was conducted for the studies shown in Figure~\ref{fig:funnel_plot} and was performed at $\alpha = 0.05$. The global estimate $\bar{x}_N$ was calculated according to Eq.~\ref{eq:global_estimator_precision_weight} but with theoretical parameter values replaced by empirical estimates. The power of each study $j$ was calculated using Eq.~\ref{eq:power_calculation} with $\tau_1$ equal to the global estimate divided by the theoretical standard error of each study $j$.}
+    \label{tab:expected_significance}
+  \end{center}
+\end{table}
+
+Alternatively, Ioannidis and Trikalinos suggest to use a binomial probability test,  which is only advisable, however, if the power values $\beta_j$is roughly the same across studies $j$. If this is not the case, it is advisable to use the Poisson binomial test statistic instead with ${B_j \sim \text{Ber}( 1-\beta_j)}$ and therefore ${E  = \sum_{j=1}^k B_j \sim \text{Poisbin}(k, [(1-\beta_1),\dots,(1-\beta_k)])}$ so that the decision function would be 
+\begin{align*}
+    \delta(E) = \begin{cases} 1, & \text{if } E > q_{(1-\alpha)}; \\ 0, & \mbox{otherwise;}\end{cases}
+\end{align*}
+with $q_{(1-\alpha)}$ the $(1-\alpha)$-quantile of the Poisson binomial distribution outlined as above.\par
+
+\subsection{Funnelling statistical evidence}
+\label{subsec:funnel plot}
+The so-called `funnel plot' is probably the best known and most widely adopted instrument to detect publication bias. Described as early as 1984 by \citet[p.~64--69]{light_summing_1984}, it has since become a standard method for meta-analysts to visually assess the extent of publication bias present in the published literature.\par
+Funnel plots are usually constructed by plotting some measure of effect size against some measure of precision. Without publication bias, the study results should be distributed around the true effect size $\theta$, thereby creating an inverted funnel with the most precise studies at the top of the funnel and the rest of the studies symmetrically spreading out around the population mean towards the bottom of the graph (see Figure~\ref{fig:funnel_plot}). If publication bias is present, however, one would expect a `gap' in the funnel where those studies with little precision and non-significant findings were expected to be.\par
+The correct choice of the axes often depends on the question at hand (see for example \citet[p.~81--89]{sterne_funnel_2005}). Often, a summary statistic of the effect size such as the mean or the log odds ratio is used for the abscissa whereas the values on the ordinate correspond to the standard error, the variance, their respective inverse, or simply the sample size \citep{sterne_funnel_2001}. Researchers have shown that the variety of possible choices for the axes can severely impact the robustness of the funnel plot as a diagnostic tool, since a different axis often leads to a different assessment of the presence or absence of publication bias \citep{tang_misleading_2000, lau_case_2006}. In addition, it was shown that mere visual inspection of funnel plots is, in general, not enough to reliably detect publication bias and might even be misleading, even for experienced systematic reviewers \citep{terrin_empirical_2005}. This can also be observed in Figure~\ref{fig:funnel_plot}: Even though both funnel plots on the last row are generated from a biased sample, the proclaimed funnel asymmetry is only observable if there are no non-significant studies published (B). Adding just $10\%$ of randomly selected non-significant studies makes the funnels appear much more symmetric. This shows that visual inspection of funnel plots can be rather misleading.\par
+With `Egger regression' and the rank correlation test developed by Begg and Mazdumar, two non-visual tools to detect publication bias based on the rationale of the funnel plot exist but they both suffer from similar drawbacks as the funnel plot itself if the publication bias is not very pronounced or the number of studies is low \citep{sterne_regression_2005}. The following two sections contain a quick overview over both of them.
+
+\myfig{ch3_fig1_funnel_plot}%% filename in figures folder
+  {width=\textwidth,height=\textheight}%% maximum width/height, aspect ratio will be kept
+  {Funnel plots of $200$ randomly simulated studies with sample sizes ${n \in [5,10,20,30,40,50,100]}$ and equal sampling probability for each $n$. The funnel plots are shown for ${H_1: \mu = 0}$ (left column) and ${H_1: \mu = 0.3}$ (right column) with ${H_0: \mu = 0}$ in both cases. Row A shows the complete sample, row B only significant studies and row C significant studies plut $10\%$ of non-significant studies. The solid black line on the vertical axis denotes the true population mean whereas the dotted black line denotes the significance threshold at different levels of precision. Individual data points in each simulated study were independently drawn from a $\mathcal{N}(\mu_1,4)$-distribution. To determine whether a given $\bar{x}_n$ was significant, $V_n$ was calculated as described in Eq.~\ref{eq:Vn_stud} and then compared to the $z_{(1-\alpha)}$-quantile with $\alpha = 0.05$.} %% caption
+  {Funnel Plots in the presence and absence of publication bias.}%% optional (short) caption for table of figures
+  {fig:funnel_plot}%% label
+\clearpage
+\subsection{Rank correlation between effect size and standard error}
+\citet{begg_operating_1994} developed a simple non-parametric test for the detection of publication bias, calling it `a direct statistical analogue of the popular ``funnel-graph'' ' (p.~1088). They exploited the fact that in the presence of publication bias, `if negative studies are less likely to be published, the [funnel] graph will tend to be skewed, inducing a negative correlation in the graph, or, expressed differently, a positive correlation between estimates of effects and their variances' (p.~1088).\par
+Let $X$ be a normally distributed random variable with unknown expectation $\mu$ and known variance $\sigma^2$. Suppose researchers estimate $\mu$ by the sample mean $\bar{\mu}_{n_j} = \hat{X}_{n_j} \sim \mathcal{N}(\mu, \sigma^2/n_j)$, where $n_j$ denotes the sample size of the $j$th study. The global estimate of the effect size across all $k$ studies (assuming fixed effects) can be calculated by averaging the sample mean $\bar{X}_{n_j}$ of each study $j$ weighted by the inverse of the sampling variance of that study:
+\begin{align}
+    \bar{X}_N = \frac{\sum_{j=1}^k \bar{X}_{n_j}w_j}{\sum_{j=1}^k w_j} \sim \mathcal{N}(\mu,\sigma^2/N) \label{eq:global_estimator_precision_weight}
+\end{align}
+where $N = \sum_{j=1}^k n_j$ and $w_j = n_j/\sigma^2$. With this, one can center each study estimate around the global estimate of the effect size
+$$(\bar{X}_{n_j}-\bar{X}_N) \sim \mathcal{N}(0, v_j)$$
+with $v_j = w_j - 1/\sum_{i=1}^k w_i$ denoting the sampling variance of the centred effect estimate $(\bar{X}_{n_j}-\bar{X}_N)$. Finally, one can stabilise the variance to $1$ by dividing the centred effect estimate by the square root of its sampling variance
+\begin{align}
+    Z_j = \frac{\bar{X}_{n_j}-\bar{X}_N}{\sqrt{v_j}} \sim \mathcal{N}(0, 1) \label{eq:standardised_effect_size}
+\end{align}
+which yields a test statistic following a standard normal distribution. Both  $Z_j$ and $v_j$ can then be used to calculate Kendall's $\tau$ \citep{kendall_new_1938} to test for correlation between the observed standardised effect sizes $z_j$ and their corresponding variances $v_j$:
+$$\tau = \frac{\sum_{i=1}^{k-1}\sum_{j=i+1}^k \text{sgn}(z_i-z_j)\text{sgn}(v_i-v_j)}{k(k-1)/2} = \frac{c-d}{k(k-1)/2}$$
+where $c$ denotes the number of concordant pairs—that is, those pairs of studies $i$ and $j$ for which $z_i$ and $v_i$ are both larger or both smaller than $z_j$ and $v_j$. Conversely, $d$ denotes the number of discordant pairs, that is, those pairs of studies $i$ and $j$ for which $z_i$ is larger than $z_j$ whereas $v_i$ is smaller than $v_j$ or vice versa. In other words, $\tau$ gives the ratio of concordant pairs minus discordant pairs divided by the total number of possible permutations of pairs $k(k-1)/2$. Under the null hypothesis of no correlation between effect size $z$ and sampling variance $v$ and with $k$ sufficiently large, the sampling distribution of $\tau$ is approximately normal with standard error $\sigma_{\tau} = \sqrt{\frac{2(2k+5)}{9k(k-1)}}$ \citep{kendall_new_1938}. Hence, we can construct the following statistic to test whether one should assume publication bias
+$$Z_k = \frac{\tau}{\sigma_{\tau}} = \frac{c-d}{\sqrt{(2k+5)k(k-1)/18}} \sim \mathcal{N}(0,1).$$
+The test statistic can then be passed to the following two-sided decision function
+\begin{align*}
+    \delta(Z_k) = \begin{cases} 1, & \text{if } |Z_k| > z_{(1-\alpha/2)}; \\ 0, & \mbox{otherwise}.\end{cases}
+\end{align*}
+with $z_{(1-\alpha/2)}$ denoting the $(1-\alpha/2)$-quantile of the standard normal distribution.\par
+Going back to the simulated studies presented in Figure~\ref{fig:funnel_plot}, we can now calculate the test statistic for each simulation. As Table~\ref{tab:rank_correlation} shows, the test detects publication bias when it is also clearly recognizable visually but fails to do so when the bias is less obvious.\par
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedright\let\\\tabularnewline}p{.1\textwidth}} 
+    \hline
+     & $k$\TBstrut & $\mu_1$ & $\bar{x}_N$ & $|\tau/\sigma_{\tau}|$ & bias detected?\\ 
+    \hline
+    full sample (no bias, A)\Tstrut & $200$ & $0$ & $-0.02$  & $1.33$ & no \\ 
+    & $200$\Bstrut & $0.3$ & $0.27$  & $0.51$ & no\\
+    \hline
+    significant studies (B)\Tstrut& $13$ & $0$ & $0.69$ & $2.81$ & yes \\
+    & $38$\Bstrut & $0.3$ & $0.61$ & $5.70$ & yes \\
+    \hline
+    significant studies and $10\%$ of\Tstrut & $32$ & $0$ & $0.15$ & $0.36$ & no \\
+    non-significant studies (C) & $55$\Bstrut & $0.3$ & $0.51$ & $1.60$ & no\\
+ \hline
+\end{tabular}
+    \caption[Rank correlation test to detect publication bias.]{The rank correlation between effect size and variance calculated for the studies shown in Figure~\ref{fig:funnel_plot}. The significance test was performed at $\alpha = 0.05$ and the global estimate $\bar{x}_N$ was calculated according to Eq.~\ref{eq:global_estimator_precision_weight} but with theoretical parameter values replaced by empirical estimates.}
+    \label{tab:rank_correlation}
+  \end{center}
+\end{table}
+\subsection{Egger regression}
+\citet{egger_bias_1997} used a regression-based approach to assess the correlation between the standardised effect size of a study ($z_j$, as described in Eq.~\ref{eq:standardised_effect_size}) and the corresponding precision defined as the inverse of the empirical standard error of the non-standardised effect size ($1/s_j$):
+$$z_j \sim \beta_0 + \beta_1/s_j.$$
+If there is no publication bias, the relationship between $z_j$ and $1/s_j$ should be completely determined by $\beta_1$, because standardised effect sizes should be low, on average, for studies with high standard errors (low precision) and high, on average, for studies with low standard errors (high precision). Hence, the regression line should pass through the origin, that is, intercept $\beta_0 = 0$. However, if there is publication bias present, we should expect higher standardised effect sizes for studies with low precision.\par
+To test whether $\hat{\beta}_0$ differs significantly from $\beta_0 = 0$, the following $t$-statistic can be constructed:
+$$T_k = \frac{\hat{\beta}_0-\beta_0}{s_{\hat{\beta}_0}} = \frac{\hat{\beta}_0}{s_{\hat{\beta}_0}} \sim t(\nu = k-2)$$
+with $s_{\hat{\beta}_0}$ denoting the standard error of $\hat{\beta}_0$, $k$ denoting the total number of studies and $\nu = k-2$ the degrees of freedom of the $t$-distribution. The statistic can be passed to the following two-sided decision function: 
+\begin{align*}
+    \delta(T_k) = \begin{cases} 1, & \text{if } |T_k| > q_{\blb t_{k-2},1-\alpha/2\brb}; \\ 0, & \mbox{otherwise}.\end{cases}
+\end{align*}
+where $q_{\blb t_{k-2},1-\alpha/2 \brb}$ denotes the $(1-\alpha/2)$-quantile of the central $t(k-2)$-distribution. The Table~\ref{tab:Egger_regression} shows the results of the Egger regression test for the examples displayed in Figure~\ref{fig:funnel_plot}. As before, the test is able to detect publication bias that is visually recognisable, but often fails to detect publication bias if it is less pronounced.
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedright\let\\\tabularnewline}p{.1\textwidth}} 
+        \hline
+         & $k$\TBstrut & $\mu_1$ & $\bar{x}_N$ & $|t|$ & bias detected?\\ 
+        \hline
+        full sample (no bias, A)\Tstrut & $200$ & $0$ & $-0.02$  & $1.30$ & no \\ 
+        & $200$\Bstrut & $0.3$ & $0.27$  & $0.95$ & no\\
+        \hline
+        significant studies (B)\Tstrut& $13$ & $0$ & $0.69$ & $3.77$ & yes \\
+        & $38$\Bstrut & $0.3$ & $0.61$ & $8.54$ & yes \\
+        \hline
+        significant studies and $10\%$ of\Tstrut & $32$ & $0$ & $0.15$ & $1.02$ & no \\
+        non-significant studies (C) & $55$\Bstrut & $0.3$ & $0.51$ & $4.05$ & yes\\
+     \hline
+    \end{tabular}
+    \caption[Egger regression test to detect publication bias.]{The Egger regression test to detect correlation between effect size and variance calculated for the studies shown in Figure~\ref{fig:funnel_plot}. The significance test was performed at $\alpha = 0.05$ and the global estimate $\bar{x}_N$ was calculated according to Eq.~\ref{eq:global_estimator_precision_weight} but with theoretical parameter values replaced by empirical estimates.}
+    \label{tab:Egger_regression}
+  \end{center}
+\end{table}
+%toadd: test statistic and decision function for Egger regression
+%toadd: Peters 2006, comparison of two methods to detect publication bias
+%toadd: Macaskill: a comparison of methods to detect publication bias in meta-analysis
+%toadd: Moreno: assessment of regression-based methods to adjust for publication bias
+%toadd: selection model described by Begg! Could be useful for my selection simulations
+
+\subsection{The calliper test: Pinching significance thresholds}
+A calliper is a mechanical instrument used to precisely measure the diameter of (small) objects by clamping them in between the two jaws of callipers. Inspired by this measuring device, \citet{gerber_can_2006, gerber_publication_2008} developed the so-called `calliper test', which serves to detect distributional discontinuities of the $p$-value around significance levels. Without significance-driven publication bias, the number of publications reporting barely significant findings should be roughly the same as the number of publications reporting $p$-values just above the $\alpha$-threshold. \par
+
+Let us assume that there is a unknown effect size $\mu$ and known variance $\sigma^2$ so that ${X \sim \mathcal{N}(\mu,\sigma^2)}$. Then, ${\bar{X} = \sum_{i_1}^n \sim \mathcal{N}(\mu, \frac{\sigma^2}{n})}$ and ${Z = \sqrt{n}\frac{\bar{X}}{\sigma} \sim \mathcal{N}(\sqrt{n}\frac{\mu}{\sigma}, 1)}$. If $X$ is not normally distributed or the variance $\sigma^2$ is unknown, these distributional properties hold asymptotically.\par
+
+Let $\Phi(\cdot)$ be the cumulative distribution function of the standard normal distribution. For the limits $c < c' < c''$, the conditional probability that an observed $Z$-scores lies in the interval $[c,c']$, given that it is drawn from the interval $[c, c'']$, corresponds to 
+\begin{align}
+    \Pr[z \in [c,c'] \mid z \in [c,c'']] = \frac{\Phi(c')-\Phi(c)}{\Phi(c'')-\Phi(c)}. \label{eq:calliper1}
+\end{align}
+Since $\Phi$ is continuous, it holds that $\Phi(z+e) - \Phi(z) = e\phi(z) + \epsilon$ where $\epsilon$ is an approximation error which goes to zero as $e$ approaches zero. Therefore, ratio \ref{eq:calliper1} can be approximated by
+\begin{align}
+    \Pr[z \in [c,c'] \mid z \in [c,c'']] \simeq \frac{(c'-c)\phi(c)}{(c''-c)\phi(c)} = \frac{c'-c
+    }{c''-c} \label{eq:calliper2}
+\end{align}
+for small intervals $[c,c'']$ (that is, small $e$) and small $\phi(\cdot)$ within the interval. If we choose $c, c'$ and $c''$ so that ${c'- c = c''-c'}$, then 
+\begin{align}
+    p = \Pr(z \in [c,c'] \mid z \in [c,c'']) = 0.5 \label{eq:calliper3}
+\end{align}
+that is, the conditional probability of a $Z$-score being an element of either the upper or lower half of the interval is fifty per cent. Equations \ref{eq:calliper2} and \ref{eq:calliper3} can now be used to construct an exact binomial test to test for publication bias.\par
+
+Let $k$ be the total number of published studies and let $k'$ be the number of studies that fall into the interval $[c,c'']$. If the $Z$-scores reported in the published studies represent $k$ independent draws from $Z \sim \mathcal{N}(\sqrt{n}\frac{\mu}{\sigma},1)$, then the number of studies $k'' \leq k'$ falling into the upper (or lower) half of $[c, c'']$ is a realisation of a binomially distributed variable $K'' \sim \text{Bin}(k', p = 0.5)$. \par
+To test for publication bias of results from one-sided superiority tests, one can set ${c' = z_{(1-\alpha)}}$ and ${[c,c''] = [c'-e, c+e]}$ with 
+$z_{(1-\alpha)}$ the $(1-\alpha)$-quantile of the standard normal distribution and $e$ small. The test hypotheses are
+\begin{align*}
+    H_0 &: p = 0.5 \\
+    H_1 &: p \neq 0.5.
+\end{align*}
+with test statistic $k''$ and decision function 
+\begin{align*}
+    \delta(k'') = \begin{cases} 1, & \text{if } k'' > q_{(1-\alpha/2)}; \\
+    1, & \text{if } k'' < -q_{(1-\alpha/2)}, \\
+    0, & \mbox{otherwise};\end{cases}
+\end{align*}
+where $q_{(1-\alpha/2)}$ denotes the ${(1-\alpha/2)}$-quantile of the binomial distribution ${\text{Bin}(k', p = 0.5)}$.\par
+Table~\ref{tab:calliper_test} shows the results of the calliper test for the simulated studies depicted in Figure~\ref{fig:funnel_plot}. Due to the small number of studies lying in the test window $[c,c'']$, the test has low power in these examples and publication bias is only detected in one case.
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedright\let\\\tabularnewline}p{.1\textwidth}} 
+        \hline
+         & $k$\TBstrut & $\mu_1$ & $k'$ & $k''$ & bias detected?\\ 
+        \hline
+        full sample (no bias, A)\Tstrut & $200$ & $0$ & $4$ & $3$ & no \\ 
+        & $200$\Bstrut & $0.3$ & $15$ & $6$ & no\\
+        \hline
+        significant studies (B)\Tstrut& $13$ & $0$ & $3$ & $3$ & no \\
+        & $38$\Bstrut & $0.3$ & $6$ & $6$ & yes \\
+        \hline
+        significant studies and $10\%$ of\Tstrut & $32$ & $0$ & $3$ & $3$ & no \\
+        non-significant studies (C) & $55$\Bstrut & $0.3$ & $7$ & $6$ & no\\
+     \hline
+    \end{tabular}
+    \caption[The calliper test to detect publication bias.]{The calliper test to detect publication bias for the examples shown in Figure~\ref{fig:funnel_plot}. The window size $e$ was set to $0.2$ and the exact binomial test was performed at $\alpha = 0.05$.}
+    \label{tab:calliper_test}
+  \end{center}
+\end{table}
+As opposed to the file drawer calculations proposed by \citet{rosenthal_file_1979}, the calliper test can theoretically also detect publication bias due to $p$-hacking and HARKing because these manipulations directly influence the conditional probabilities of finding studies in the upper or lower part of a small interval around the significance threshold.\par
+It should be noted, however, that the test is only approximately accurate if the sampling distribution of $Z$ has a mean value close to the critical value, that is, the $(1-\alpha)$-quantile of the standard normal distribution. If the sampling distribution is not symmetric around the critical value, $\Pr(z \in [c,c+e] \mid z \in [c-e,c+e])$ does not equal 0.5 anymore. However, for very large deviations of the mean value from the critical value, the overall probability of any values falling into $[c-e,c+e]$ is negligible. Coincidentally, in those cases a test for significance-driven publication bias is rendered moot, since all or most of the results are expected to be significant because of the presence of a strong real effect. %toadd: maybe add quick calculations
+
+\subsection{The \texorpdfstring{$p$}{p}-curve}
+\label{subsec:p-curve}
+As already mentioned in Section \ref{subsec:file drawer}, not all methods that try to detect significance-driven publication bias are robust against $p$-hacking and HARKing. The $p$-curve test was specifically designed by \citet{simonsohn_pcurve_detection_2014} to provide a robust method to detect publication bias in the presence of such manipulations. The rationale of the test is based on the observation that the distribution of $p$-values is uniform if the null hypothesis is true\footnote{This only holds for simple null hypothesis and composite null hypotheses evaluated at the most unfavourable null parameter value.} but should be right-skewed if the alternative holds (see Section \ref{subsec:p-value} for more details).\par
+Simonsohn \textit{et al.} proposed using these properties by aggregating all significant $p$-values pertinent to a specific set of hypotheses in order to assess whether a body of published studies contained any evidential value or not. Let 
+$${\gamma = \frac{1/n \sum_{j=1}^l (p_j-\bar{p}_l)^3}{[1/(n-1)\sum_{j=1}^l (p_j-\bar{p}_l)^2]^{3/2}}}$$ 
+be the sample skewness of $p$ below the significance threshold. We can then distinguish between the following four cases:
+\begin{align*}
+    \text{1. } &H_0 \text{ true and $p$-hacking absent:} &&P \sim \text{Unif}(0,1) &&\text{ (no skew)};\\
+    \text{2. } &H_0 \text{ true and $p$-hacking present:} &&\gamma < 0 &&\text{ (left skew)};\\
+    \text{3. } &H_0 \text{ false and $p$-hacking absent:} &&\gamma > 0 &&\text{ (right skew)};\\
+    \text{4. } &H_0 \text{ false and $p$-hacking present:} &&\gamma < 0 &&\text{ (left skew) or }\\ 
+    & &&\gamma > 0 &&\text{ (right skew).}
+\end{align*}
+Cases 1 to 3 can relatively easy be distinguished, for example by visual inspection of the empirical distribution of $p$-values or by calculating the sample skewness and testing whether it significantly deviates from zero skew expected under $P \sim \text{Unif}(0,1)$. Distinguishing Case 4 from Cases 2 and 3 is more subtle, however. Simnsohn \textit{et al.} did not offer a method to do so, but instead suggested to reframe the problem as a test for the presence or absence of evidential value.\par
+To test whether a certain set of significant findings $l$ contains real evidence against the null, one first calculates for each observed $p$-value the probability of observing a $p$-value that is at least as extreme if the null were true and given that the observed $p$-value is significant, that is, ${\Pr(P \leq p \mid p < \alpha)}$. Simonsohn \textit{et al.} call this the `$pp$-value'---the $p$-value of the $p$-value. They then combine the $pp$-values from all $k$ significant findings to construct the test statistic for Fisher's combined probability test statistic $$pp_{\text{comb}} = -2\sum_{j=1}^l \text{ln}(pp_j)$$
+which follows a $\chi_{2s}^2$-distribution if the $pp$-values are drawn from a $\text{Unif}(0,1)$-distribution. Hence, the test statistic can be passed to the following decision function to test for significant skewness:
+\begin{align*}
+    \delta(pp_{\text{comb}}) = \begin{cases} 1, & \text{if } pp_{\text{comb}} > q_{(\chi_{2s}^2,1-\alpha)}; \\ 
+    0, & \mbox{otherwise}.\end{cases}
+\end{align*}
+If the distribution $p$-values are significantly left skewed, that is, ${\gamma < 0}$ and ${\delta(pp_{\text{comb}}) = 1}$, the analysed results were probably $p$-hacked. If the distribution of $p$-values is significantly right-skewed, (${\gamma > 0}$ and ${\delta = 1}$), $p$-hacking might still have occurred, but one can at least conclude that the studies reporting significant findings did indeed contain some evidential value against the null. However, if Fisher's combined probability test turns out to be non-significant, this may indicate either that there are not enough findings to draw any conclusion or that the findings did not contain evidential value, that is, that they originated from $p$-hacking.\par
+To distinguish between these two cases, Simonsohn \textit{et al.} suggested conducting a second test, but this time against a null hypothesis that assumes a very small effect instead of no effect. Specifically, they proposed to compare the observed $p$-curve to a $p$-curve that would be expected for studies with a low power of $0.33$. This curve can be constructed recalculating the $pp$-values under the assumption that the underlying $p$-values originated from studies with a small real effect and corresponding power of $0.33$.\par
+Let us follow through with the example inspired by Simonsohn \textit{et al.} and assume that the original $p$-values were calculated using Student's $t$-statistic (see \ref{subsec:student's t-statistic} for more details). Under the null hypothesis $H_0$, the $t$-statistic follows a central $t(\nu)$-distribution, with $\nu = n-1$ degrees of freedom and $n$ denoting the sample size used to calculate the statistic. The corresponding $p$-value is given by
+$$p_{H_0} = \Pr(T>t_n \mid H_0) = 1-F_T(t_n\mid H_0)$$
+with $F_{T}(\cdot \mid H_0)$ the cumulative distribution function of the central $t(\nu)$-distribution.\par
+Under the alternative hypothesis $H_1$, the $t$-statistic follows a non-central $t(\lambda,\nu)$-distribution, with non-centrality parameter ${\lambda = \sqrt{n}(\mu-\mu_0)/\sigma}$ and $\nu$ and $n$ same as above.\par
+Given a $t$-statistic $t_n$, sample size $n$ and the $(1-\alpha)$-quantile of the central $t(\nu)$-distribution $q_{(1-\alpha)}$, we can find the non-centrality parameter $\lambda$ corresponding to a power of $1-\beta$ as follows:
+\begin{alignat*}{2}
+    \phantom{\Longleftrightarrow}\quad &\Pr(T > q_{(1-\alpha)} \mid H_1) &&= 1-\beta\\
+    \Longleftrightarrow\quad &1-F_{T}(q_{(1-\alpha)} \mid H_1) &&= 1-\beta\\
+    \Longleftrightarrow\quad &F^{-1}_{T}(1-\beta\mid H_1) &&= q_{(1-\alpha)}
+\end{alignat*}
+with $F_{T}(\cdot \mid H_1)$ and $F_{T}^{-1}(\cdot \mid H_1)$ the cumulative distribution function and the quantile function of $T$ under the alternative hypothesis. In other words, we need to find the non-central $t(\lambda,\nu)$-distribution whose $0.67$-quantile is equal to the $q_{(1-\beta)}$-quantile of the central $t(\nu)$-distribution. Having done that, we can calculate the $p$-value of $t_n$ under the alternative which amounts to 
+$$p_{H_1} = \Pr(T>t_n \mid H_1) = 1-F_T(t_n\mid H_1).$$ 
+The corresponding $pp$-value is then
+\begin{alignat*}{1}
+    \Pr(P<p_{H_1} \mid p_{H_0} < \alpha, H_1) &= \frac{\Pr(P<p_{H_1}, p_{H_0} < \alpha\mid H_1)}{\Pr(p_{H_0}<\alpha)\mid H_1)}\\ 
+    &= \frac{\Pr(P<p_{H_1}, p_{H_1} < 1-\beta\mid H_1)}{\Pr(p_{H_1}<1-\beta \mid H_1)}\\ 
+    &= \frac{\Pr(P<p_{H_1}\mid H_1) - (\Pr(p_{H_1} \geq 1-\beta \mid H_1))}{\Pr(p_{H_1}<1-\beta \mid H_1)}\\
+    &= \frac{p_{H_1}-\beta}{1-\beta}.
+\end{alignat*}
+By calculating these alternative $pp$-values for each observation, one can construct a reference $p$-curve for assumed power $1-\beta$ that can be tested against the null hypothesis of uniform distribution of the $p$-values. If the reference $p$-curve is significantly right-skewed and thus more right skewed than the observed $p$-curve, one can conclude that the analysed studies contain less evidential value than the same amount of studies with power $1-\beta$. If one picks $1-\beta$ so that the studies would be clearly underpowered (such as $1-\beta = 0.33$), this would mean that evidential value is rather low.\par
+However, if the observed $p$-curve is not significantly less right-skewed than the newly constructed reference curve, one cannot make a judgement about the presence or absence of any evidential value based on the $p$-curve.\par
+As \citet{simonsohn_pcurve_detection_2014} show, their $p$-curve method has high power to detect that a set of studies has evidential value or lack thereof, even if the individual studies have rather low power or are even slightly $p$-hacked, respectively. However, an important prerequisite of these results is the judicious definition and use of selection criteria with which to select $p$-values from individual studies. For example, the $p$-curve analysis does only work if the analysed $p$-values are independent from each other, if they have a uniform distribution under the null and if they are linked to the same hypothesis of interest.\par
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.09\textwidth} | >{\raggedright\let\\\tabularnewline}p{.1\textwidth}} 
+        \hline
+         & $k$\TBstrut & $\mu_1$ & $\gamma$ & $pp_{\text{comb}}$ & bias detected?\\ 
+        \hline
+        full sample (no bias, A)\Tstrut & $200$ & $0$ & $0.55$ & $44.94$ & no \\ 
+        & $200$\Bstrut & $0.3$ & $0.45$ & $116.67$ & no\\
+        \hline
+        significant studies (B)\Tstrut& $13$ & $0$ & $0.55$ & $44.94$ & no \\
+        & $38$\Bstrut & $0.3$ & $0.45$ & $116.67$ & no \\
+        \hline
+        significant studies and $10\%$ of\Tstrut & $32$ & $0$ & $0.55$ & $44.94$ & no \\
+        non-significant studies (C) & $55$\Bstrut & $0.3$ & $0.45$ & $116.67$ & no\\
+     \hline
+    \end{tabular}
+    \caption[The $p$-curve test to check for uniformity of significant $p$-values under the null hypothesis.]{Results of the $p$-curve test to check for uniformity of significant $p$-values under the null hypothesis. The test was conducted for the studies shown in Figure~\ref{fig:funnel_plot} at an $\alpha$-level of $0.05$.}
+    \label{tab:p_curve}
+  \end{center}
+\end{table}
+In addition, if $p$-hacking and HARKing are completely absent and publication bias originates exclusively from an increased publication probability for significant findings, the $p$-curve fails to detect any bias. This happens because the $p$-curve method only looks at $p$-values below the significance threshold whose distribution remains unchanged in the absence of $p$-hacking and HARKing regardless of how many non-significant findings are suppressed. The $p$-curve tests conducted for the simulated studies shown in Figure~\ref{fig:funnel_plot} confirm this. As can be seen in Table~\ref{tab:p_curve}, the tests yields exactly the same result in all three scenarios.\par
+%toadd: p-curve is related to previous work that has examined the distribution of p values (or their corresponding t or Z scores) reported across large numbers of articles (Card & Krueger, 1995; Gadbury & Allison, 2012; Gerber & Malhotra, 2008a, 2008b; Masicampo & Lalande, 2012; Ridley, Kolm, Freckelton, & Gage, 2007)
+
+%First, when true effect sizes differ across studies, as they inevitably do, the funnel plot and the excessive significance approaches risk falsely concluding publication bias is present when in fact it is not (Lau, Ioannidis, Terrin, Schmid, & Olkin, 2006; Peters, Sutton, Jones, Abrams, & Rushton, 2007; Tang & Liu, 2000). 
+
+\section{Correcting biased estimates}
+\label{sec:correct_publication_bias}
+The detection of publication bias is an important endeavour in itself, lest biased meta-analyses are used as a basis for future research or even policy decision. This is especially important in the case of the most extreme form of publication bias, in which all published findings about a specific questions are simply a false positive. However, having detected both the presence of a real effect as well as publication bias, it would be desirable to have tools at hand with which to correct biased effect size estimates. The following sections present a selection of methods to do so. 
+%TOADD
+%TOADD: ecause overestimated effect sizes are more likely to be significant than are underestimated ones, the published record systematically overestimates effect sizes (Hedges, 1984; Ioannidis, 2008; Lane \& Dunlap, 1978). (comes from simonshon 2014 - correction)
+\subsection{Publication probabilities and truncated distributions}
+\label{subsec:pub_prob and trunc_dist}
+In the absence of publication bias---and assuming no other major source of bias---the distribution of published findings is given by the sampling distribution of the corresponding summary statistic. Let ${X_i \sim \mathcal{N}(\mu,\sigma^2)}$ be a random variable from which data points are drawn and let the corresponding summary statistic be ${S_{n_j} = \bar{X}_{n_j} = \frac{1}{n_j} \sum_{i=1}^{n_j} X_i \sim \mathcal{N}(\mu, \sigma^2/n_j)}$ for each study $j$.\par
+If we calculate the mean of ${\bar{X}_{n_j}}$ weighted by the inverse of the standard error we get the global effect size estimate 
+\begin{align*}
+    \bar{X}_N = \frac{\sum_{j=1}^k \bar{X}_{n_j}w_j}{\sum_{j=1}^k w_j}
+\end{align*}
+which was already outlined in Equation~\ref{eq:global_estimator_precision_weight}. ${N = \sum_{j=1}^k n_j}$ is again the total number of individual samples summed over all studies and $w_j$ is the squared inverse of the theoretical ($w_j = n/\sigma_j^2$) or estimated ($w_j = n/s_j^2$) standard error of each estimate $j$.\par
+In the presence of publication, however, the global estimate is biased upwards. The following sections introduce methods to correct this, most of which rely on the following definitions.\
+\begin{description}[leftmargin=!,labelwidth=\widthof{\bfseries $\boldsymbol{E_4}$}]
+    \item [\textbf{Publication rate:}] Let $X_1,\dots,X_n$ be a set of i.i.d random variables with expectation $\mu$. I define the publication probability of a finding based on a test statistic $S_n(X_1,\dots,X_n)$ as
+\begin{align}
+    {\ppr(S_n, \pi) = \pi + (1-\pi)\delta(S_n)} \label{eq:pub_prob}
+\end{align}
+where $\delta(\cdot)$ is a decision function taking $S_n$ as input and returning $1$ if $S_n$ lies beyond the predefined significance threshold and $0$ otherwise. Hence, if a finding is significant, its publication probability is assumed to be equal to $1$, if it is not, it is assumed to be equal to $\pi$. For the methods outlined below, $\pi$ is assumed to be a constant, but it could easily be replaced by function $\pi(\cdot)$, dependent on effect size, sample size, or other study properties.\\
+\item [\textbf{Expected publication probability given $\boldsymbol{n}$:}] The expectation of the publication probability $\text{ppr}$ is given by
+\begin{align}
+    \E[\ppr(S_n, \pi)] = \int_0^1 p f_{\ppr}(p)dp \label{eq:expected_pub_prob}
+\end{align}
+with $f_{\ppr}(\cdot)$ denoting the probability density function of $\ppr$. If we assume $\pi$ to be constant, this simplifies to
+\begin{align}
+    \E[\ppr(S_n, \pi)] = \pi \Pr(\ppr = \pi) + \Pr(\ppr = 1) \label{eq:expected_pub_prob_constant}
+\end{align}
+\item [\textbf{Truncated probability density function of $\boldsymbol{S_n}$:}] Let $f_{S_n}(\cdot)$ be the probability density function of $S_n$. If publication bias is present, the truncated probability density function $ f_{S_n}^{*}(\cdot)$ is given by
+\begin{align}
+    f_{S_n}^{*}(s_n) = \frac{\ppr(s_n, \pi)}{\E[\ppr(S_n, \pi)]}f_{S_n}(s_n). \label{eq:truncated_prob_density}
+\end{align}
+\item [\textbf{Truncated likelihood of $\boldsymbol{\mu}$:}] The likelihood of $\mu$ given the observed test statistics $s_{n_1},\dots,s_{n_k}$ is defined as ${\mathcal{L}(\mu \mid s_{n_1},\dots,s_{n_k}) = \prod_{j=1}^k f_{S_{n_j},\mu}(
+s_{n_j} \mid \mu)}$ with $f(s_{n_j} \mid \mu)$ denoting the probability density function of $S_{n_j}$ given $\mu$. In the presence of publication bias, I define the truncated likelihood of $\mu$ as
+    \begin{align}
+        \mathcal{L}^{*}(\mu \mid s_{n_1},\dots,s_{n_k}) &= \prod_{j=1}^k\frac{\ppr(s_{n_j}, \pi)}{\E[\ppr(S_{n_j}, \pi)\mid \mu]}f_{S_{n_j}}(s_{n_j})\\ \nonumber
+        &=  \frac{\mathcal{L}(\mu \mid s_{n_1},\dots,s_{n_k})}{\E[\ppr(S_{n_j},\pi)\mid \mu]}\prod_{j=1}^k \ppr(S_{n_j},\pi) \label{eq:truncated_likelihood}
+    \end{align}
+\end{description}
+The measures described above are taken from \citet{andrews_identification_2017}, but I use them for bias corrections methods that are different from the ones proposed by the two authors.%toadd: everything above given sample size n
+
+\subsection{Reweighting estimates by publication probabilities}
+Let ${S_{n_j} = \bar{X}_{n_j} = \frac{1}{n_j} \sum_{i=1}^{n_j} X_i \sim \mathcal{N}(\mu, \sigma^2/n_j)}$ be the summary statistic reported by a study $j$. To estimate the true effect size $\mu$ in the absence of publication bias, one can simply apply Eq.~\ref{eq:global_estimator_precision_weight}. However, if publication bias is present, this estimator is biased upwards.\par 
+Let ${\ppr_j = \ppr(S_{n_j},\pi_j)}$ be the publication probability of a finding $S_{n_j}$ as stated in Section~\ref{subsec:pub_prob and trunc_dist}, Eq.~\ref{eq:pub_prob}, and assume that $\pi_j \neq 1$ for at least some non-significant findings. Then, $${\bar{X}_j^{*} = \bar{X}_j \ppr_j \sim \mathcal{N}(\mu\ppr_j, \sigma^2\frac{\ppr_j^2}{n_j}})$$ and the global estimator given in Eq.~\ref{eq:global_estimator_precision_weight} turns into by
+\begin{align}
+    \bar{X}_\text{N} = \frac{\sum_{j=1}^k \bar{X}_{n_j}^{*}w_j}{\sum_{j=1}^k w_j}\sim \mathcal{N}(\mu \frac{\sum_{j=1}^k n_j\ppr_j w_j}{\sum_{j=1}^k w_j},\sigma^2\frac{\sum_{j=1}^k n_j(\ppr_j w_j)^2}{(\sum_{j=1}^k w_j)^2})
+\end{align} 
+with ${w_j = n_j/\sigma^2}$. To correct the bias, on can simply reweight each finding $\bar{X}_j^{*}$ published under publication bias by the inverse of its publication probability, that is, $\bar{X}_j = \bar{X}_j^{*}/\ppr_j$ and then calculate the unbiased global estimate using Eq.~\ref{eq:global_estimator_precision_weight} which yields the following unbiased estimator:
+\begin{align}
+    \bar{X}_\text{N}^{*} = \frac{\sum_{j=1}^k \bar{X}_{n_j}^{*}w_j/\ppr_j}{\sum_{j=1}^k w_j/\ppr_j}\sim \mathcal{N}(\mu,\sigma^2/\sum_{j=1}^k w_j/\ppr_j) \label{eq:global_estimator_corrected}
+\end{align} 
+This method---inspired by the finite sample estimator developed by \citet{hansen_theory_1943}---performs well when there is a real but biased effect but underestimates the global effect size the assumed or estimated publication probability is smaller than the real one. For biased null effects the estimator also tends to underestimate the true effect size if In scenarios in which there are only significant findings observed, it completely fails (see Table~\ref{tab:hansen_hurvitz} for examples). In addition, the method is only applicable if the publication probability for a given study is known or can be estimated.\par
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.1\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.1\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.1\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.1\textwidth}} 
+        \hline
+         & $k$\TBstrut & $\mu_1$ & $\bar{x}_N$ & $\bar{x}_N^{*}$ \\ 
+        \hline
+        full sample (no bias, A)\Tstrut & $200$ & $0$ & $-0.02$  & $-0.07$ \\ 
+        & $200$\Bstrut & $0.3$ & $0.27$  & $0.15$\\
+        \hline
+        significant studies (B)\Tstrut& $13$ & $0$ & $0.69$ & $0.69$ \\
+        & $38$\Bstrut & $0.3$ & $0.61$ & $0.61$ \\
+        \hline
+        significant studies and $10\%$ of\Tstrut & $32$ & $0$ & $0.15$ & $-0.17$ \\
+        non-significant studies (C) & $55$\Bstrut & $0.3$ & $0.51$ & $0.27$ \\
+     \hline
+    \end{tabular}
+    \caption[Bias correction by reweighting with publication probabilities.]{The results of the bias correction based on reweighting each result by the inverse of its respective publication probability. The correction was applied to the studies shown in Figure~\ref{fig:funnel_plot}, the global estimate $\bar{x}_N$ was calculated according to Eq.~\ref{eq:global_estimator_precision_weight} and the corrected estimate $\bar{x}_N^{*}$ was calculated according to Eq.~\ref{eq:global_estimator_corrected}---in both cases with theoretical parameter values replaced by empirical estimates.}
+    \label{tab:hansen_hurvitz}
+  \end{center}
+\end{table}
+
+\subsection{Trim-and-fill: Closing gaps in funnel plots}
+The `trim-and-fill' method developed by \citet{duval_trim_2000, duval_nonparametric_2000} leverages on a similar rationale as the funnel plot introduced in Section \ref{subsec:funnel plot}. It assumes that publication bias suppresses those findings which are most `negative' in the sense of `pointing in the opposite direction of significant findings'. As a result, we would expect a considerable gap in the lower left part of the funnel plot, where the those studies with low precision and negative effect sizes are located, and---conversely---a global effect size estimate that is biased upwards.\par %to add: figure of funnel plot showing most extreme findings missing
+To correct for this, Duval and Tweedie propose an expectation-maximisation algorithm based on trimming the most `positive' findings, calculating a corrected global effect size estimate, again trimming the most positive findings with regard to the corrected estimate, re-correcting said estimate and so on, until convergence is achieved. Then, the most positive findings with regard to the converged global effect size estimate are mirrored around said estimate and a final global effect size estimate is calculated. In detail, the algorithm consists of the following stages (adapted from \citet{duval_trim_2005}): 
+\begin{enumerate}
+    \item \label{itm:transform} Transform the individual findings $\hat{\theta}_{1},\dots,\hat{\theta}_{k}$ into standard normally distributed test statistics ${V_{n_1}, \dots, V_{n_k}}$ using a variance stabilising transformation.
+    \item \label{itm:global_estimate_init} Set $i=1$, $k_0^{(0)}=0$ and calculate a global estimate $V_N^{(i)}$ of the individual test statistics $V_{n_j}$.
+    \item \label{itm:center} Centre the findings around $V_N^{(i)}$, that is, $V_{n_j}^{*} = V_{n_j} - V_N^{(i)}$.
+    \item Rank all centred estimates according to their absolute value from smallest to largest and assign each rank the sign of its corresponding $V_{n_j}^{*}$. This yields signed ranks $\text{sr}_{V_{n_j}^{*}} = \text{sgn}(V_{n_j}^{*})\cdot\text{rank}_{|V_{n_1}^{*}|,\dots,|V_{n_k}^{*}|}(|V_{n_j}^{*}|)$, with $\text{rank}_{|V_{n_1}^{*}|,\dots,|V_{n_k}^{*}|}(\cdot)$ denoting the rank function with regard to absolute values of all centred estimates.
+    \item Sum all ranks with positive sign to obtain the rank sum $$S_{\text{rank}} = \sum_{j=1}^k  \text{sr}_{V_{n_j}^{*}}\cdot \mathbb{1}(\text{sr}_{V_{n_j}^{*}} > 0).$$
+    \item Estimate the number of potentially omitted studies $$k_0^{(i)} = \left\lceil\frac{4 S_{\text{rank}}-n(n+1)}{2n-1}\right\rceil.$$
+    \item If ${k_0^{(i)} = k_0^{(i-1)}}$ go to step \ref{itm:fill}. Otherwise, continue with step \ref{itm:trim}. 
+    \item \label{itm:trim} Trim off the $k_0^{(i)}$ most positive findings $V_{n_j}$ and recalculate the global estimate of the trimmed sample $V_N^{(i+1)}$.
+    \item Set $i = i+1$ and restart from step \ref{itm:center} using all original findings (including the ones that were trimmed in step \ref{itm:trim}).
+    \item \label{itm:fill} Take the $k_0^{(i)}$ most positive findings $V_{n_j}$, `mirror' them around $V_N^{(i)}$ and add them to the data set along with the corresponding standard error.
+    \item Transform all $V_{n_j}$ back into effect size estimates $\hat{\theta}_j$ (including the newly filled data) and calculate a global effect size estimate $\hat{\theta}_{N}$.
+\end{enumerate}
+%to add: R implementation of code
+%Let us assume that ${\hat{\theta}_j = \bar{x}_{n_j} = \frac{1}{n_j}\sum_{i=1}^{n_j} x_i}$ with ${X_i \sim \mathcal{N}(\mu,\sigma^2)}$ and thereby ${\bar{X}_{n_j} \sim \mathcal{N}(\mu, \sigma^2/n_j)}$. In \textbf{\textsf{R}}, the algorithm can be implemented as follows: 
+%\begin{lstlisting}[language=R]
+%test
+%\end{lstlisting}
+Since the trim-and-fill method hinges on the assumption that only the most extreme negative findings are omitted in the presence of publication bias, the correction will fail if the publication probability of a finding $\hat{\theta}_i$ does not decay with increasing negative distance from the significance threshold. If---for example---the publication probability of a finding is given by ${\ppr_j = \ppr(V_{n_j}, \pi_j)}$ as described in Section~\ref{subsec:pub_prob and trunc_dist}, Eq.~\ref{eq:pub_prob}, with ${V_{n_j} = V(\hat{\theta}_j)}$ a variance stabilised and normally distributed test statistic based on $\hat{\theta}_j$ and $\pi_j$ either constant across all $j$ or a function dependent on some study characteristic of interest, then the publication probability will be equal to $1$ above the significance threshold and $\pi_j$ below. In such cases, the trim-and-fill estimator will overestimate the true effect size as can be seen in Table~\ref{tab:trim_and_fill}.\par
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.1\textwidth}} 
+    \hline
+     & $k$\TBstrut & $\mu_1$ & $\bar{x}_N$ & $\bar{x}_N^{\text{(t\&f)}}$ & $\bar{x}_N^{\text{(t\&f-ppr)}}$\\ 
+    \hline
+    full sample (no bias, A)\Tstrut & $200$ & $0$ & $-0.02$ & $-0.11$ & $-0.10$ \\ 
+    & $200$\Bstrut & $0.3$ & $0.27$ & $0.27$ & $0.10$\\
+    \hline
+    significant studies (B)\Tstrut& $13$ & $0$ & $0.69$ & $0.46$ & $0.46$ \\
+    & $38$\Bstrut & $0.3$ & $0.61$ & $0.45$ & $0.45$ \\
+    \hline
+    significant studies and $10\%$ of\Tstrut & $32$ & $0$ & $0.15$ & $0.11$ & $-0.002$ \\
+    non-significant studies (C) & $55$\Bstrut & $0.3$ & $0.51$ & $0.42$ & $0.40$\\
+ \hline
+\end{tabular}
+    \caption[The trim-and-fill method to correct effect size estimates.]{Results for the trim-and-fill method and the adapted trim-and-fill method to correct for effect size estimates. The correction was applied to the studies shown in Figure~\ref{fig:funnel_plot}. The global estimate for $V_{n_j}$ was calculated by using the arithmetic mean. The global estimate $\bar{x}_N$ was calculated according to Eq.~\ref{eq:global_estimator_precision_weight} but with theoretical parameter values replaced by empirical estimates.}
+    \label{tab:trim_and_fill}
+  \end{center}
+\end{table}
+If there is reason to belief that the $\ppr_j$ represents the publication probability of a finding $j$ below the significance threshold better than the decaying probability assumed by Duval and Tweedie, I propose the following adjustment to their trim-and-fill method, to be executed after the first execution of step~\ref{itm:transform} and before the first execution of step~\ref{itm:center} described above:
+\begin{enumerate}[start=1,label={2.\arabic*.}]
+    \item Set $i = 1$, but instead of starting out with $k_0^{(0)} = 0$, set it equal to the minimum of the number of all significant findings and the number of all non-significant findings reweighted by their respective publication probability $\ppr_j$, that is,
+    $$k_0^{(0)} = \text{min}(\sum_{j=1}^{k} \delta(V_{n_j}),\sum_{j=1}^{k} (1-\delta(V_{n_j}))/\ppr_j) $$
+    where $\delta(\cdot)$ is a decision function taking $S_n$ as input and returning $1$ if $V_n$ lies beyond the predefined significance threshold and $0$ otherwise.
+    \item Trim off the $k_0^{(0)}$ must positive findings and calculate the global estimate $\hat{\theta}_{\text{tot}}^{(i)}$ based on the remaining data.
+    \item Enter the trim-and-fill algorithm at step~\ref{itm:center} and iterate until convergence.
+\end{enumerate}
+Unless there is no publication present or the publication probability of non-significant studies is larger than assumed, the corrections outlined above improve the performance of the trim-and-fill method as can also be observed in Table~\ref{tab:trim_and_fill}.
+%toadd: show that this adjustment helps improve the correction
+%toadd: maybe add algo in which you simply trim off all significant finding / or number of significant findings corresponding to number of omitted studies and recalculate globa lmean
+
+\subsection{Effect size correction based on \texorpdfstring{$p$}{p}-curves}
+The $p$-curve described in Section~\ref{subsec:p-curve} cannot only be used for the detection of publication bias, but also for its correction. The correction method put forward by \citet{simonsohn_pcurve_correction_2014} leverages again on the different distributions of $p$-values depending on whether the null hypothesis is true or false, respectively, and whether $p$-hacking is present or absent, respectively (see Section~\ref{subsec:p-curve} for details). In short, the researcher calculates the $pp$-values for the published findings for a range of possible true effect sizes and then checks to resulting $p$-curves for correspondence to a uniform distribution. In detail, the procedure goes as follows (assuming that findings result from a one-sided superiority test):
+\begin{enumerate}
+    \item Let $s_{n_1},\dots,s_{n_l}$ be a set of published and significant test statistics with ${S_{n_j}\sim \mathcal{N}(\mu, \sigma^2/n_j)}$. Create a set of possible candidates $\{\mu_1,\dots,\mu_m\}$ for $\mu$.
+    \item For each $\mu_i$ calculate the corresponding $p$-values for $s_{n_1},\dots,s_{n_l}$, that is, $p_{ij} = \Pr(S_{n_j} > s_{n_j}\mid \mu_i) = 1-F_{S_n}(\cdot \mid \mu_i)$, with $F_{S_{n_j}}(s_{n_j} \mid \mu_i)$ denoting the cumulative distribution function of $S_{n_j}$ given $\mu = \mu_i$.
+    \item Transform the $p_{ij}$-values into $pp_{ij}$-values by conditioning on the fact that all observed $p$-values were significant and thus below the pre-defined Type I error rate $\alpha$:
+    \begin{alignat*}{1}
+    pp_{ij} = \Pr(P<p_{ij} \mid p_{ij} < 1-\beta_{ij}, \mu_i) = \frac{p_{ij}-\beta_{ij}}{1-\beta{ij}}.
+    \end{alignat*}
+    \item For each $\mu_i$, compare the corresponding $p$-curve consisting of $pp$-values $pp_{i1},\dots,pp_{il}$ to the uniform distribution. Simonsohn \textit{et al.} suggested using the Kolmogorov-Smirnov statistic (see for example \citet[p.~155]{barlow_statistics_1989}), as a measure of distance between of the empirical $p$-curve and the uniform distribution, that is,
+    $$D_i = \max_j(|pp_{ij}-1/\alpha|).$$
+    \item Pick the $\mu_i$ with the lowest $D_i$ as corrected estimate of the true effect size $\mu$.
+\end{enumerate}
+Table~\ref{tab:p_curve_correction} shows the results for the corrections applied to the studies shown in Figure~\ref{fig:funnel_plot}. As shown before (see Table~\ref{tab:p_curve}), the $p$-curve discards all information from non-significant studies and therefore is not able to distinguish between different extents of `pure' publication bias, that is, publication bias that only originates from a higher publication probability for significant results. 
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.1\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.1\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.1\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.1\textwidth}} 
+        \hline
+         & $k$\TBstrut & $\mu_1$ & $\bar{x}_N$ & $\bar{\mu}$ \\ 
+        \hline
+        full sample (no bias, A)\Tstrut & $200$ & $0$ & $-0.02$  & $0.41$ \\ 
+        & $200$\Bstrut & $0.3$ & $0.27$  & $0.25$\\
+        \hline
+        significant studies (B)\Tstrut& $13$ & $0$ & $0.69$ & $0.41$ \\
+        & $38$\Bstrut & $0.3$ & $0.61$ & $0.25$ \\
+        \hline
+        significant studies and $10\%$ of\Tstrut & $32$ & $0$ & $0.15$ & $0.41$ \\
+        non-significant studies (C) & $55$\Bstrut & $0.3$ & $0.25$ & $0.27$ \\
+     \hline
+    \end{tabular}
+    \caption[Using the $p$-curve to correct for publication bias.]{The results of the bias correction based on the $p$-curve method. The correction was applied to the studies shown in Figure~\ref{fig:funnel_plot}, the global estimate $\bar{x}_N$ was calculated according to Eq.~\ref{eq:global_estimator_precision_weight} with the theoretical parameter values replaced by empirical estimates.}
+    \label{tab:p_curve_correction}
+  \end{center}
+\end{table}
+Simonsohn \textit{et al.} showed that effect size corrections using the $p$-curve outperforms the standard trim-and-fill method in the case of publication bias. If $p$-hacking or HARKing is the cause of the publication bias (and not only bias based on preferential publishing of significant findings alone), then the $p$-curve correction still performs well, but underestimates the true effect size.
+
+\subsection{Maximising the truncated likelihood}
+Yet another possibility to correct biased effect size estimates is possible by exploiting the truncated likelihood function as outlined in Section~\ref{subsec:pub_prob and trunc_dist}, Eq.~\ref{eq:truncated_likelihood}. Let $v_{n_1},\dots,v_{n_k}$ be the variance stabilised and standard normally distributed test statistics for the true population mean $\mu$ in $k$ studies with $n_j$ data points each. Furthermore, let the publication probability of significant and non-significant studies be $1$ and $\pi$, respectively, with $\pi$ being constant. We can then write the truncated likelihood for the $\mu$ as:
+\begin{align*}
+        \mathcal{L}^{*}(\mu \mid v_{n_1},\dots,v_{n_k}) = \frac{\mathcal{L}(\mu \mid v_{n_1},\dots,v_{n_k})}{\E[\ppr(V_{n_j},\pi)\mid \mu]}\prod_{j=1}^k \ppr(V_{n_j},\pi).
+\end{align*}
+Estimated values or both $\mu$ and $\pi$ can now easily be computed by maximising the likelihood through grid-search optimisation: 
+\begin{enumerate}
+    \item Define a set of candidate values $\{\mu_1,\dots,\mu_m\}$ and $\{\pi_1,\dots,\pi_n\}$ for $\mu$ and $\pi$, respectively.
+    \item For each combination of $\mu$ and $\pi$, calculate the likelihood.
+    \item Choose the candidate value for $\mu$ and $\pi$ that yields the highest likelihood.
+\end{enumerate}
+As Table~\ref{tab:maximise_trunc_likelihood} shows, this approach yields corrected estimates for $\mu$ and $\pi$ that are rather close to the unbiased effect sizes and performs robustly across different scenarios.
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{ >{\raggedright\let\\\tabularnewline}p{.4\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth}| >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.075\textwidth} | >{\raggedleft\let\\\tabularnewline}p{.1\textwidth}} 
+    \hline
+     & $k$\TBstrut & $\mu_1$ & $\bar{x}_N$ & $\hat{\mu}$ & $\hat{\pi}$\\ 
+    \hline
+    full sample (no bias, A)\Tstrut & $200$ & $0$ & $-0.02$ & $-0.02$ & $0.66$ \\ 
+    \Bstrut & $200$\Bstrut & $0.3$ & $0.27$ & $0.27$ & $1$\\
+    \hline
+    significant studies (B)\Tstrut & $13$ & $0$ & $0.69$ & $0.31$ & $0$ \\
+    \Bstrut & $38$\Bstrut & $0.3$ & $0.61$ & $0.31$ & $0$ \\
+    \hline
+    significant studies and $10\%$ of\Tstrut & $32$ & $0$ & $0.15$ & $-0.07$ & $0.05$ \\
+    non-significant studies (C)\Bstrut & $55$\Bstrut & $0.3$ & $0.51$ & $0.33$ & $0.16$\\
+ \hline
+\end{tabular}
+    \caption[Maximising the truncated likelihood to correct for publication bias.]{Results for the effect size corrections and publication probability estimates based on the maximisation of the truncated likelihood. The correction was applied to the studies shown in Figure~\ref{fig:funnel_plot}. The global estimate $\bar{x}_N$ was calculated according to Eq.~\ref{eq:global_estimator_precision_weight} but with theoretical parameter values replaced by empirical estimates.}
+    \label{tab:maximise_trunc_likelihood}
+  \end{center}
+\end{table}
