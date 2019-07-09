@@ -108,7 +108,7 @@ fig1A <- ggarrange(p1, p2,
 
 ggsave(
   filename = paste0(out_path, figname, ".pdf"), plot = fig1A,
-  width = A4[1], height = 0.80 * A4[2] / 3, device = cairo_pdf
+  width = A4[1], height = 0.4 * A4[2], device = cairo_pdf
 )
 
 
@@ -117,7 +117,7 @@ ggsave(
 ### (fig:normal_fit_student_[Corr])
 
 # define figure name
-figname <- paste0("poster_fig1B_normal_fit_student")
+figname <- paste0("presentation_fig1B_normal_fit_student")
 
 # variables are
 # cdf: cumulative probability
@@ -229,14 +229,14 @@ fig1B <- ggarrange(p1, p2,
 )
 ggsave(
   filename = paste0(out_path, figname, ".pdf"), plot = fig1B,
-  width = A4[1], height = 0.80 * A4[2]/3, device = cairo_pdf
+  width = A4[1], height = 0.4 * A4[2], device = cairo_pdf
 )
 
 ### Figure 1C: Plot Tn & Vn against mu1 & compare with normal distribution ----
 ### (fig:evidence_student_[Corr])
 
 # define figure name
-figname <- paste0("poster_fig1C_evidence_student")
+figname <- paste0("presentation_fig1C_evidence_student")
 
 # plot fit of empirical distribution of Zn and Vn with theoretical dist
 fit_plotter <- function(dat) {
@@ -352,12 +352,11 @@ p2 <- sd_plotter(dat[dat$n_study == 5, ])
 
 fig1C <- ggarrange(p1, p2,
                   ncol = 2, nrow = 1,
-                  align = "hv", legend = "top", common.legend = T,
-                  labels = c("C", "")
+                  align = "hv", legend = "top", common.legend = T
 )
 ggsave(
   filename = paste0(out_path, figname, ".pdf"), plot = fig1C,
-  width = A4[1], height = 0.80 * A4[2] /3, device = cairo_pdf
+  width = A4[1], height = 0.4 * A4[2], device = cairo_pdf
 )
 
 
