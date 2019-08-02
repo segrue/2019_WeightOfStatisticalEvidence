@@ -27,9 +27,16 @@
   font_family <- "Palatino Linotype"
   A4 <- c(8.27, 11.69) # width and height of A4 page in inches
   A5 <- c(5.8, 8.3) # width and height of an A5 page
-  corr_student <- "MLE" # either "MLE" for no correction or "Corr" for finite sample correction
-  corr_bin <- "MLE" # either "MLE" for no correction or "Ans" for Anscombe correction
+  corr <- FALSE #should Anscombe and finite sample correction be used, respectively
   n_sim <- "1e+05"
+  
+  if (corr == TRUE){
+    corr_student <- "Corr" # either "MLE" for no correction or "Corr" for finite sample correction
+    corr_bin <- "Ans" # either "MLE" for no correction or "Ans" for Anscombe correction
+  } else {
+    corr_student <- "MLE" # either "MLE" for no correction or "Corr" for finite sample correction
+    corr_bin <- "MLE" # either "MLE" for no correction or "Ans" for Anscombe correction
+  }
   
   ### Figure 2.1: Type I and Type II error explained (fig:error_types)------------
   figname <- "ch2_fig1_error_types"
@@ -170,7 +177,7 @@
           bquote(p == 0.1), bquote(p == 0.5),
           bquote(p == 0.9)
         ),
-        values = c("solid", "dashed", "dotdash")
+        values = c("dashed", "solid", "dotdash")
       ) +
       ylim(0, 1) + ggtitle(bquote("n" == .(dat$n_study[1]))) +
       labs(x = "x", y = "F(x)") + coord_cartesian(xlim = c(q_min, q_max)) +
@@ -192,7 +199,7 @@
       group = interaction(p1, id), linetype = factor(p1)
     )) +
       geom_line() + scale_color_manual(values = c("th" = "black", "Zn" = "blue", "Vn" = "red")) +
-      scale_linetype_manual(values = c("solid", "dashed", "dotdash")) +
+      scale_linetype_manual(values = c("dashed", "solid", "dotdash")) +
       labs(x = bquote(Phi^{
         -1
       } * (x)), y = bquote(F^{
@@ -560,7 +567,7 @@
             bquote(mu == -2), "0" = bquote(mu == 0),
           "2" = bquote(mu == 2)
         ),
-        values = c("-2" = "solid", "0" = "dashed", "2" = "dotdash")
+        values = c("-2" = "dashed", "0" = "solid", "2" = "dotdash")
       ) +
       ylim(0, 1) + ggtitle(bquote("n" == .(dat$n_study[1]))) +
       labs(x = "x", y = "F(x)") + coord_cartesian(xlim = c(q_min, q_max)) +
@@ -592,7 +599,7 @@
             bquote(mu == -2), "0" = bquote(mu == 0),
           "2" = bquote(mu == 2)
         ),
-        values = c("-2" = "solid", "0" = "dashed", "2" = "dotdash")
+        values = c("-2" = "dashed", "0" = "solid", "2" = "dotdash")
       ) +
       labs(x = bquote(Phi^{
         -1
