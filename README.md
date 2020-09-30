@@ -1,2 +1,2 @@
 # 2019_StatisticalEvidence
-Master Thesis in Computational Science and Engineering at EPFL
+Simulation of different sources of publication bias based on Master Thesis in Computational Science and Engineering at EPFL
